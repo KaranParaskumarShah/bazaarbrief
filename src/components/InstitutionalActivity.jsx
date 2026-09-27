@@ -1,0 +1,7 @@
+import './InstitutionalActivity.css';
+const cr = (n) => n == null ? '—' : `${n >= 0 ? '+' : ''}${Number(n).toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`;
+export default function InstitutionalActivity({ data }) {
+  if (!data?.configured) return <section className="section"><div className="section__head"><h2>FII / DII Activity</h2><p>Live institutional-flow data is not shown until a browser-CORS-safe provider is configured. Bazaar Brief intentionally does not ship old hard-coded FII/DII numbers.</p></div><div className="setup-card"><strong>Waiting for a live FII/DII source.</strong><p>Use a provider that explicitly supports browser requests, or add a server-side proxy later if you decide to move beyond frontend-only architecture.</p></div></section>;
+  const e = data?.equity;
+  return <section className="section"><div className="section__head"><h2>FII / DII Activity</h2><p>Cash-market institutional flow. The latest row is dated <span className="num">{data?.date || '—'}</span>.</p></div><div className="institutional-grid"><div><span>FII Buy</span><b className="num">{cr(e?.fii_buy)}</b></div><div><span>FII Sell</span><b className="num">{cr(e?.fii_sell)}</b></div><div><span>FII Net</span><b className={`num ${e?.fii_net >= 0 ? 'gain' : 'loss'}`}>{cr(e?.fii_net)}</b></div><div><span>DII Buy</span><b className="num">{cr(e?.dii_buy)}</b></div><div><span>DII Sell</span><b className="num">{cr(e?.dii_sell)}</b></div><div><span>DII Net</span><b className={`num ${e?.dii_net >= 0 ? 'gain' : 'loss'}`}>{cr(e?.dii_net)}</b></div></div></section>;
+}

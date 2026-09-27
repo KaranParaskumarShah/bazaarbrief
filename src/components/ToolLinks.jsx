@@ -1,0 +1,2 @@
+import './ToolLinks.css';
+export default function ToolLinks(){const items=['SIP Calculator','CAGR Calculator','Stock Average','Dividend Calculator','P/E Calculator','EPS Calculator','IPO Investment','USD/INR'];return <section className="section"><div className="section__head"><h2>🧮 Financial Tools</h2><p>Evergreen calculators that complement the daily market brief.</p></div><div className="tool-links">{items.map(x=><a href="/tools" key={x}>{x}<span>→</span></a>)}</div></section>}

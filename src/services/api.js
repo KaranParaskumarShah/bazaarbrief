@@ -1,70 +1,131 @@
-import { API_KEYS, ENDPOINTS } from "../config";
+import { API_KEYS } from '../config';
 
-async function getJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json();
+const TD = 'https://api.twelvedata.com';
+const FIN_IPO = 'https://finapi.upvaly.com/api/ipo';
+const GDELT = 'https://api.gdeltproject.org/api/v2/doc/doc';
+const FX = 'https://api.frankfurter.app/latest?from=USD&to=INR';
+
+async function json(url, options = {}) {
+  const res = await fetch(url, { ...options, cache: 'no-store' });
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error(`Invalid response (${res.status})`); }
+  if (!res.ok) throw new Error(data?.message || data?.error || `Request failed (${res.status})`);
+  return data;
 }
 
-// USD -> INR rate. Free, no key.
-export async function fetchUsdInrRate() {
-  const data = await getJSON(ENDPOINTS.FOREX_USD_BASE);
-  const rate = data?.rates?.INR;
-  if (!rate) throw new Error("INR rate missing from response");
-  return rate;
+const num = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+async function twelveQuotes(symbols) {
+  if (!API_KEYS.TWELVE_DATA) {
+    return { configured: false, rows: [], provider: 'Twelve Data', reason: 'VITE_TWELVE_DATA_KEY is not configured' };
+  }
+
+  const url = `${TD}/quote?symbol=${encodeURIComponent(symbols.join(','))}&apikey=${encodeURIComponent(API_KEYS.TWELVE_DATA)}`;
+  const data = await json(url);
+  const rows = symbols.map((symbol) => {
+    const r = data?.[symbol] || (symbols.length === 1 ? data : null) || {};
+    return {
+      symbol,
+      name: r.name || symbol,
+      price: num(r.close ?? r.price),
+      change: num(r.change),
+      changePercent: num(r.percent_change),
+      currency: r.currency || 'INR',
+      asOf: r.datetime || r.timestamp || null,
+      error: r.status === 'error' ? r.message : null,
+    };
+  }).filter(r => r.price != null || !r.error);
+
+  return { configured: true, provider: 'Twelve Data', rows };
 }
 
-// Gold spot, USD per troy ounce. Free, no key.
-export async function fetchGoldUsd() {
-  const data = await getJSON(ENDPOINTS.GOLD_USD);
-  const entry = data?.symbols?.[0];
-  if (!entry) throw new Error("Gold price missing from response");
-  return { price: parseFloat(entry.price), asOf: entry.computed_at, stale: entry.is_stale };
+async function fxRate() {
+  const data = await json(FX);
+  return { symbol: 'USD/INR', price: num(data?.rates?.INR), currency: 'INR', asOf: data?.date || null, provider: 'Frankfurter' };
 }
 
-// Brent crude, USD per barrel. Free, no key.
-export async function fetchBrentUsd() {
-  const data = await getJSON(ENDPOINTS.BRENT_USD);
-  // UKOilWatch returns a small object with the latest price; be defensive
-  // about the exact field name since it's a third-party free service.
-  const price = data?.price ?? data?.brent ?? data?.value;
-  if (price == null) throw new Error("Brent price missing from response");
-  return { price: parseFloat(price), asOf: data?.date ?? data?.updated ?? null };
+async function ipoFeed() {
+  const data = await json(FIN_IPO);
+  const rows = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+  return { configured: true, provider: 'FinAPI', rows };
 }
 
-// WTI crude, USD per barrel. Needs a free OilPriceAPI key.
-export async function fetchWtiUsd() {
-  if (!API_KEYS.OILPRICE_KEY) return null;
-  const res = await fetch(ENDPOINTS.WTI_USD(API_KEYS.OILPRICE_KEY), {
-    headers: { Authorization: `Token ${API_KEYS.OILPRICE_KEY}` },
-  });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  const data = await res.json();
-  return { price: parseFloat(data?.data?.price), asOf: data?.data?.created_at };
+async function newsFeed() {
+  // GDELT is a public, no-key global news index. It is used instead of a
+  // hard-coded news JSON file so headlines cannot silently become stale.
+  const query = encodeURIComponent('(India stock market OR NSE OR BSE OR IPO) sourcelang:english');
+  const data = await json(`${GDELT}?query=${query}&mode=artlist&maxrecords=12&format=json&sort=datedesc`);
+  const rows = (data?.articles || []).map(a => ({
+    title: a.title,
+    url: a.url,
+    site: a.domain || a.sourcecountry || 'News',
+    publishedDate: a.seendate || '',
+  }));
+  return { configured: true, provider: 'GDELT', rows };
 }
 
-// Silver / Copper spot, USD. Needs a free MetalpriceAPI key.
-export async function fetchMetalUsd(symbol) {
-  if (!API_KEYS.METALPRICE_KEY) return null;
-  const data = await getJSON(ENDPOINTS.METAL(symbol, API_KEYS.METALPRICE_KEY));
-  const rate = data?.rates?.[symbol];
-  if (!rate) throw new Error(`${symbol} price missing from response`);
-  // metalpriceapi returns currency-per-metal-unit as a ratio; invert to get USD price
-  return { price: 1 / rate, asOf: data?.timestamp ? new Date(data.timestamp * 1000).toISOString() : null };
+function commodity(quotes, symbol, label) {
+  const row = quotes?.rows?.find(r => r.symbol === symbol);
+  return { symbol: label, price: row?.price ?? null, change: row?.change, changePercent: row?.changePercent, currency: row?.currency || 'USD', asOf: row?.asOf || null, provider: quotes?.provider || 'Twelve Data' };
 }
 
-// Single India equity quote. Needs a free Twelve Data key.
-export async function fetchStockQuote(symbol) {
-  if (!API_KEYS.TWELVE_DATA_KEY) return null;
-  const data = await getJSON(ENDPOINTS.STOCK_QUOTE(symbol, API_KEYS.TWELVE_DATA_KEY));
-  if (data?.status === "error" || !data?.close) return { error: data?.message || "No data" };
-  return {
-    price: parseFloat(data.close),
-    changePercent: parseFloat(data.percent_change),
-    currency: data.currency || "INR",
+export async function fetchMarketData() {
+  const symbols = [
+    'NIFTY:NSE', 'SENSEX:BSE', 'NIFTY BANK:NSE',
+    'IXIC', 'SPX', 'DJI',
+    'RELIANCE:NSE', 'HDFCBANK:NSE', 'TCS:NSE', 'INFY:NSE',
+    'ICICIBANK:NSE', 'SBIN:NSE', 'BHARTIARTL:NSE', 'ITC:NSE', 'LT:NSE',
+    'HAL:NSE', 'BEL:NSE', 'BDL:NSE', 'MAZDOCK:NSE', 'SOLARINDS:NSE',
+    'TATAELXSI:NSE', 'DIXON:NSE', 'PERSISTENT:NSE', 'KPITTECH:NSE',
+    'XAU/USD', 'XAG/USD', 'WTI/USD', 'BRENT/USD', 'HG1',
+  ];
+
+  const [quotes, fx, ipo, news] = await Promise.allSettled([
+    twelveQuotes(symbols),
+    fxRate(),
+    ipoFeed(),
+    newsFeed(),
+  ]);
+
+  const result = {
+    ok: true,
+    updatedAt: new Date().toISOString(),
+    refreshIntervalMs: 2 * 60 * 60 * 1000,
+    market: {
+      fx: fx.status === 'fulfilled' ? fx.value : { error: fx.reason?.message },
+      quotes: quotes.status === 'fulfilled' ? quotes.value : { configured: false, rows: [], error: quotes.reason?.message },
+      // Commodity symbols can be added to the same Twelve Data subscription.
+      // Keep them null until a provider returns a valid quote rather than showing old values.
+      gold: commodity(quotes, 'XAU/USD', 'Gold'),
+      silver: commodity(quotes, 'XAG/USD', 'Silver'),
+      brent: commodity(quotes, 'BRENT/USD', 'Brent Crude'),
+      wti: commodity(quotes, 'WTI/USD', 'WTI Crude'),
+      copper: commodity(quotes, 'HG1', 'Copper'),
+    },
+    ipo: {
+      india: ipo.status === 'fulfilled' ? ipo.value : { configured: false, rows: [], error: ipo.reason?.message },
+      calendar: ipo.status === 'fulfilled' ? ipo.value : { configured: false, rows: [], error: ipo.reason?.message },
+    },
+    fiiDii: {
+      configured: false,
+      rows: [],
+      reason: 'NSE FII/DII endpoints are not reliably browser-CORS accessible. No stale hard-coded values are shown.',
+    },
+    news: news.status === 'fulfilled' ? news.value : { configured: false, rows: [], error: news.reason?.message },
+    sourceNotes: {
+      market: 'Twelve Data (browser API key required)',
+      fx: 'Frankfurter public exchange-rate API',
+      ipo: 'FinAPI public IPO feed',
+      news: 'GDELT public news index',
+      fiiDii: 'Unavailable in pure browser mode without a CORS-safe provider',
+    },
   };
-}
 
-export function hasKey(name) {
-  return Boolean(API_KEYS[name]);
+  const failures = [quotes, fx, ipo, news].filter(x => x.status === 'rejected');
+  if (failures.length === 4) throw new Error('All live data providers failed. Check your connection and API configuration.');
+  return result;
 }
