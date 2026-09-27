@@ -61,7 +61,6 @@ const SEED={
   {title:'Global cues, crude and currency remain important overnight inputs for the next Indian session.',tag:'GLOBAL',source:'Market brief',age:'26 Sep'}
  ]
  }
-};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function money(n,dec=2){if(n===null||n===undefined||n===''||Number.isNaN(Number(n)))return '—';return new Intl.NumberFormat('en-IN',{maximumFractionDigits:dec,minimumFractionDigits:dec}).format(Number(n))}
