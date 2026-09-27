@@ -33,4 +33,4 @@ export default function App(){
    <MarketIndexStrip market={market}/><MarketSnapshot data={market}/><GainersLosers rows={market.quotes?.rows || []}/><SectorPerformance rows={market.quotes?.rows || []}/><IPOSection data={data?.ipo}/><InstitutionalActivity data={data?.fiiDii}/><CommoditiesBoard data={market}/><NewsSection data={data?.news}/><ToolLinks/>
  </main><Footer/></div>
 }
-function Footer(){return <footer className="app__footer"><p>bazaarbrief.in · Market data is informational and may be delayed. GMP is unofficial/market-reported. Verify important figures with exchange filings and official IPO documents. Not investment advice.</p></footer>}
+function Footer(){return <footer className="app__footer"><p>{data?.dataStatus === 'seed' ? 'Showing the latest available dated snapshot while live feeds are unavailable. ' : ''}bazaarbrief.in · Market data is informational and may be delayed. GMP is unofficial/market-reported. Verify important figures with exchange filings and official IPO documents. Not investment advice.</p></footer>}

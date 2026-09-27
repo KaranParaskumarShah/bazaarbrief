@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CACHE_KEY, CACHE_TTL_MS, REFRESH_INTERVAL_MS } from '../config';
 import { fetchMarketData } from '../services/api';
+import { initialMarketData } from '../data/initialMarketData';
 
 function readCache() {
   try {
@@ -16,11 +17,12 @@ function writeCache(data) {
 
 export function useMarketData() {
   const cached = readCache();
+  const initial = cached?.data || initialMarketData;
   const [state, setState] = useState({
-    data: cached?.data || null,
-    loading: !cached?.data,
+    data: initial,
+    loading: false,
     error: null,
-    lastUpdated: cached?.data?.updatedAt || null,
+    lastUpdated: initial?.updatedAt || null,
     cacheAge: cached ? Date.now() - cached.savedAt : null,
   });
   const mounted = useRef(true);
@@ -38,7 +40,7 @@ export function useMarketData() {
       writeCache(data);
       if (mounted.current) setState({ data, loading: false, error: null, lastUpdated: data.updatedAt, cacheAge: 0 });
     } catch (error) {
-      if (mounted.current) setState(s => ({ ...s, loading: false, error: error.message || 'Unable to load live data' }));
+      if (mounted.current) setState(s => ({ ...s, loading: false, error: `${error.message || 'Unable to load live data'} Showing the latest dated snapshot instead.` }));
     }
   }, []);
 

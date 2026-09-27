@@ -20,7 +20,7 @@ export default function Masthead({ updatedAt, cacheAge, loading, onRefresh }) {
     <nav className="nav" aria-label="Primary navigation">
       {links.map(([href, label]) => <a key={href} href={href}>{label}</a>)}
     </nav>
-    <div className="masthead__status"><span className="live-dot" /> Browser refresh: <b>2 hours</b> · Last successful fetch: <span className="num">{updated} IST</span> · {age} <button type="button" className="refresh-button" onClick={onRefresh} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh now'}</button></div>
+    <div className="masthead__status"><span className="live-dot" /> Browser refresh: <b>2 hours</b> · Latest data timestamp: <span className="num">{updated} IST</span> · {age} <button type="button" className="refresh-button" onClick={onRefresh} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh now'}</button></div>
     <p className="masthead__tagline">Indian markets, IPO intelligence, global drivers and practical financial tools — in one morning brief.</p>
   </header>;
 }

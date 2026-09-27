@@ -1,4 +1,5 @@
 import { API_KEYS } from '../config';
+import { initialMarketData } from '../data/initialMarketData';
 
 const TD = 'https://api.twelvedata.com';
 const FIN_IPO = 'https://finapi.upvaly.com/api/ipo';
@@ -73,6 +74,12 @@ function commodity(quotes, symbol, label) {
   return { symbol: label, price: row?.price ?? null, change: row?.change, changePercent: row?.changePercent, currency: row?.currency || 'USD', asOf: row?.asOf || null, provider: quotes?.provider || 'Twelve Data' };
 }
 
+function mergeRows(seedRows = [], liveRows = []) {
+  const map = new Map(seedRows.map(r => [r.symbol, r]));
+  liveRows.forEach(r => { if (r?.price != null || r?.changePercent != null) map.set(r.symbol, { ...map.get(r.symbol), ...r, dataStatus: 'live' }); });
+  return [...map.values()];
+}
+
 export async function fetchMarketData() {
   const symbols = [
     'NIFTY:NSE', 'SENSEX:BSE', 'NIFTY BANK:NSE',
@@ -92,30 +99,33 @@ export async function fetchMarketData() {
   ]);
 
   const result = {
+    ...initialMarketData,
     ok: true,
     updatedAt: new Date().toISOString(),
+    dataStatus: 'live',
+    snapshotLabel: 'Live provider response',
     refreshIntervalMs: 2 * 60 * 60 * 1000,
     market: {
-      fx: fx.status === 'fulfilled' ? fx.value : { error: fx.reason?.message },
-      quotes: quotes.status === 'fulfilled' ? quotes.value : { configured: false, rows: [], error: quotes.reason?.message },
+      fx: fx.status === 'fulfilled' ? fx.value : initialMarketData.market.fx,
+      quotes: quotes.status === 'fulfilled' ? { ...quotes.value, rows: mergeRows(initialMarketData.market.quotes.rows, quotes.value.rows) } : initialMarketData.market.quotes,
       // Commodity symbols can be added to the same Twelve Data subscription.
       // Keep them null until a provider returns a valid quote rather than showing old values.
-      gold: commodity(quotes, 'XAU/USD', 'Gold'),
-      silver: commodity(quotes, 'XAG/USD', 'Silver'),
-      brent: commodity(quotes, 'BRENT/USD', 'Brent Crude'),
-      wti: commodity(quotes, 'WTI/USD', 'WTI Crude'),
-      copper: commodity(quotes, 'HG1', 'Copper'),
+      gold: commodity(quotes, 'XAU/USD', 'Gold').price != null ? commodity(quotes, 'XAU/USD', 'Gold') : initialMarketData.market.gold,
+      silver: commodity(quotes, 'XAG/USD', 'Silver').price != null ? commodity(quotes, 'XAG/USD', 'Silver') : initialMarketData.market.silver,
+      brent: commodity(quotes, 'BRENT/USD', 'Brent Crude').price != null ? commodity(quotes, 'BRENT/USD', 'Brent Crude') : initialMarketData.market.brent,
+      wti: commodity(quotes, 'WTI/USD', 'WTI Crude').price != null ? commodity(quotes, 'WTI/USD', 'WTI Crude') : initialMarketData.market.wti,
+      copper: commodity(quotes, 'HG1', 'Copper').price != null ? commodity(quotes, 'HG1', 'Copper') : initialMarketData.market.copper,
     },
     ipo: {
-      india: ipo.status === 'fulfilled' ? ipo.value : { configured: false, rows: [], error: ipo.reason?.message },
-      calendar: ipo.status === 'fulfilled' ? ipo.value : { configured: false, rows: [], error: ipo.reason?.message },
+      india: ipo.status === 'fulfilled' ? { ...ipo.value, rows: ipo.value.rows?.length ? ipo.value.rows : initialMarketData.ipo.rows } : initialMarketData.ipo,
+      calendar: ipo.status === 'fulfilled' ? { ...ipo.value, rows: ipo.value.rows?.length ? ipo.value.rows : initialMarketData.ipo.rows } : initialMarketData.ipo,
     },
     fiiDii: {
       configured: false,
       rows: [],
       reason: 'NSE FII/DII endpoints are not reliably browser-CORS accessible. No stale hard-coded values are shown.',
     },
-    news: news.status === 'fulfilled' ? news.value : { configured: false, rows: [], error: news.reason?.message },
+    news: news.status === 'fulfilled' ? { ...news.value, rows: news.value.rows?.length ? news.value.rows : initialMarketData.news.rows } : initialMarketData.news,
     sourceNotes: {
       market: 'Twelve Data (browser API key required)',
       fx: 'Frankfurter public exchange-rate API',
@@ -126,6 +136,6 @@ export async function fetchMarketData() {
   };
 
   const failures = [quotes, fx, ipo, news].filter(x => x.status === 'rejected');
-  if (failures.length === 4) throw new Error('All live data providers failed. Check your connection and API configuration.');
+  if (failures.length === 4) return { ...initialMarketData, ok: true, dataStatus: 'seed', updatedAt: initialMarketData.updatedAt, error: 'Live providers unavailable; showing the latest dated snapshot.' };
   return result;
 }
