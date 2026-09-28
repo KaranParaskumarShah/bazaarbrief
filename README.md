@@ -69,3 +69,6 @@ The duplicate `TWO_HOURS` declaration in `src/main.jsx` was removed. There is no
 `const TWO_HOURS = 2 * 60 * 60 * 1000;`
 
 The production UI remains API-only: no bundled financial snapshot is used. The frontend reads `/data/latest.json`, which is populated by the scheduled GitHub Action.
+
+## Runtime blank-page fix
+The frontend is safe when `latest.json` has not yet been refreshed. The header no longer dereferences `state.data` before the API dataset exists. The app shows an explicit API-refresh waiting state instead of a white screen. A React ErrorBoundary is also included so an unexpected render exception produces a recovery screen rather than a blank page.

@@ -24,7 +24,25 @@ function useData(){
    if(!next || next.dataPolicy?.primary!=='API-only' || !next.market || next.refresh?.status!=='ok'){
     throw new Error('Live API dataset is unavailable or not marked API-only.');
    }
-   setData(next);setLast(next.updatedAt||null);setMsg('');
+   const normalized={
+    ...next,
+    source: next.source || 'API-only shared scheduled feed',
+    market: {
+      ...(next.market||{}),
+      indices: Array.isArray(next.market?.indices)?next.market.indices:[],
+      global: Array.isArray(next.market?.global)?next.market.global:[],
+      commodities: Array.isArray(next.market?.commodities)?next.market.commodities:[],
+      stocks: Array.isArray(next.market?.stocks)?next.market.stocks:[]
+    },
+    fiiDii: next.fiiDii || {},
+    ipo: {
+      ...(next.ipo||{}),
+      mainboard: Array.isArray(next.ipo?.mainboard)?next.ipo.mainboard:[],
+      sme: Array.isArray(next.ipo?.sme)?next.ipo.sme:[]
+    },
+    news: Array.isArray(next.news)?next.news:[]
+   };
+   setData(normalized);setLast(normalized.updatedAt||null);setMsg('');
   }catch(e){
    setData(null);setLast(null);setMsg(e.message);
   }finally{setLoading(false)}
@@ -40,7 +58,7 @@ function useData(){
 }
 function fmtDate(value){return value?new Date(value).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}
 function Sparkline({positive=true,seed=1}){const points=Array.from({length:12},(_,i)=>{const wave=Math.sin((i+seed)*0.85)*3;const drift=(positive?i:-i)*0.65;return 28-wave-drift});const min=Math.min(...points),max=Math.max(...points);const d=points.map((v,i)=>`${i*9},${18-((v-min)/(max-min||1))*14}`).join(' ');return <svg className={`spark ${positive?'sparkUp':'sparkDown'}`} viewBox="0 0 99 36" preserveAspectRatio="none" aria-hidden="true"><polyline points={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-function Header({state,onNav}){const [searchOpen,setSearchOpen]=useState(false);return <><header className="appHeader"><button className="brand" onClick={()=>onNav('/')} aria-label="Bazaar Brief home"><span className="brandMark">B</span><span>BAZAAR<span>BRIEF</span></span></button><div className="marketLive"><i></i><span>MARKET DATA</span><b>API feed</b></div><nav className="mainNav" aria-label="Primary navigation"><button className="active" onClick={()=>onNav('/')}>Markets</button><button onClick={()=>onNav('/ipo')}>IPOs</button><button onClick={()=>onNav('/gmp')}>GMP Tracker</button><button onClick={()=>onNav('/ipo-allotment-status')}>Allotment</button><button onClick={()=>onNav('/tools')}>Tools</button></nav><div className="headerActions"><button className="searchBtn" onClick={()=>setSearchOpen(v=>!v)}>⌘ K <span>Search</span></button><button className="refreshBtn" onClick={()=>state.refresh(true)} disabled={state.loading}>{state.loading?'Refreshing':'Refresh'}</button></div></header>{searchOpen&&<div className="searchPanel"><input autoFocus placeholder="Search IPOs, tools, markets…" onKeyDown={e=>{if(e.key==='Escape')setSearchOpen(false)}}/><span>Press Esc to close</span></div>}<div className="dataRail"><span><i className="pulseDot"></i> {state.data.source}</span><span>Updated {fmtDate(state.last)}</span><span>Auto refresh · 2h</span></div></>}
+function Header({state,onNav}){const [searchOpen,setSearchOpen]=useState(false);return <><header className="appHeader"><button className="brand" onClick={()=>onNav('/')} aria-label="Bazaar Brief home"><span className="brandMark">B</span><span>BAZAAR<span>BRIEF</span></span></button><div className="marketLive"><i></i><span>MARKET DATA</span><b>API feed</b></div><nav className="mainNav" aria-label="Primary navigation"><button className="active" onClick={()=>onNav('/')}>Markets</button><button onClick={()=>onNav('/ipo')}>IPOs</button><button onClick={()=>onNav('/gmp')}>GMP Tracker</button><button onClick={()=>onNav('/ipo-allotment-status')}>Allotment</button><button onClick={()=>onNav('/tools')}>Tools</button></nav><div className="headerActions"><button className="searchBtn" onClick={()=>setSearchOpen(v=>!v)}>⌘ K <span>Search</span></button><button className="refreshBtn" onClick={()=>state.refresh(true)} disabled={state.loading}>{state.loading?'Refreshing':'Refresh'}</button></div></header>{searchOpen&&<div className="searchPanel"><input autoFocus placeholder="Search IPOs, tools, markets…" onKeyDown={e=>{if(e.key==='Escape')setSearchOpen(false)}}/><span>Press Esc to close</span></div>}<div className="dataRail"><span><i className="pulseDot"></i> {state.data?.source || 'Waiting for shared API feed'}</span><span>Updated {fmtDate(state.last)}</span><span>Auto refresh · 2h</span></div></>}
 function Section({title,sub,action,children}){return <section className="dashSection"><div className="sectionHead"><div><div className="sectionKicker">{title}</div>{sub&&<p>{sub}</p>}</div>{action}</div>{children}</section>}
 function IndexCard({x,index}){const positive=(x.pct??0)>=0;return <article className={`indexCard ${x.name==='GIFT NIFTY'?'featured':''}`}><div className="indexTop"><span>{x.name}</span><em>{x.name==='GIFT NIFTY'?'FUTURES':'INDEX'}</em></div><div className="indexValue">{money(x.value, x.value>=10000?2:2)}</div><div className="indexBottom"><span className={positive?'gain':'loss'}>{x.change==null?'Live quote':`${x.change>=0?'+':''}${money(x.change,2)} · ${pct(x.pct)}`}</span><Sparkline positive={positive} seed={index+1}/></div>{x.note&&<small className="indexNote">{x.note}</small>}</article>}
 function IndexCards({items}){return <div className="indexBento">{items.map((x,i)=><IndexCard key={x.name} x={x} index={i}/>)}</div>}
@@ -89,5 +107,16 @@ const TOOL_DEFS={
 function Calculator({def}){const initial=Object.fromEntries(def.fields.map(([k,,v])=>[k,v]));const [v,setV]=useState(initial);useEffect(()=>setV(initial),[def.title]);const result=useMemo(()=>def.calc(v),[def,v]);return <div className="calculator"><h2>{def.title}</h2><div className="fieldGrid">{def.fields.map(([key,label])=><label key={key}>{label}<input type="number" min="0" step="any" value={v[key]} onChange={e=>setV({...v,[key]:e.target.value})}/></label>)}</div><div className="results">{result.map(([a,b])=><div className="resultRow" key={a}><span>{a}</span><strong>{b}</strong></div>)}</div></div>}
 function Tools({tool}){const [active,setActive]=useState(tool&&TOOL_DEFS[tool]?tool:'sip');return <main><div className="pageTitle"><span>TOOLS</span><h1>Financial Tools</h1><p>Formula-based browser calculators with validation and instant results.</p></div><div className="toolSelector">{Object.entries(TOOL_DEFS).map(([k,d])=><button className={active===k?'active':''} key={k} onClick={()=>setActive(k)}>{d.title}</button>)}</div><Calculator def={TOOL_DEFS[active]}/><div className="toolNote"><b>Important:</b> calculators are mathematical tools, not investment advice. IPO GMP is unofficial; allotment estimation is not a prediction.</div></main>}
 function Footer(){return <footer>BAZAAR BRIEF · Market data can be delayed. GIFT Nifty is a futures/pre-market indicator, not NIFTY 50 spot. GMP is unofficial / market-reported. Verify important figures against NSE/BSE, registrar pages and official IPO documents.</footer>}
+class ErrorBoundary extends React.Component{
+ constructor(props){super(props);this.state={error:null}}
+ static getDerivedStateFromError(error){return {error}}
+ componentDidCatch(error,info){console.error('BazaarBrief render error',error,info)}
+ render(){
+  if(this.state.error){
+   return <><header className="appHeader"><button className="brand" onClick={()=>location.reload()}><span className="brandMark">B</span><span>BAZAAR<span>BRIEF</span></span></button><div className="marketLive"><i></i><span>APPLICATION</span><b>Error recovery</b></div></header><main className="emptyFeed"><div className="emptyFeedCard"><div className="eyebrow"><span></span>BAZAARBRIEF / RECOVERY</div><h1>The dashboard hit a rendering error.</h1><p>The application is still loaded, but a UI component failed while rendering. Reload the page to recover. No financial snapshot is being substituted.</p><button className="refreshBtn" onClick={()=>location.reload()}>Reload dashboard</button></div></main><Footer/></>;
+  }
+  return this.props.children;
+ }
+}
 function App(){const state=useData();const [path,setPath]=useState(location.pathname.replace(/\/$/,'')||'/');const nav=p=>{history.pushState({},'',p);setPath(p);window.scrollTo({top:0,behavior:'smooth'})};useEffect(()=>{const f=()=>setPath(location.pathname.replace(/\/$/,'')||'/');addEventListener('popstate',f);return()=>removeEventListener('popstate',f)},[]);let content;if(!state.data){content=<main className="emptyFeed"><div className="emptyFeedCard"><div className="eyebrow"><span></span>LIVE SHARED DATA</div><h1>Waiting for the latest API refresh.</h1><p>Nothing is shown from a bundled snapshot. The page will display market, commodity, IPO, GMP, FII/DII and news data only after the scheduled API feed has completed successfully.</p><button className="refreshBtn" onClick={()=>state.refresh(true)} disabled={state.loading}>{state.loading?'Refreshing…':'Try again'}</button></div></main>}else if(path==='/ipo')content=<IPOPage data={state.data} navigate={nav}/>;else if(path==='/ipo/mainboard')content=<IPOPage data={state.data} kind="mainboard" navigate={nav}/>;else if(path==='/ipo/sme')content=<IPOPage data={state.data} kind="sme" navigate={nav}/>;else if(path.startsWith('/ipo/mainboard/'))content=<IPOPage data={state.data} kind="mainboard" slug={path.split('/')[3]} navigate={nav}/>;else if(path.startsWith('/ipo/sme/'))content=<IPOPage data={state.data} kind="sme" slug={path.split('/')[3]} navigate={nav}/>;else if(path==='/ipo-calendar')content=<Calendar data={state.data} navigate={nav}/>;else if(path==='/gmp')content=<GMP data={state.data}/>;else if(path==='/ipo-allotment-status')content=<Allotment data={state.data}/>;else if(path.startsWith('/tools/'))content=<Tools tool={path.split('/')[2]}/>;else if(path==='/tools')content=<Tools/>;else content=<Home data={state.data} navigate={nav}/>;return <><Header state={state} onNav={nav}/>{state.msg&&<div className="notice">{state.msg}</div>}{content}<Footer/></>}
-createRoot(document.getElementById('root')).render(<App/>);
+createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
