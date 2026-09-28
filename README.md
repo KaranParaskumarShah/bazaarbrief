@@ -1,74 +1,41 @@
-# Bazaar Brief — API-only shared data
+# Bazaar Brief — Free API Shared Data Build
 
-This build intentionally has **no financial snapshot fallback** in the refresh pipeline.
+This build removes the paid Twelve Data requirement and removes all financial snapshots from the production UI.
 
-## Architecture
+## Data architecture
 
-Financial provider APIs -> GitHub Actions (every 2 hours) -> `public/data/latest.json` -> Vercel/static frontend -> all visitors.
+GitHub Actions refreshes `public/data/latest.json` every 2 hours. Visitors only fetch that shared JSON file; they never call market providers directly.
 
-Visitors never call financial providers directly.
+## Free providers used by default
 
-## Required API configuration
+- Indian/global market quotes: Yahoo Finance public chart feed from the scheduled GitHub runner (unofficial/public endpoint; check commercial redistribution terms before relying on it commercially).
+- Gold/Silver: Gold-API, no key, live USD/troy-ounce spot; converted to INR using the live USD/INR quote. Gold-API documents its no-key live feed and timestamped responses.
+- FX: Frankfurter/ECB latest USD/INR reference rate.
+- India index fallback: Snapdata, no key; daily Nifty 50/Nifty Bank/Sensex data. This is only a fallback for missing index quotes, never a bundled snapshot.
+- FII/DII: NSE public endpoint, fetched by the scheduled job.
+- News: Google News RSS, no key.
+- IPO base data: IndianAPI public `/ipo` endpoint, no key.
+- GMP/subscription enrichment: IPO Guru free API key, optional. Without a key, GMP is shown as unavailable rather than inventing/storing an old number.
 
-Set GitHub Actions secrets/variables:
+## Why this is not described as "guaranteed live"
 
-- `TWELVE_DATA_KEY` (secret)
-- `GIFT_NIFTY_SYMBOL` (variable; required if your Twelve Data plan exposes GIFT Nifty under a specific symbol)
-- `IPO_JSON_URL` (secret)
-- `GMP_JSON_URL` (secret)
-- `FIIDI_JSON_URL` (secret)
-- `NEWS_JSON_URL` (secret)
-- `STOCKS_JSON_URL` (secret)
+No free provider gives a licensed, guaranteed-real-time feed for every Indian index, GIFT Nifty, IPO subscription, GMP, global index and commodity at once. Some free feeds are delayed or unofficial. The dataset therefore carries provider/source and timestamps and the UI must never call a value live when its provider did not provide a current timestamp.
 
-Optional:
+## Setup
 
-- `GOLD_INR_URL`
-- `SILVER_INR_URL`
+1. Push the project to GitHub.
+2. Run **Actions → Refresh Bazaar Brief shared data → Run workflow** once.
+3. The scheduled workflow then runs every 2 hours.
+4. Optional: add `IPOGURU_API_KEY` as a GitHub Actions secret for GMP/subscription enrichment. IPO Guru says its developer API is free with 300 requests/day and 15 requests/minute.
+5. Deploy the same repository to Vercel.
 
-The normalized endpoints must return live API JSON. Do not point them at checked-in JSON files.
+## Build
 
-### Expected normalized formats
-
-IPO:
-```json
-{"mainboard":[...],"sme":[...]}
+```bash
+npm install
+npm run build
 ```
 
-GMP:
-```json
-[{"slug":"moneyview-ipo","gmp":12,"gmpUpdated":"2026-09-28T12:00:00Z","gmpSource":"Provider"}]
-```
+## Important
 
-FII/DII:
-```json
-{"fii":-1234.5,"dii":2345.6,"date":"2026-09-28","source":"Provider"}
-```
-
-News:
-```json
-{"news":[{"title":"...","tag":"MARKET","source":"Provider","age":"2h"}]}
-```
-
-## Commodity units
-
-- Gold: ₹/10g
-- Silver: ₹/kg
-- Brent: $/bbl
-- WTI: $/bbl
-- Natural Gas: $/MMBtu
-- USD/INR: ₹ per USD
-
-Gold and silver use direct INR API feeds when configured. Otherwise they are derived from **live** XAU/XAG spot and **live** USD/INR in the same refresh; they are never taken from the old checked-in snapshot.
-
-## Important behavior
-
-If any required API is unavailable or returns invalid data, `refresh-data.mjs` exits non-zero and does **not** overwrite `latest.json`. This prevents stale data from being labelled as current. The previous file may remain on the site until the next successful run; its timestamp/source remains visible. For strict no-stale publishing, configure the deployment to fail/stop when the refresh job fails.
-
-## Build fix
-The duplicate `TWO_HOURS` declaration in `src/main.jsx` was removed. There is now exactly one declaration:
-`const TWO_HOURS = 2 * 60 * 60 * 1000;`
-
-The production UI remains API-only: no bundled financial snapshot is used. The frontend reads `/data/latest.json`, which is populated by the scheduled GitHub Action.
-
-## Runtime blank-page fix
-The frontend is safe when `latest.json` has not yet been refreshed. The header no longer dereferences `state.data` before the API dataset exists. The app shows an explicit API-refresh waiting state instead of a white screen. A React ErrorBoundary is also included so an unexpected render exception produces a recovery screen rather than a blank page.
+The app intentionally starts with an empty API-only dataset. It will display a waiting state until the scheduled refresh succeeds. It never falls back to a financial snapshot.

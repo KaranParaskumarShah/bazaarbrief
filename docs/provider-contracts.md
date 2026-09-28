@@ -1,25 +1,29 @@
-# Bazaar Brief provider contracts
+# Bazaar Brief free-data provider contracts
 
-All six endpoints below must be live API endpoints. Do not point them at repository JSON files.
+## Shared refresh model
 
-## IPO_JSON_URL
-`{"mainboard": [...], "sme": [...]}`
+The browser reads only `/data/latest.json`. GitHub Actions is the single scheduled caller and refreshes the dataset every two hours. There are no per-user provider calls.
 
-Each IPO object should include at least: `name, slug, type, status, open, close, allotment, refund, credit, listing, band, lot, min, issue, fresh, ofs, subscription, qib, nii, retail`.
+## Providers
 
-## GMP_JSON_URL
-Array of patches keyed by `slug`, `symbol`, or `name` with `gmp`, `gmpUpdated`, and `gmpSource`.
+| Dataset | Provider | Auth | Freshness / caveat |
+|---|---|---|---|
+| NIFTY 50 / SENSEX / BANK NIFTY | Yahoo Finance public chart feed | None | Public/undocumented feed; may be delayed or unavailable |
+| GIFT NIFTY | Yahoo Finance public chart feed, configurable symbol | None | Futures quote; symbol availability can change |
+| Global indices | Yahoo Finance public chart feed | None | Public/undocumented feed; may be delayed |
+| Gold / Silver | Gold-API | None | Live USD/troy-oz spot with timestamp; converted to INR using live USD/INR quote |
+| USD/INR | Yahoo Finance + Frankfurter fallback | None | Yahoo quote preferred; ECB reference rate as fallback |
+| Brent / WTI / Natural Gas | Yahoo Finance futures symbols | None | Public feed; may be delayed |
+| India index fallback | Snapdata | None | Daily snapshot only; used only when Yahoo misses an index, never bundled in the app |
+| FII/DII | NSE public endpoint | None | Exchange endpoint; may reject automated requests depending on edge protection |
+| IPO base data | IndianAPI `/ipo` | None | Dynamic IPO lifecycle feed; field coverage can vary |
+| GMP / subscription | IPO Guru | Free API key | Free developer API; GMP is unofficial/market-reported |
+| News | Google News RSS | None | RSS aggregation; headline timestamps preserved |
 
-## FIIDI_JSON_URL
-`{"fii": number, "dii": number, "date": string, "source": string}` or `{ "fiiDii": {...} }`.
+## No snapshot policy
 
-## STOCKS_JSON_URL
-`{"stocks": [{"symbol":"...","name":"...","price":123,"pct":1.2}]}`.
+`public/data/latest.json` starts empty. The refresh script never writes a fabricated financial number. If a provider fails, that field is omitted and the refresh result records the error.
 
-## NEWS_JSON_URL
-`{"news": [{"title":"...","tag":"...","source":"...","age":"..."}]}`.
+## Commercial-use warning
 
-## Direct metal endpoints (optional)
-`GOLD_INR_URL` should return `{value, pct, asOf, source}` where value is INR per 10g.
-`SILVER_INR_URL` should return `{value, pct, asOf, source}` where value is INR per kg.
-If omitted, the refresh job derives live INR display values from live XAU/USD, XAG/USD and USD/INR API quotes; it does not use stored values.
+Free public feeds can have licensing, attribution, rate-limit, delay, and redistribution restrictions. Bazaar Brief should verify each provider's current terms before commercial redistribution. Free does not mean exchange-licensed real-time market data.

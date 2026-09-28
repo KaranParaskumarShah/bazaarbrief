@@ -22,35 +22,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Refresh shared data
+      - name: Refresh free live API dataset
         env:
-          TWELVE_DATA_KEY: ${{ secrets.TWELVE_DATA_KEY }}
-          NIFTY_SYMBOL: ${{ vars.NIFTY_SYMBOL }}
-          SENSEX_SYMBOL: ${{ vars.SENSEX_SYMBOL }}
-          BANK_NIFTY_SYMBOL: ${{ vars.BANK_NIFTY_SYMBOL }}
           GIFT_NIFTY_SYMBOL: ${{ vars.GIFT_NIFTY_SYMBOL }}
-          SP500_SYMBOL: ${{ vars.SP500_SYMBOL }}
-          NASDAQ_SYMBOL: ${{ vars.NASDAQ_SYMBOL }}
-          FTSE_SYMBOL: ${{ vars.FTSE_SYMBOL }}
-          HANGSENG_SYMBOL: ${{ vars.HANGSENG_SYMBOL }}
-          USDINR_SYMBOL: ${{ vars.USDINR_SYMBOL }}
-          GOLD_SPOT_SYMBOL: ${{ vars.GOLD_SPOT_SYMBOL }}
-          SILVER_SPOT_SYMBOL: ${{ vars.SILVER_SPOT_SYMBOL }}
-          GOLD_INR_URL: ${{ secrets.GOLD_INR_URL }}
-          SILVER_INR_URL: ${{ secrets.SILVER_INR_URL }}
-          BRENT_SYMBOL: ${{ vars.BRENT_SYMBOL }}
-          WTI_SYMBOL: ${{ vars.WTI_SYMBOL }}
-          NATURAL_GAS_SYMBOL: ${{ vars.NATURAL_GAS_SYMBOL }}
-          IPO_JSON_URL: ${{ secrets.IPO_JSON_URL }}
-          GMP_JSON_URL: ${{ secrets.GMP_JSON_URL }}
-          FIIDI_JSON_URL: ${{ secrets.FIIDI_JSON_URL }}
-          NEWS_JSON_URL: ${{ secrets.NEWS_JSON_URL }}
-          STOCKS_JSON_URL: ${{ secrets.STOCKS_JSON_URL }}
+          IPOGURU_API_KEY: ${{ secrets.IPOGURU_API_KEY }}
         run: node scripts/refresh-data.mjs
       - name: Commit refreshed shared data
         run: |
           git config user.name 'Bazaar Brief Data Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add public/data/latest.json
-          git diff --cached --quiet || git commit -m "chore: refresh market and IPO data"
+          git diff --cached --quiet || git commit -m "chore: refresh free market and IPO data"
           git push
