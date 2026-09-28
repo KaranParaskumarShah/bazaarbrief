@@ -1,20 +1,21 @@
 {
-  "name":"bazaarbrief",
-  "private":true,
-  "version":"2.0.0",
-  "type":"module",
-  "scripts":{
-    "dev":"vite",
-    "build":"vite build",
-    "preview":"vite preview",
-    "validate":"node --check scripts/refresh-data.mjs && node --check scripts/seed.mjs"
+  "name": "bazaarbrief",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "validate": "node --check scripts/refresh-data.mjs",
+    "validate:refresh": "node --check scripts/refresh-data.mjs"
   },
-  "dependencies":{
-    "react":"19.1.1",
-    "react-dom":"19.1.1"
+  "dependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   },
-  "devDependencies":{
-    "@vitejs/plugin-react":"6.0.1",
-    "vite":"8.3.0"
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.0.1",
+    "vite": "8.3.0"
   }
 }

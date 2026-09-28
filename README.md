@@ -1,82 +1,65 @@
-# Bazaar Brief — Shared Data Cache Architecture
+# Bazaar Brief — API-only shared data
 
-This version keeps the **website frontend-only for visitors**. Visitors never call Twelve Data, IPO, GMP, FII/DII or news providers directly.
+This build intentionally has **no financial snapshot fallback** in the refresh pipeline.
 
-## Data flow
+## Architecture
 
-```text
-Financial providers
-      |
-      | one scheduled refresh every 2 hours
-      v
-GitHub Action: scripts/refresh-data.mjs
-      |
-      v
-public/data/latest.json
-      |
-      | one shared read per visitor/browser refresh
-      v
-Bazaar Brief React UI
+Financial provider APIs -> GitHub Actions (every 2 hours) -> `public/data/latest.json` -> Vercel/static frontend -> all visitors.
+
+Visitors never call financial providers directly.
+
+## Required API configuration
+
+Set GitHub Actions secrets/variables:
+
+- `TWELVE_DATA_KEY` (secret)
+- `GIFT_NIFTY_SYMBOL` (variable; required if your Twelve Data plan exposes GIFT Nifty under a specific symbol)
+- `IPO_JSON_URL` (secret)
+- `GMP_JSON_URL` (secret)
+- `FIIDI_JSON_URL` (secret)
+- `NEWS_JSON_URL` (secret)
+- `STOCKS_JSON_URL` (secret)
+
+Optional:
+
+- `GOLD_INR_URL`
+- `SILVER_INR_URL`
+
+The normalized endpoints must return live API JSON. Do not point them at checked-in JSON files.
+
+### Expected normalized formats
+
+IPO:
+```json
+{"mainboard":[...],"sme":[...]}
 ```
 
-The GitHub Action replaces `public/data/latest.json` every two hours. All visitors see the same latest shared dataset. The React app only reads that JSON file and stores the last successful copy locally as a fallback.
+GMP:
+```json
+[{"slug":"moneyview-ipo","gmp":12,"gmpUpdated":"2026-09-28T12:00:00Z","gmpSource":"Provider"}]
+```
 
-## Configure the refresh job
+FII/DII:
+```json
+{"fii":-1234.5,"dii":2345.6,"date":"2026-09-28","source":"Provider"}
+```
 
-GitHub → Repository → Settings → Secrets and variables → Actions.
+News:
+```json
+{"news":[{"title":"...","tag":"MARKET","source":"Provider","age":"2h"}]}
+```
 
-### Required for market data
+## Commodity units
 
-Add secret:
+- Gold: ₹/10g
+- Silver: ₹/kg
+- Brent: $/bbl
+- WTI: $/bbl
+- Natural Gas: $/MMBtu
+- USD/INR: ₹ per USD
 
-- `TWELVE_DATA_KEY`
+Gold and silver use direct INR API feeds when configured. Otherwise they are derived from **live** XAU/XAG spot and **live** USD/INR in the same refresh; they are never taken from the old checked-in snapshot.
 
-Twelve Data supports batched quote requests, so the refresh job makes one batched market request for the configured symbols. Note: batching reduces HTTP requests but each symbol still consumes provider credits.
+## Important behavior
 
-### IPO / GMP / FII-DII / News
-
-Add normalized JSON endpoint secrets:
-
-- `IPO_JSON_URL`
-- `GMP_JSON_URL`
-- `FIIDI_JSON_URL`
-- `NEWS_JSON_URL`
-
-The endpoints should return the shapes already used by the UI. This is intentional: the scheduled worker is the only place that knows provider credentials/URLs; the browser never receives them.
-
-### GIFT Nifty
-
-Set repository variable `GIFT_NIFTY_SYMBOL` to a symbol supported by your selected provider. If your provider does not expose GIFT Nifty, use a dedicated normalized feed in your own `GIFT_NIFTY_JSON_URL` adapter before publishing. The UI will never silently label NIFTY spot as GIFT Nifty.
-
-## Schedule
-
-The GitHub Action runs at:
-
-`0 */2 * * *`
-
-It can also be run manually from the Actions tab.
-
-## Visitor behavior
-
-- Initial page load: fetch `/data/latest.json` once.
-- Every 2 hours while open: fetch `/data/latest.json` again.
-- Manual Refresh: reads the shared JSON again; it does **not** call financial APIs.
-- If the shared file is temporarily unavailable, the browser keeps its last successful copy.
-
-## Important
-
-A browser's localStorage is per-user and cannot be a shared cache. The shared JSON file is therefore the common source for all visitors. This is the part that prevents 1,000 visitors from making 1,000 provider calls.
-
-GMP is displayed as unofficial / market-reported and should carry its source and timestamp. Official IPO/subscription information should be verified against exchange/registrar documents.
-
-
-## Vercel deployment
-
-1. Push this repository to GitHub.
-2. Import the repository into Vercel.
-3. Vercel builds with `npm run build`.
-4. Configure the GitHub Actions secrets/variables listed above.
-5. The scheduled Action updates `public/data/latest.json` and pushes the new file.
-6. The Git push triggers a new Vercel deployment, so all visitors receive the same refreshed dataset.
-
-The browser never receives provider API keys. Manual refresh in the UI only reads the shared JSON; it never calls the upstream financial providers.
+If any required API is unavailable or returns invalid data, `refresh-data.mjs` exits non-zero and does **not** overwrite `latest.json`. This prevents stale data from being labelled as current. The previous file may remain on the site until the next successful run; its timestamp/source remains visible. For strict no-stale publishing, configure the deployment to fail/stop when the refresh job fails.
