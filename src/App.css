@@ -1,0 +1,58 @@
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  width: 100%;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 2.75rem;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.section__head {
+  margin-bottom: 1.1rem;
+  max-width: 62ch;
+}
+
+.section__head h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 600;
+}
+
+.section__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.app__footer {
+  border-top: 1px solid var(--line);
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+}
+
+.app__footer p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}

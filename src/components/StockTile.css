@@ -1,0 +1,65 @@
+.stile {
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 0.85rem 0.95rem;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stile__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.stile__name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.stile__symbol {
+  font-family: var(--font-num);
+  font-size: 0.72rem;
+  color: var(--muted-on-paper);
+  white-space: nowrap;
+}
+
+.stile__note {
+  margin: 0.3rem 0 0;
+  color: var(--muted-on-paper);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  flex: 1;
+}
+
+.stile__hint {
+  font-size: 0.75rem;
+  color: var(--muted-on-paper);
+  margin-top: 0.5rem;
+}
+
+.stile__hint--error {
+  color: var(--loss);
+}
+
+.stile__quote {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  border-top: 1px solid var(--line-on-paper);
+  padding-top: 0.5rem;
+}
+
+.stile__price {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.stile__change {
+  font-size: 0.85rem;
+}

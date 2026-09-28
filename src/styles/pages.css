@@ -1,0 +1,104 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.25rem 1.5rem 3.5rem;
+}
+
+.page__head {
+  margin-bottom: 1.75rem;
+  max-width: 68ch;
+}
+
+.page__eyebrow {
+  color: var(--marigold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.page__head h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.page__head p {
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.page__crumb {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.page__crumb a {
+  color: var(--marigold);
+  text-decoration: none;
+}
+
+.page__crumb a:hover {
+  text-decoration: underline;
+}
+
+.disclaimer-box {
+  background: rgba(216, 161, 58, 0.1);
+  border: 1px solid rgba(216, 161, 58, 0.35);
+  border-radius: 4px;
+  padding: 0.85rem 1.05rem;
+  font-size: 0.85rem;
+  color: var(--paper);
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+
+.disclaimer-box strong {
+  color: var(--marigold);
+}
+
+.ipo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.data-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table td a {
+  color: var(--marigold);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
