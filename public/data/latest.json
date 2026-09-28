@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-09-28T20:27:39.948Z",
+  "updatedAt": "2026-09-28T20:36:27.381Z",
   "source": "Free live API aggregation — shared scheduled feed",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-09-28T20:27:39.948Z",
+    "updatedAt": "2026-09-28T20:36:27.381Z",
     "cadence": "2 hours",
     "partial": true,
     "errors": [
@@ -62,7 +62,7 @@
         "value": 7683.69,
         "change": -59.720000000000255,
         "pct": -0.7712364449254302,
-        "asOf": "2026-09-28T20:20:01.000Z",
+        "asOf": "2026-09-28T20:36:12.000Z",
         "currency": "USD",
         "providerSymbol": "^GSPC",
         "source": "Yahoo Finance public chart feed"
@@ -73,7 +73,7 @@
         "value": 30276.81,
         "change": -331.3249999999971,
         "pct": -1.0824736626390243,
-        "asOf": "2026-09-28T20:27:37.000Z",
+        "asOf": "2026-09-28T20:36:26.000Z",
         "currency": "USD",
         "providerSymbol": "^NDX",
         "source": "Yahoo Finance public chart feed"
@@ -116,29 +116,29 @@
       },
       {
         "name": "GOLD",
-        "value": 127145.39208166594,
+        "value": 127049.74342807234,
         "change": null,
         "pct": null,
         "unit": "₹/10g",
-        "asOf": "2026-09-28T20:27:36Z",
+        "asOf": "2026-09-28T20:36:07Z",
         "source": "Gold-API live spot × live FX"
       },
       {
         "name": "SILVER",
-        "value": 187772.66752506586,
+        "value": 187556.66260499854,
         "change": null,
         "pct": null,
         "unit": "₹/kg",
-        "asOf": "2026-09-28T20:27:36Z",
+        "asOf": "2026-09-28T20:36:06Z",
         "source": "Gold-API live spot × live FX"
       },
       {
         "name": "BRENT",
         "kind": "commodity",
-        "value": 98.35,
-        "change": 0.9099999999999966,
-        "pct": 0.933908045977008,
-        "asOf": "2026-09-28T20:17:09.000Z",
+        "value": 98.34,
+        "change": 0.9000000000000057,
+        "pct": 0.9236453201970501,
+        "asOf": "2026-09-28T20:26:12.000Z",
         "currency": "USD",
         "providerSymbol": "BZ=F",
         "source": "Yahoo Finance public chart feed",
@@ -150,7 +150,7 @@
         "value": 93.03,
         "change": 0.6200000000000045,
         "pct": 0.6709230602748669,
-        "asOf": "2026-09-28T20:17:30.000Z",
+        "asOf": "2026-09-28T20:26:20.000Z",
         "currency": "USD",
         "providerSymbol": "CL=F",
         "source": "Yahoo Finance public chart feed",
@@ -159,10 +159,10 @@
       {
         "name": "NATURAL GAS",
         "kind": "commodity",
-        "value": 3.136,
-        "change": -0.08899999999999997,
-        "pct": -2.7596899224806193,
-        "asOf": "2026-09-28T20:17:37.000Z",
+        "value": 3.147,
+        "change": -0.07800000000000029,
+        "pct": -2.4186046511627994,
+        "asOf": "2026-09-28T20:26:22.000Z",
         "currency": "USD",
         "providerSymbol": "NG=F",
         "source": "Yahoo Finance public chart feed",
@@ -176,7 +176,7 @@
     "dii": 5189.02,
     "date": "28-Sep-2026",
     "source": "NSE public FII/DII endpoint",
-    "asOf": "2026-09-28T20:27:39.948Z"
+    "asOf": "2026-09-28T20:36:27.381Z"
   },
   "ipo": {
     "mainboard": [],
@@ -199,7 +199,7 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "BSE stock falls 2.3% as SEBI mulls self-listing rules revamp, days after NSE IPO listing - Check details - Livemint",
+      "title": "BSE stock falls 2.3% as SEBI mulls self-listing rules revamp, days after NSE IPO listing - Check details - livemint.com",
       "source": "Google News RSS",
       "age": "Mon, 28 Sep 2026 09:01:58 GMT",
       "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxQMUlfeXBWN1NxZnktNUJ0X2o4NE9PdEJwZGtJQlh1c2lmWFo2anRvMWpsZGR0V1d3WWZ2WTZzQlp4ckpEbFF1SUJUVGFqbmZPamhHazVDbGtSXy1aZ1BaQVFPQllhSUpZWU9MdlhTR3FRdkxYaXVTWFA2dzhDWThxUi1Vei1qT1FfUDRWZ0RpNkJpQUNfSXgzcXZtMlNlR1dYRGt1T0dRTWVwVE0zcEFVQ0k3N1k1S2tMVnl5WFN3MFEwbHcyeGtudlc5MTFxdERadERrbDdLRVFxQWRJdFVWa0pPUnU1TkHSAewBQVVfeXFMT0hmQzAwZGJSRDdTTEhnVmI4T2ZEMW5SZUNvUUpjQjZwbHZaYVJsYWNzU2h6OUNRUEVQU2ZodU9mY3lzU3NuLUFiOGo2SUM2S1pwZ3VmXzN2RkdudDJnRUVzUDhCVS1JQlpnOFRwVEo4RDFLUGdGdjN4cVIyLXEwRDFDZU9CdVVFTl9uelA5cExUQk80QThVOEYwa3ZvSDN0X3E2RmlMZmpkbllpelVLSmdFV0Nud21Gdk1qVUpGdnpHTGppRE1fTl94ZzdhVWt3bkoxejREVW0wNGt6ODhzOEFxMEdlYWFxUzZ6bDQ?oc=5"
