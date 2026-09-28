@@ -68,3 +68,15 @@ It can also be run manually from the Actions tab.
 A browser's localStorage is per-user and cannot be a shared cache. The shared JSON file is therefore the common source for all visitors. This is the part that prevents 1,000 visitors from making 1,000 provider calls.
 
 GMP is displayed as unofficial / market-reported and should carry its source and timestamp. Official IPO/subscription information should be verified against exchange/registrar documents.
+
+
+## Vercel deployment
+
+1. Push this repository to GitHub.
+2. Import the repository into Vercel.
+3. Vercel builds with `npm run build`.
+4. Configure the GitHub Actions secrets/variables listed above.
+5. The scheduled Action updates `public/data/latest.json` and pushes the new file.
+6. The Git push triggers a new Vercel deployment, so all visitors receive the same refreshed dataset.
+
+The browser never receives provider API keys. Manual refresh in the UI only reads the shared JSON; it never calls the upstream financial providers.
