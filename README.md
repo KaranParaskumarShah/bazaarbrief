@@ -63,3 +63,9 @@ Gold and silver use direct INR API feeds when configured. Otherwise they are der
 ## Important behavior
 
 If any required API is unavailable or returns invalid data, `refresh-data.mjs` exits non-zero and does **not** overwrite `latest.json`. This prevents stale data from being labelled as current. The previous file may remain on the site until the next successful run; its timestamp/source remains visible. For strict no-stale publishing, configure the deployment to fail/stop when the refresh job fails.
+
+## Build fix
+The duplicate `TWO_HOURS` declaration in `src/main.jsx` was removed. There is now exactly one declaration:
+`const TWO_HOURS = 2 * 60 * 60 * 1000;`
+
+The production UI remains API-only: no bundled financial snapshot is used. The frontend reads `/data/latest.json`, which is populated by the scheduled GitHub Action.

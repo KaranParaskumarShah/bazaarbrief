@@ -2,8 +2,7 @@ import React,{useEffect,useMemo,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
 
-const TWO_HOURS=2*60*60*1000;
-const TWO_HOURS=2*60*60*1000;
+const TWO_HOURS = 2 * 60 * 60 * 1000;
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function money(n,dec=2){if(n===null||n===undefined||n===''||Number.isNaN(Number(n)))return '—';return new Intl.NumberFormat('en-IN',{maximumFractionDigits:dec,minimumFractionDigits:dec}).format(Number(n))}
 function pct(n){return n===null||n===undefined||Number.isNaN(Number(n))?'—':`${Number(n)>=0?'+':''}${Number(n).toFixed(2)}%`}
