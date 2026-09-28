@@ -79,25 +79,31 @@ function bandHigh(band){const m=String(band||'').match(/([\d,.]+)\s*[–-]\s*([\
 function slugify(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')}
 
 function useData(){
- const [data,setData]=useState(()=>{try{const cached=JSON.parse(localStorage.getItem('bb-shared-data'));return cached?.data?cached.data:clone(SEED)}catch{return clone(SEED)}});
- const [last,setLast]=useState(()=>{try{return localStorage.getItem('bb-shared-last')||SEED.updatedAt}catch{return SEED.updatedAt}});
+ const [data,setData]=useState(()=>{try{const cached=JSON.parse(localStorage.getItem('bb-data'));return cached?.data?mergeSeed(cached.data):clone(SEED)}catch{return clone(SEED)}});
+ const [last,setLast]=useState(()=>{try{return localStorage.getItem('bb-last')||SEED.updatedAt}catch{return SEED.updatedAt}});
  const [loading,setLoading]=useState(false),[msg,setMsg]=useState('');
  const refresh=async(manual=false)=>{
   setLoading(true);setMsg('');
   try{
-   const r=await fetch(`/data/latest.json?t=${Date.now()}`,{cache:'no-store'});
-   if(!r.ok)throw new Error(`Shared data feed returned HTTP ${r.status}.`);
-   const next=await r.json();
-   if(!next || !next.market)throw new Error('Shared data feed is invalid.');
-   setData(next);
-   setLast(next.updatedAt||new Date().toISOString());
-   localStorage.setItem('bb-shared-data',JSON.stringify({data:next}));
-   localStorage.setItem('bb-shared-last',next.updatedAt||new Date().toISOString());
-  }catch(e){setMsg(manual?e.message:'Shared data feed unavailable; showing the last successful data.')}finally{setLoading(false)}
+   const key=import.meta.env.VITE_TWELVE_DATA_KEY;
+   if(!key)throw new Error('Live market provider is not configured. Showing the verified dated snapshot.');
+   const symbols=['NSE:NIFTY','BSE:SENSEX','NSE:BANKNIFTY'];
+   const r=await fetch(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(','))}&apikey=${key}`);
+   if(!r.ok)throw new Error(`Live provider returned HTTP ${r.status}.`);
+   const j=await r.json();
+   const rows=Array.isArray(j)?j:Object.values(j||{}).filter(x=>x&&x.close);
+   if(!rows.length)throw new Error('Live provider returned no usable quotes.');
+   const next=clone(data);
+   next.market.indices=next.market.indices.map((item,i)=>{const q=rows[i];if(!q?.close)return item;const value=Number(q.close),prev=Number(q.previous_close||value);return {...item,value,change:value-prev,pct:prev?((value-prev)/prev)*100:item.pct}});
+   next.updatedAt=new Date().toISOString();next.source='Live browser API response';
+   setData(next);setLast(next.updatedAt);localStorage.setItem('bb-data',JSON.stringify({data:next}));localStorage.setItem('bb-last',next.updatedAt);
+  }catch(e){setMsg(manual?e.message:'Live feed unavailable; verified dated snapshot remains visible.')}finally{setLoading(false)}
  };
- useEffect(()=>{refresh(false);const timer=setInterval(()=>refresh(false),TWO_HOURS);const vis=()=>{if(document.visibilityState==='visible')refresh(false)};document.addEventListener('visibilitychange',vis);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',vis)}},[]);
+ useEffect(()=>{const timer=setInterval(()=>refresh(false),TWO_HOURS);const vis=()=>{if(document.visibilityState==='visible'){const l=localStorage.getItem('bb-last');if(l&&Date.now()-new Date(l).getTime()>TWO_HOURS)refresh(false)}};document.addEventListener('visibilitychange',vis);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',vis)}},[]);
  return {data,last,loading,msg,refresh}
 }
+function mergeSeed(cached){const base=clone(SEED);if(!cached)return base;return {...base,...cached,market:{...base.market,...cached.market,indices:cached.market?.indices||base.market.indices,global:cached.market?.global||base.market.global,commodities:cached.market?.commodities||base.market.commodities,stocks:cached.market?.stocks||base.market.stocks},fiiDii:cached.fiiDii||base.fiiDii,ipo:base.ipo,news:base.news}}
+
 function Header({state,onNav}){return <><div className="top"><div className="brand" onClick={()=>onNav('/')}>BAZAAR<span>BRIEF</span></div><div className="tag">INDIA'S DAILY MARKET BRIEF</div><button onClick={()=>state.refresh(true)} disabled={state.loading}>{state.loading?'Updating…':'↻ Refresh data'}</button></div><div className="nav"><a onClick={()=>onNav('/')}>Markets</a><a onClick={()=>onNav('/ipo')}>IPO</a><a onClick={()=>onNav('/ipo-calendar')}>IPO Calendar</a><a onClick={()=>onNav('/gmp')}>GMP</a><a onClick={()=>onNav('/ipo-allotment-status')}>Allotment</a><a onClick={()=>onNav('/tools')}>Financial Tools</a></div><div className="status">● {state.data.source} · Updated {new Date(state.last).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})} · Refresh target: every 2 hours while open</div></>}
 function Section({title,sub,children}){return <section><div className="sectionHead"><div><h2>{title}</h2>{sub&&<p>{sub}</p>}</div></div>{children}</section>}
 function IndexCards({items}){return <div className="indexGrid">{items.map(x=><div className="index" key={x.name}><small>{x.name}</small><strong>{money(x.value)}</strong><span className={x.pct===null?'':x.pct>=0?'up':'down'}>{x.change===null?'Quote available':' '+(x.change>=0?'+':'')+money(x.change)+' · '+pct(x.pct)}</span>{x.note&&<em>{x.note}</em>}</div>)}</div>}
