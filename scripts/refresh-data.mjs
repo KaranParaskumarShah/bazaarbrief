@@ -38,8 +38,10 @@ if (process.env.TWELVE_DATA_KEY) {
     'HANG SENG': process.env.HANGSENG_SYMBOL || 'HSI',
     'USD/INR': process.env.USDINR_SYMBOL || 'USD/INR',
     'GOLD SPOT': process.env.GOLD_SYMBOL || 'XAU/USD',
+    'SILVER SPOT': process.env.SILVER_SYMBOL || 'XAG/USD',
     'BRENT': process.env.BRENT_SYMBOL || 'BRENT/USD',
-    'WTI': process.env.WTI_SYMBOL || 'WTI/USD'
+    'WTI': process.env.WTI_SYMBOL || 'WTI/USD',
+    'NATURAL GAS': process.env.NATURAL_GAS_SYMBOL || 'NG/USD'
   };
   const usable = Object.entries(symbols).filter(([, s]) => s);
   try {
@@ -51,7 +53,19 @@ if (process.env.TWELVE_DATA_KEY) {
     const indexNames = ['NIFTY 50','SENSEX','BANK NIFTY','GIFT NIFTY'];
     next.market.indices = next.market.indices.map(item => find(item.name) ? quoteRow(find(item.name), item) : item);
     next.market.global = next.market.global.map(item => find(item.name) ? quoteRow(find(item.name), item) : item);
-    next.market.commodities = next.market.commodities.map(item => find(item.name) ? ({...item, value:num(find(item.name).close) ?? item.value, pct:num(find(item.name).percent_change) ?? item.pct, asOf:find(item.name).datetime || now}) : item);
+    const fx = num(find('USD/INR')?.close) ?? num(next.market.commodities.find(x=>x.name==='USD/INR')?.value);
+    next.market.commodities = next.market.commodities.map(item => {
+      const q = find(item.name); if (!q) return item;
+      const value = num(q.close) ?? item.value;
+      const pct = num(q.percent_change) ?? item.pct;
+      const base = {...item, value, pct, asOf:q.datetime || now, source:'Twelve Data'};
+      if ((item.name === 'GOLD SPOT' || item.name === 'SILVER SPOT') && fx) {
+        const ouncesPerGram = 31.1034768;
+        base.displayValue = item.name === 'GOLD SPOT' ? (value * fx / ouncesPerGram * 10) : (value * fx / ouncesPerGram * 1000);
+        base.displayUnit = item.name === 'GOLD SPOT' ? '₹/10g' : '₹/kg';
+      }
+      return base;
+    });
   } catch (e) { errors.push(`Twelve Data: ${e.message}`); }
 } else errors.push('TWELVE_DATA_KEY is not configured');
 

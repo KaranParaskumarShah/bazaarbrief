@@ -32,8 +32,10 @@ jobs:
           HANGSENG_SYMBOL: ${{ vars.HANGSENG_SYMBOL }}
           USDINR_SYMBOL: ${{ vars.USDINR_SYMBOL }}
           GOLD_SYMBOL: ${{ vars.GOLD_SYMBOL }}
+          SILVER_SYMBOL: ${{ vars.SILVER_SYMBOL }}
           BRENT_SYMBOL: ${{ vars.BRENT_SYMBOL }}
           WTI_SYMBOL: ${{ vars.WTI_SYMBOL }}
+          NATURAL_GAS_SYMBOL: ${{ vars.NATURAL_GAS_SYMBOL }}
           IPO_JSON_URL: ${{ secrets.IPO_JSON_URL }}
           GMP_JSON_URL: ${{ secrets.GMP_JSON_URL }}
           FIIDI_JSON_URL: ${{ secrets.FIIDI_JSON_URL }}

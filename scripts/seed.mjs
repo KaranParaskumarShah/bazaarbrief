@@ -15,10 +15,12 @@ export const SEED={
    {name:'HANG SENG',value:25303.41,change:186.22,pct:0.74,unit:'',asOf:'28 Sep'}
   ],
   commodities:[
-   {name:'USD/INR',value:96.083,unit:'₹',pct:0.17},
-   {name:'GOLD SPOT',value:4226.17,unit:'$',pct:-2.19},
-   {name:'BRENT',value:98.72,unit:'$',pct:1.30},
-   {name:'WTI',value:93.77,unit:'$',pct:1.48}
+   {name:'USD/INR',value:95.98,unit:'₹',pct:0.17,display:'₹95.98',asOf:'28 Sep 2026 · 16:23 IST',source:'Alerfo'},
+   {name:'GOLD SPOT',value:4191.60,unit:'USD/oz',pct:-3.00,displayValue:129346,displayUnit:'₹/10g',asOf:'28 Sep 2026 · 16:23 IST',source:'Alerfo'},
+   {name:'SILVER SPOT',value:61.73,unit:'USD/oz',pct:-3.91,displayValue:190488,displayUnit:'₹/kg',asOf:'28 Sep 2026 · 16:23 IST',source:'Alerfo'},
+   {name:'BRENT',value:101.13,unit:'$/bbl',pct:-3.06,asOf:'28 Sep 2026 · 16:23 IST',source:'Alerfo'},
+   {name:'WTI',value:96.37,unit:'$/bbl',pct:4.29,asOf:'28 Sep 2026 · 16:23 IST',source:'Alerfo'},
+   {name:'NATURAL GAS',value:3.11,unit:'$/MMBtu',pct:-2.82,asOf:'28 Sep 2026 · 16:23 IST',source:'Alerfo'}
   ],
   stocks:[
    {symbol:'DRREDDY',name:"Dr. Reddy's Laboratories",price:1221,pct:1.67},
