@@ -710,7 +710,7 @@ function emptyDataset(errors, status = 'failed') {
 const errors = [];
 
 try {
-  const [nseMarket, bseSensex, yahoo, giftNifty, metals, fiiDii, news, finIpo, gmpToday] = await Promise.allSettled([
+  const [nseMarket, bseSensex, yahoo, giftNifty, metals, news, finIpo, gmpToday] = await Promise.allSettled([
     fetchNseMarket(),
     fetchBseSensex(),
     fetchYahooSet([
