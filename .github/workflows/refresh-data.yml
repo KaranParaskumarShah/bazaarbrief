@@ -20,25 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
-      - name: Check optional provider configuration
-        env:
-          IPOGURU_API_KEY: ${{ secrets.IPOGURU_API_KEY }}
-        run: |
-          if [ -n "$IPOGURU_API_KEY" ]; then
-            echo "IPOGURU_API_KEY configured: yes"
-          else
-            echo "IPOGURU_API_KEY configured: no — IPO Guru data will be unavailable and the script will try NSE fallback"
-          fi
-      - name: Refresh free exchange-first live API dataset
+      - name: Refresh free no-key API dataset
         env:
           GIFT_NIFTY_SYMBOL: ${{ vars.GIFT_NIFTY_SYMBOL }}
-          IPOGURU_API_KEY: ${{ secrets.IPOGURU_API_KEY }}
         run: node scripts/refresh-data.mjs
       - name: Commit refreshed shared data
         run: |

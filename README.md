@@ -1,108 +1,49 @@
-# BazaarBrief — Static React frontend + scheduled shared market API feed
+# BazaarBrief — free API-only market + IPO feed
 
-BazaarBrief is a static Vite/React site. The browser does **not** call financial providers directly and no provider API key is shipped to visitors.
+BazaarBrief is a static React/Vite market-information site. The browser never calls financial providers directly. GitHub Actions collects public/free API data and writes `public/data/latest.json`; Vercel serves the static site.
 
-## Architecture
+## Refresh architecture
 
-```text
-Official/public providers
-       │
-       │ scheduled fetch
-       ▼
-GitHub Actions (every 10 minutes)
-       │
-       ├── NSE India → NIFTY 50 / BANK NIFTY / stock feed / FII-DII / IPO fallback
-       ├── BSE India → SENSEX
-       ├── IPO Guru → active IPO + GMP + subscription (free key)
-       ├── Yahoo Finance → global indices / USD-INR / Brent / WTI / Natural Gas
-       ├── XAUS → INR gold/silver spot
-       ├── TradingView scanner → GIFT Nifty fallback/indicator
-       └── Google News RSS → market/news headlines
-       │
-       ▼
-public/data/latest.json
-       │
-       ▼
-Static React/Vite frontend
-       │
-       └── browser checks shared JSON every 60 seconds
-```
+- GitHub Actions: every 10 minutes.
+- Browser: checks the shared JSON about every 60 seconds.
+- No paid API keys are required.
+- No bundled financial snapshots are used.
+- If a provider fails, that field is omitted and the error is recorded. The refresh is not failed merely because one provider is blocked.
+- If virtually no provider returns usable data, the workflow fails and the previous valid dataset is left untouched.
 
-This keeps the site frontend/static while giving it an automatically refreshed shared dataset. There are **no per-visitor provider calls** and no bundled financial-value snapshots.
+## IPO priority
 
-## Refresh cadence
+IPO data uses free, no-key sources: **FinAPI free IPO endpoint**, **GMP Today public dataset/API**, and **NSE public IPO endpoints when reachable**. GMP Today publishes a machine-readable dataset refreshed during the day. GMP is unofficial and is clearly labelled as such.
 
-- GitHub Actions: every **10 minutes**.
-- Browser: checks the shared JSON every **60 seconds** and immediately checks again when the tab becomes visible.
-- GitHub scheduled jobs can occasionally start late because GitHub controls scheduled-job execution. The `updatedAt` field in `public/data/latest.json` is the authoritative freshness timestamp.
-- If a provider fails, BazaarBrief does not invent a value or silently reuse an old financial snapshot.
+The collector normalizes multiple field names for price band, lot size, issue size, dates, subscription, GMP and board type, then merges sources by normalized company name. Open IPOs are shown before upcoming IPOs.
 
-## API key setup
+## Gold / silver
 
-The only required optional key is for IPO Guru's IPO/GMP/subscription enrichment.
+Gold and silver use public spot data in USD/troy oz and calculate an INR equivalent using the same USD/INR feed used by the dashboard. The UI shows both USD/oz and INR/10g or INR/kg. It is spot-equivalent pricing, not a local jewellery/retail quote.
 
-1. Request a free IPO Guru API key from the provider.
-2. In GitHub open:
-   `Settings → Secrets and variables → Actions → New repository secret`
-3. Create:
+## Market close accuracy
 
-```text
-IPOGURU_API_KEY = your_actual_key
-```
+For NIFTY 50, BANK NIFTY and SENSEX, the collector attempts to switch from intraday exchange quotes to exchange historical EOD close after the Indian cash session. It never replaces a failed EOD lookup with a fabricated value.
 
-4. Optional repository variable:
+## GIFT Nifty
 
-```text
-GIFT_NIFTY_SYMBOL = NIFTY1!
-```
+GIFT Nifty is displayed as a futures/pre-market indicator using the public market scanner where available. It is not labelled as NIFTY 50 spot.
 
-The secret is only available to the GitHub Actions refresh job. **Do not put the real key in React, `main.jsx`, `public/`, `latest.json`, or a committed `.env` file.**
-
-IPO Guru documents a free REST API with 300 requests/day and 15 requests/minute. This build uses **one `/ipos` request per scheduled run**, so a 10-minute cadence is 144 scheduled requests/day, leaving room for manual runs. See the provider documentation for current limits and commercial-use terms.
-
-## Run locally
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Validate the refresh script:
-
-```bash
-npm run validate
-```
-
-Build the static site:
+Build:
 
 ```bash
 npm run build
 ```
 
-## First production refresh
+Validate refresh script:
 
-After pushing the repository:
-
-1. Open **Actions**.
-2. Select **Refresh Bazaar Brief shared data**.
-3. Click **Run workflow** once.
-4. Confirm the job succeeds.
-5. Open `public/data/latest.json` and confirm `refresh.status` is `ok` and `updatedAt` is recent.
-6. Deploy the same repository to Vercel.
-
-After that, the scheduled workflow keeps replacing `latest.json` with the newest successful API result.
-
-## Data integrity rules
-
-- No hard-coded market prices.
-- No fake chart/sparkline values. Sparklines are rendered only when the API supplies a real price series.
-- Every quote carries provider/source information and, when the provider exposes it, the provider's actual timestamp.
-- Gold and silver are direct INR spot-equivalent values from the metal provider, not Indian retail/jewellery rates.
-- Brent/WTI/Natural Gas are market futures/commodity quotes, not Indian retail fuel prices.
-- GIFT Nifty is a futures/pre-market indicator and may be delayed. It is never presented as NIFTY 50 spot.
-- GMP is unofficial/market-reported and is explicitly labelled as such.
-- A stale precious-metal response is rejected rather than published as if it were live.
-
-## Important limitation
-
-Free public feeds cannot guarantee licensed exchange-grade tick-by-tick real-time redistribution. NSE's own market-live page describes its web market data as approximately 1–3 minutes behind trading in some views. TradingView also states that exchange real-time redistribution on its public widgets is subject to exchange licensing and that website data can be delayed. Therefore the UI uses source-specific freshness labels rather than claiming every number is tick-by-tick real-time.
+```bash
+npm run validate
+```

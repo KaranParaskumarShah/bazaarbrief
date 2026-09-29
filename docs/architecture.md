@@ -24,7 +24,7 @@ normalized value + change + provider timestamp + source + optional series
 
 GitHub Actions runs the refresh script every 10 minutes.
 
-The orchestrator uses independent `Promise.allSettled` calls so one failing provider does not destroy unrelated data. The dataset is published only when the minimum market coverage is present.
+The orchestrator uses independent `Promise.allSettled` calls so one failing provider does not destroy unrelated data. The dataset is published when at least a small amount of usable API data is available. One provider failure never blocks the entire refresh. If essentially all providers fail, the script exits without replacing the previous valid dataset.
 
 The job uses a concurrency lock so two refresh jobs do not publish at the same time.
 
@@ -50,8 +50,8 @@ The browser:
 
 - checks the shared file every 60 seconds
 - checks again when the tab becomes visible
-- never receives the IPO Guru secret
-- never directly calls NSE/BSE/Yahoo/IPO Guru
+- never receives provider credentials
+- never directly calls NSE/BSE/Yahoo/FinAPI/GMP Today
 
 ### Layer 5 — Vercel/static hosting
 
@@ -63,19 +63,23 @@ No database and no application server are required for the current product.
 
 | Data | Primary | Fallback | Notes |
 |---|---|---|---|
-| NIFTY 50 | NSE | Yahoo | Exchange source preferred |
-| BANK NIFTY | NSE | Yahoo | Exchange source preferred |
-| SENSEX | BSE | Yahoo | BSE source preferred |
+| NIFTY 50 | NSE | Yahoo | Exchange source preferred; after cash close use NSE EOD close |
+| BANK NIFTY | NSE | Yahoo | Exchange source preferred; after cash close use NSE EOD close |
+| SENSEX | BSE | Yahoo | BSE source preferred; after cash close use BSE EOD close |
 | Indian stocks | NSE | community API | Fallback is only used when NSE stock rows are insufficient |
 | FII/DII | NSE | none | Missing data stays missing |
-| IPO | IPO Guru | NSE | IPO Guru adds GMP/subscription |
-| GMP | IPO Guru | none | Unofficial market-reported value |
-| Global indices | Yahoo | TradingView | Same provider family preferred to reduce timestamp mismatch |
+| IPO details | FinAPI free IPO feed + NSE when reachable | GMP Today | No API key; normalize and merge by company name |
+| GMP/subscription | GMP Today | raw GitHub copy of same free dataset | Unofficial; source/update time shown |
+| Global indices | Yahoo | TradingView | Provider timestamp is preserved |
 | USD/INR | Yahoo | Frankfurter/TradingView | Quote timestamp is preserved |
 | Brent/WTI/Natural Gas | Yahoo | TradingView | Futures/commodity quote |
-| Gold/Silver | XAUS INR spot | none | Stale response is rejected |
+| Gold/Silver | Gold-API USD spot | none | Shows USD/troy oz and calculated INR equivalent; timestamps are preserved |
 | GIFT Nifty | TradingView / Yahoo fallback | none | Futures indicator; can be delayed |
 | News | Google News RSS | none | Headlines only |
+
+## No-snapshot rule
+
+The financial refresh layer does not use Snapdata, bundled market prices, or any packaged financial snapshot. If a provider fails, that field remains unavailable and the error is recorded. The refresh continues for independent providers. If essentially all providers fail, the existing valid dataset is left untouched.
 
 ## Why not call APIs directly from React?
 
@@ -97,6 +101,6 @@ The provider request volume is therefore independent of traffic.
 
 ## Why 10 minutes?
 
-IPO Guru's documented free limit is 300 requests/day. One IPO Guru request per 10-minute refresh is 144 scheduled calls/day, leaving capacity for manual runs and operational retries.
+The zero-key IPO layer uses public GMP Today data plus public NSE IPO endpoints, so no provider secret is required. The refresh cadence is 10 minutes; the browser checks the shared file every 60 seconds.
 
-For an even tighter live requirement, a paid/licensed exchange feed or a provider with a higher free quota should replace the relevant adapter. The frontend schema does not need to change.
+For an even tighter live requirement, a paid/licensed exchange feed can replace the relevant adapter later. The frontend schema does not need to change.

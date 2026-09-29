@@ -6,6 +6,9 @@ const now = new Date().toISOString();
 const NSE_BASE = 'https://www.nseindia.com';
 const NSE_PAGE = `${NSE_BASE}/market-data/all-upcoming-issues-ipo`;
 const REQUEST_TIMEOUT = 12000;
+const FINAPI_IPO_URL = 'https://finapi.upvaly.com/api/ipo';
+const GMP_TODAY_URL = 'https://gmptoday.in/api/gmp.json';
+const GMP_GITHUB_URL = 'https://raw.githubusercontent.com/Spectrumz00/india-ipo-gmp-data/main/data/gmp-latest.json';
 
 const num = v => {
   if (v === null || v === undefined || v === '') return null;
@@ -13,6 +16,7 @@ const num = v => {
   return Number.isFinite(x) ? x : null;
 };
 const slugify = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const ipoMatchKey = s => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/\b(private|pvt|limited|ltd|india|inc|ipo|company|co)\b/g, '').replace(/[^a-z0-9]/g, '');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const changePct = (value, previous) => value != null && previous ? ((value - previous) / previous) * 100 : null;
 const changePts = (value, previous) => value != null && previous != null ? value - previous : null;
@@ -169,26 +173,6 @@ async function fetchTradingViewMarket() {
   }
   if (!good.length) throw new Error('TradingView market scanner returned no usable rows');
   return good;
-}
-
-async function fetchXausMetals() {
-  const payload = await fetchJson(`https://xaus.com/api/v1/spot?currency=INR&unit=gram&fresh=${Date.now()}`);
-  const goldGram = num(payload?.xau?.price);
-  const silverOz = num(payload?.silver_usd_oz);
-  const fxRate = num(payload?.fx_rate);
-  if (goldGram == null) throw new Error('XAUS returned no gold price');
-  if (payload?.stale || payload?.data_state?.status === 'stale') {
-    throw new Error('XAUS returned stale precious-metal data; refusing to publish stale values');
-  }
-  return {
-    gold10g: goldGram * 10,
-    silverKg: silverOz != null && fxRate != null ? silverOz * fxRate * 1000 / 31.1034768 : null,
-    goldAsOf: payload?.price_as_of || payload?.updated_at || now,
-    silverAsOf: payload?.updated_at || now,
-    goldSource: `XAUS live XAU spot in INR · ${payload?.price_source || 'upstream'}`,
-    silverSource: `XAUS live XAG spot converted to INR · ${payload?.silver_source || 'upstream'}`,
-    stale: Boolean(payload?.stale || payload?.data_state?.status === 'stale')
-  };
 }
 
 function nseHeaders(cookie = '') {
@@ -404,14 +388,6 @@ async function fetchBseSensex() {
   };
 }
 
-async function fetchSnapData() {
-  const [india, crude] = await Promise.all([
-    fetchJson('https://snapdata.dev/api/v1/equity-indices/in/latest.json'),
-    fetchJson('https://snapdata.dev/api/v1/crude/world/latest.json')
-  ]);
-  return { india, crude };
-}
-
 async function fetchGoldApi() {
   const [gold, silver] = await Promise.all([
     fetchJson('https://api.gold-api.com/price/XAU'),
@@ -429,17 +405,6 @@ function metalInr(usdPerTroyOz, usdInr, unit) {
   if (unit === '₹/10g') return usdPerTroyOz * usdInr * 10 / 31.1034768;
   if (unit === '₹/kg') return usdPerTroyOz * usdInr * 1000 / 31.1034768;
   return null;
-}
-
-function extractSnapObservation(payload, preferredName) {
-  const observations = payload?.observations || payload?.data || [];
-  const row = observations.find(x => String(x.name || x.series || x.id || '').toLowerCase().includes(preferredName.toLowerCase())) || observations[0];
-  if (!row) return null;
-  return {
-    value: num(row.value ?? row.price ?? row.close),
-    asOf: row.date || row.timestamp || payload?.updated_at || now,
-    source: 'Snapdata daily fallback'
-  };
 }
 
 async function fetchFiiDii(cookie) {
@@ -507,126 +472,215 @@ function parseBand(value) {
 
 function ipoStatus(openDate, closeDate, explicitStatus) {
   const s = String(explicitStatus || '').toLowerCase();
-  if (s === 'open') return 'Open';
-  if (s === 'closed' || s === 'listed') return s === 'listed' ? 'Listed' : 'Closed';
-  const today = new Date().toISOString().slice(0, 10);
+  if (s.includes('open') || s.includes('live') || s === 'u') return 'Open';
+  if (s.includes('upcoming') || s === 'upcoming') return 'Upcoming';
+  if (s.includes('closed')) return 'Closed';
+  if (s.includes('listed')) return 'Listed';
+  const today = indiaNow().date;
   if (openDate && openDate <= today && (!closeDate || closeDate >= today)) return 'Open';
+  if (closeDate && closeDate < today) return 'Closed';
   return 'Upcoming';
 }
 
-function normalizeIpoGuru(raw) {
-  const company = raw.name || raw.company || raw.companyName || raw.symbol || 'IPO';
-  const boardText = String(raw.type || raw.board || '').toLowerCase();
-  const board = boardText.includes('sme') ? 'SME' : 'Mainboard';
-  const band = parseBand(raw.price_band ?? raw.priceBand ?? raw.issue_price);
-  const lot = num(raw.lot_size ?? raw.lotSize);
-  const openDate = toISO(raw.open_date ?? raw.openDate);
-  const closeDate = toISO(raw.close_date ?? raw.closeDate);
-  const status = ipoStatus(openDate, closeDate, raw.status);
-  const issueText = String(raw.issue_size ?? raw.issueSize ?? '');
-  const issueSizeCr = num(issueText.replace(/₹/g, '').replace(/,/g, '').match(/[0-9]+(?:\.[0-9]+)?/)?.[0]);
-  const sub = raw.subscription || {};
-  const g = raw.gmp || {};
+function cleanText(v) {
+  if (v === null || v === undefined) return null;
+  const t = String(v).replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+  return t || null;
+}
+
+function firstValue(...values) {
+  return values.find(v => v !== null && v !== undefined && String(v).trim() !== '');
+}
+
+function extractNumber(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const m = String(value).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+  return m ? num(m[0]) : null;
+}
+
+function parseBoard(raw) {
+  const text = String(firstValue(raw.type, raw.issueType, raw.issue_type, raw.board, raw.segment, raw.category, raw.exchange, raw.sub_type, raw.series) || '').toLowerCase();
+  return text.includes('sme') || raw.isSme === true || raw.is_sme === true ? 'SME' : 'Mainboard';
+}
+
+function normalizeIpoRecord(raw, sourceLabel = 'NSE India public IPO feed') {
+  const company = cleanText(firstValue(raw.name, raw.companyName, raw.company, raw.ipoName, raw.title, raw.symbol)) || 'IPO';
+  const board = parseBoard(raw);
+  const bandRaw = firstValue(raw.price_band, raw.priceBand, raw.priceRange, raw.price_range, raw.issuePrice, raw.issue_price, raw.price, `${raw.minimum_price ?? raw.minPrice ?? ''}-${raw.maximum_price ?? raw.maxPrice ?? ''}`);
+  const band = parseBand(bandRaw);
+  const lot = extractNumber(firstValue(raw.lot_size, raw.lotSize, raw.minBidQuantity, raw.min_bid_quantity, raw.lot, raw.minimum_lot));
+  const openDate = toISO(firstValue(raw.open_date, raw.openDate, raw.issueStartDate, raw.bidding_start_date, raw.startDate, raw.biddingStartDate));
+  const closeDate = toISO(firstValue(raw.close_date, raw.closeDate, raw.issueEndDate, raw.bidding_end_date, raw.endDate, raw.biddingEndDate));
+  const issueSizeRaw = firstValue(raw.issue_size, raw.issueSize, raw.issue_size_cr, raw.issueSizeCr, raw.issueSizeValue);
+  const issueSizeCr = extractNumber(issueSizeRaw);
+  const minInvestment = extractNumber(firstValue(raw.min_investment, raw.minimumInvestment, raw.minInvestment, raw.minimum_investment));
+  const subscriptionObj = raw.subscription && typeof raw.subscription === 'object' ? raw.subscription : {};
+  const subscription = extractNumber(firstValue(subscriptionObj.total, raw.subscription_total, raw.subscriptionTotal, raw.total_subscription, raw.overall_subscription, raw.subscription_multiple, raw.subs, raw.subscription, raw.subscribed));
+  const qib = extractNumber(firstValue(subscriptionObj.qib, raw.qib));
+  const nii = extractNumber(firstValue(subscriptionObj.nii, subscriptionObj.hni, raw.nii, raw.hni));
+  const retail = extractNumber(firstValue(subscriptionObj.retail, raw.retail));
+  const gmpObj = raw.gmp && typeof raw.gmp === 'object' ? raw.gmp : {};
+  const gmp = extractNumber(firstValue(gmpObj.price, gmpObj.value, raw.gmp_price, raw.gmpPrice, raw.gmp, raw.gmp_median, raw.median_gmp, raw.gmpMedian, raw.median, raw.premium));
+  const gmpPct = extractNumber(firstValue(gmpObj.percentage, gmpObj.percent, raw.gmp_percentage, raw.gmpPercent, raw.gmp_pct, raw.gmpPercent, raw.estimated_gain, raw.estimated_gain_pct));
+  const issuePrice = band.max ?? extractNumber(firstValue(raw.issue_price, raw.issuePrice));
+  const min = minInvestment ?? (issuePrice != null && lot != null ? issuePrice * lot : null);
+  const issue = issueSizeRaw != null ? cleanText(issueSizeRaw) : issueSizeCr != null ? `₹${issueSizeCr.toLocaleString('en-IN')} Cr` : '—';
   return {
-    slug: slugify(company),
-    symbol: raw.symbol || null,
-    name: company,
-    type: board,
-    status,
-    exchange: raw.listing_on || raw.listingOn || (board === 'SME' ? 'NSE/BSE SME' : 'NSE/BSE'),
-    band: band.min != null ? `₹${band.min.toLocaleString('en-IN')} – ₹${band.max.toLocaleString('en-IN')}` : (raw.price_band || '—'),
-    priceBand: band,
-    lot: lot || 0,
-    lotSize: lot || 0,
-    min: band.max != null && lot ? band.max * lot : null,
-    issue: raw.issue_size || '—',
-    issueSizeCr,
-    open: openDate || '—',
-    close: closeDate || '—',
-    openDate,
-    closeDate,
-    allotment: toISO(raw.allotment_date ?? raw.allotmentDate),
-    listing: toISO(raw.listing_date ?? raw.listingDate),
-    listingDate: toISO(raw.listing_date ?? raw.listingDate),
-    listingPrice: num(raw.listing_price),
-    refund: null,
-    credit: null,
-    faceValue: raw.face_value ?? raw.faceValue ?? null,
-    registrar: raw.registrar || null,
-    leadManagers: raw.lead_managers || raw.leadManagers || null,
-    fresh: raw.fresh_issue ?? raw.freshIssue ?? null,
-    ofs: raw.ofs ?? null,
-    saleType: raw.sale_type || null,
-    sector: raw.industry || raw.sector || '—',
-    objects: raw.objects || null,
-    revenue: null,
-    profit: null,
-    debt: null,
-    promoters: null,
-    subscription: num(sub.total) ?? null,
-    qib: num(sub.qib),
-    nii: num(sub.nii),
-    retail: num(sub.retail),
-    subscriptionUpdated: sub.updated_at || null,
-    gmp: num(g.price),
-    gmpPct: num(g.percentage),
-    gmpUpdated: g.updated_at || null,
-    gmpSource: g.price != null ? 'IPO Guru API — unofficial/market-reported' : null,
-    source: 'IPO Guru API',
-    sourceDate: now.slice(0, 10),
-    asOf: g.updated_at || sub.updated_at || now
+    slug: slugify(company), symbol: cleanText(firstValue(raw.symbol, raw.scrip, raw.code)), name: company, type: board,
+    status: ipoStatus(openDate, closeDate, firstValue(raw.status, raw.state)),
+    exchange: cleanText(firstValue(raw.listing_on, raw.listingOn, raw.exchange, raw.exchangeName)) || (board === 'SME' ? 'NSE/BSE SME' : 'NSE/BSE'),
+    band: band.min != null ? `₹${band.min.toLocaleString('en-IN')} – ₹${band.max.toLocaleString('en-IN')}` : '—',
+    priceBand: band, lot: lot || 0, lotSize: lot || 0, min, issue, issueSizeCr,
+    open: openDate || '—', close: closeDate || '—', openDate, closeDate,
+    allotment: toISO(firstValue(raw.allotment_date, raw.allotmentDate)),
+    refund: toISO(firstValue(raw.refund_date, raw.refundDate)),
+    credit: toISO(firstValue(raw.credit_date, raw.creditDate, raw.demat_credit_date)),
+    listing: toISO(firstValue(raw.listing_date, raw.listingDate)),
+    listingDate: toISO(firstValue(raw.listing_date, raw.listingDate)),
+    listingPrice: extractNumber(firstValue(raw.listing_price, raw.listingPrice)),
+    faceValue: cleanText(firstValue(raw.face_value, raw.faceValue)),
+    registrar: cleanText(firstValue(raw.registrar, raw.registrar_name)),
+    leadManagers: cleanText(firstValue(raw.lead_managers, raw.leadManagers)),
+    fresh: cleanText(firstValue(raw.fresh_issue, raw.freshIssue, raw.fresh)),
+    ofs: cleanText(firstValue(raw.ofs, raw.offerForSale, raw.offer_for_sale)),
+    saleType: cleanText(firstValue(raw.sale_type, raw.saleType)),
+    sector: cleanText(firstValue(raw.industry, raw.sector)) || '—',
+    objects: cleanText(firstValue(raw.objects, raw.object_of_issue, raw.issue_object)),
+    revenue: cleanText(firstValue(raw.revenue)), profit: cleanText(firstValue(raw.profit, raw.pat)), debt: cleanText(firstValue(raw.debt, raw.borrowings)), promoters: cleanText(firstValue(raw.promoters)),
+    subscription, qib, nii, retail,
+    subscriptionUpdated: cleanText(firstValue(subscriptionObj.updated_at, raw.subscription_updated_at, raw.subscriptionUpdated)),
+    gmp, gmpPct,
+    gmpUpdated: cleanText(firstValue(gmpObj.updated_at, raw.gmp_updated_at, raw.gmpUpdated, raw.gmpLastUpdated, raw.gmp_updated_at, raw.updated_at)),
+    gmpRange: cleanText(firstValue(gmpObj.range, raw.gmp_range, raw.gmpRange, raw.range)),
+    gmpConfidence: cleanText(firstValue(raw.confidence, gmpObj.confidence)),
+    gmpSources: extractNumber(firstValue(raw.sources, gmpObj.sources)),
+    gmpSource: gmp != null ? 'GMP Today — median of public trackers; unofficial' : null,
+    source: sourceLabel,
+    sourceDate: indiaNow().date,
+    asOf: firstValue(gmpObj.updated_at, subscriptionObj.updated_at, raw.updated_at, raw.updatedAt) || now
   };
 }
 
-async function fetchIpoGuru() {
-  const key = process.env.IPOGURU_API_KEY;
-  if (!key) throw new Error('IPOGURU_API_KEY is not configured. Request the free IPO Guru key and add it to GitHub Actions Secrets.');
-  // One request returns all active IPOs. This is important because the free plan
-  // allows 300 requests/day; a 10-minute refresh cadence is 144 runs/day.
-  const payload = await fetchJson('https://www.ipoguru.in/api/v1/ipos', { headers: { 'X-API-KEY': key } });
-  const rows = Array.isArray(payload?.data) ? payload.data : [];
-  if (!rows.length) throw new Error('IPO Guru returned zero IPO records');
-  const map = new Map();
-  for (const raw of rows) {
-    const item = normalizeIpoGuru(raw);
-    const keySlug = item.slug;
-    const existing = map.get(keySlug);
-    if (!existing || item.status === 'Open') map.set(keySlug, item);
+function collectIpoLikeRows(payload, depth = 0, out = []) {
+  if (depth > 4 || payload == null) return out;
+  if (Array.isArray(payload)) {
+    for (const item of payload) collectIpoLikeRows(item, depth + 1, out);
+    return out;
   }
-  const values = [...map.values()];
-  return {
-    mainboard: values.filter(x => x.type === 'Mainboard'),
-    sme: values.filter(x => x.type === 'SME')
-  };
+  if (typeof payload !== 'object') return out;
+  const looksLikeIpo = ['name','company','companyName','ipoName','title','symbol'].some(k => payload[k] != null);
+  if (looksLikeIpo) out.push(payload);
+  for (const [key, value] of Object.entries(payload)) {
+    if (['meta','config','disclaimer'].includes(key)) continue;
+    if (Array.isArray(value) || (value && typeof value === 'object')) collectIpoLikeRows(value, depth + 1, out);
+  }
+  return out;
+}
+
+function mergeIpoRecords(...groups) {
+  const map = new Map();
+  const keyMap = new Map();
+  for (const group of groups) {
+    for (const item of group || []) {
+      if (!item?.slug) continue;
+      const key = ipoMatchKey(item.name);
+      const existingKey = keyMap.get(key);
+      const existing = map.get(item.slug) || (existingKey ? map.get(existingKey) : null);
+      if (!existing) {
+        map.set(item.slug, item);
+        keyMap.set(key, item.slug);
+        continue;
+      }
+      const merged = { ...existing };
+      for (const [field, value] of Object.entries(item)) {
+        const empty = value === null || value === undefined || value === '' || value === '—' || (typeof value === 'number' && Number.isNaN(value));
+        if (!empty) merged[field] = value;
+      }
+      const official = existing.source?.includes('NSE') ? existing : item.source?.includes('NSE') ? item : null;
+      const tracker = existing.source?.includes('GMP Today') ? existing : item.source?.includes('GMP Today') ? item : null;
+      if (official && tracker) {
+        Object.assign(merged, {
+          name: official.name || tracker.name,
+          symbol: official.symbol || tracker.symbol,
+          type: official.type,
+          band: official.band !== '—' ? official.band : tracker.band,
+          priceBand: official.priceBand?.min != null ? official.priceBand : tracker.priceBand,
+          lot: official.lot || tracker.lot, lotSize: official.lotSize || tracker.lotSize,
+          min: official.min ?? tracker.min, issue: official.issue !== '—' ? official.issue : tracker.issue,
+          openDate: official.openDate || tracker.openDate, closeDate: official.closeDate || tracker.closeDate,
+          open: official.open !== '—' ? official.open : tracker.open, close: official.close !== '—' ? official.close : tracker.close,
+          allotment: official.allotment || tracker.allotment, listing: official.listing || tracker.listing,
+          exchange: official.exchange || tracker.exchange,
+          source: 'NSE official IPO details + GMP Today free public tracker',
+          sourceDate: indiaNow().date,
+          asOf: tracker.gmpUpdated || tracker.asOf || official.asOf
+        });
+      }
+      map.delete(existing.slug);
+      map.set(merged.slug || existing.slug, merged);
+      keyMap.set(key, merged.slug || existing.slug);
+    }
+  }
+  return [...map.values()];
+}
+
+async function fetchJsonWithRetries(url, options = {}, attempts = 3) {
+  let lastError;
+  for (let i = 0; i < attempts; i++) {
+    try { return await fetchJson(url, options); }
+    catch (e) { lastError = e; if (i < attempts - 1) await sleep(700 * (i + 1)); }
+  }
+  throw lastError;
+}
+
+function extractIpoArray(payload) {
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.ipos)) return payload.ipos;
+  if (Array.isArray(payload?.open)) return payload.open;
+  if (Array.isArray(payload?.upcoming)) return payload.upcoming;
+  return collectIpoLikeRows(payload);
+}
+
+async function fetchFinApiIpos() {
+  const payload = await fetchJsonWithRetries(FINAPI_IPO_URL, { timeout: 15000, headers: { Accept: 'application/json' } }, 2);
+  const rows = extractIpoArray(payload);
+  const normalized = rows.map(r => normalizeIpoRecord(r, 'FinAPI free IPO feed')).filter(x => x.name !== 'IPO');
+  if (!normalized.length) throw new Error('FinAPI returned no normalizable IPO records');
+  return normalized;
+}
+
+async function fetchGmpTodayIpos() {
+  const payload = await fetchJsonWithRetries(GMP_TODAY_URL, { timeout: 15000, headers: { Accept: 'application/json' } }, 2);
+  const rows = extractIpoArray(payload);
+  const normalized = rows.map(r => normalizeIpoRecord(r, 'GMP Today free public dataset')).filter(x => x.name !== 'IPO');
+  if (!normalized.length) throw new Error('GMP Today returned no normalizable IPO records');
+  return normalized;
+}
+
+async function fetchGmpGithubIpos() {
+  const payload = await fetchJsonWithRetries(GMP_GITHUB_URL, { timeout: 15000, headers: { Accept: 'application/json' } }, 2);
+  const rows = extractIpoArray(payload);
+  const normalized = rows.map(r => normalizeIpoRecord(r, 'GMP Today open dataset mirror')).filter(x => x.name !== 'IPO');
+  if (!normalized.length) throw new Error('GMP GitHub mirror returned no normalizable IPO records');
+  return normalized;
+}
+
+async function fetchFreeIpoData() {
+  const results = await Promise.allSettled([fetchFinApiIpos(), fetchGmpTodayIpos(), fetchGmpGithubIpos()]);
+  const records = [];
+  const errors = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled') records.push(...r.value);
+    else errors.push(r.reason?.message || String(r.reason));
+  }
+  const merged = mergeIpoRecords(...records);
+  if (!merged.length) throw new Error(`All free IPO sources failed: ${errors.join(' | ')}`);
+  return { records: merged, errors };
 }
 
 function baseIpo(raw, status) {
-  const company = raw.companyName || raw.company || raw.name || raw.symbol || 'IPO';
-  const board = String(raw.series || raw.board || '').toUpperCase() === 'SME' || raw.isSme === true || raw.is_sme === true ? 'SME' : 'Mainboard';
-  const band = parseBand(raw.issuePrice ?? raw.priceBand ?? `${raw.minPrice ?? ''}-${raw.maxPrice ?? ''}`);
-  const lot = num(raw.lotSize ?? raw.lot_size ?? raw.minBidQuantity ?? raw.min_bid_quantity);
-  const issueSizeCr = num(raw.issueSize ?? raw.issue_size) != null ? num(raw.issueSize ?? raw.issue_size) : null;
-  const openDate = toISO(raw.issueStartDate ?? raw.openDate ?? raw.bidding_start_date);
-  const closeDate = toISO(raw.issueEndDate ?? raw.closeDate ?? raw.bidding_end_date);
-  return {
-    slug: slugify(company), symbol: raw.symbol || null, name: company, type: board,
-    status: ipoStatus(openDate, closeDate, status), exchange: board === 'SME' ? 'NSE/BSE SME' : 'NSE/BSE',
-    band: band.min != null ? `₹${band.min.toLocaleString('en-IN')} – ₹${band.max.toLocaleString('en-IN')}` : '—',
-    priceBand: band, lot: lot || 0, lotSize: lot || 0,
-    min: band.max != null && lot ? band.max * lot : null,
-    issue: issueSizeCr != null ? `₹${issueSizeCr.toLocaleString('en-IN')} Cr` : '—',
-    issueSizeCr,
-    open: openDate || '—', close: closeDate || '—', openDate, closeDate,
-    allotment: toISO(raw.allotmentDate ?? raw.allotment_date), listing: toISO(raw.listingDate ?? raw.listing_date), listingDate: toISO(raw.listingDate ?? raw.listing_date),
-    refund: null, credit: null, faceValue: raw.faceValue || raw.face_value || null,
-    registrar: raw.registrar || null, leadManagers: raw.leadManagers || null,
-    fresh: raw.freshIssue || raw.fresh_issue || null, ofs: raw.ofs || raw.offerForSale || null,
-    sector: raw.industry || raw.sector || '—', objects: raw.objects || null,
-    revenue: null, profit: null, debt: null, promoters: null,
-    subscription: num(raw.noOfTimesSubscribed ?? raw.subscription) != null ? num(raw.noOfTimesSubscribed ?? raw.subscription) : null,
-    qib: null, nii: null, retail: null, gmp: null, gmpUpdated: null,
-    source: 'NSE India public IPO feed', sourceDate: now.slice(0, 10), asOf: now
-  };
+  return normalizeIpoRecord({ ...raw, status }, 'NSE India public IPO feed');
 }
 
 async function fetchNseIpos(cookie) {
@@ -637,18 +691,8 @@ async function fetchNseIpos(cookie) {
   ]);
   const current = unwrapRows(currentPayload);
   const upcoming = unwrapRows(upcomingPayload);
-  const map = new Map();
-  for (const raw of [...upcoming, ...current]) {
-    const item = baseIpo(raw);
-    if (!map.has(item.slug) || item.status === 'Open') map.set(item.slug, item);
-  }
-  return { mainboard: [...map.values()].filter(x => x.type === 'Mainboard'), sme: [...map.values()].filter(x => x.type === 'SME') };
-}
-
-function mergeIpos(primary, fallback) {
-  const map = new Map(fallback.map(x => [x.slug, x]));
-  for (const x of primary) map.set(x.slug, { ...map.get(x.slug), ...x });
-  return [...map.values()];
+  const records = [...upcoming, ...current].map(raw => baseIpo(raw)).filter(x => x.name !== 'IPO');
+  return mergeIpoRecords(records).filter(x => x.type === 'Mainboard' || x.type === 'SME');
 }
 
 async function writeDataset(result) {
@@ -661,7 +705,7 @@ const errors = [];
 try {
   // Indian exchange data is fetched from the exchanges first. Yahoo is a fallback
   // for the Indian indices/GIFT and the primary source for global markets/commodities.
-  const [nseMarket, bseSensex, yahoo, giftNifty, tvMarket, snap, metals, xaus, fx, fiiDii, news] = await Promise.allSettled([
+  const [nseMarket, bseSensex, yahoo, giftNifty, tvMarket, metals, fx, fiiDii, news, freeIpoResult] = await Promise.allSettled([
     fetchNseIndiaMarket(),
     fetchBseSensex(),
     allYahooQuotes([
@@ -680,7 +724,7 @@ try {
     ]),
     fetchGiftNifty(),
     fetchTradingViewMarket(),
-    fetchSnapData(), fetchGoldApi(), fetchXausMetals(), fetchFx(), Promise.resolve(null), fetchNews()
+    fetchGoldApi(), fetchFx(), Promise.resolve(null), fetchNews(), fetchFreeIpoData()
   ]);
 
   const yahooGood = yahoo.status === 'fulfilled' ? yahoo.value.good : [];
@@ -692,13 +736,11 @@ try {
   if (nseMarket.status === 'fulfilled') nse = nseMarket.value;
   else errors.push(`NSE market: ${nseMarket.reason?.message || nseMarket.reason}`);
   if (bseSensex.status === 'rejected') errors.push(`BSE SENSEX: ${bseSensex.reason?.message || bseSensex.reason}`);
-  if (snap.status === 'rejected') errors.push(`Snapdata: ${snap.reason?.message || snap.reason}`);
   if (metals.status === 'rejected') errors.push(`Gold API: ${metals.reason?.message || metals.reason}`);
   if (fx.status === 'rejected') errors.push(`FX: ${fx.reason?.message || fx.reason}`);
   if (news.status === 'rejected') errors.push(`News: ${news.reason?.message || news.reason}`);
   if (giftNifty.status === 'rejected') errors.push(`GIFT Nifty: ${giftNifty.reason?.message || giftNifty.reason}`);
   if (tvMarket.status === 'rejected') errors.push(`TradingView market: ${tvMarket.reason?.message || tvMarket.reason}`);
-  if (xaus.status === 'rejected') errors.push(`XAUS metals: ${xaus.reason?.message || xaus.reason}`);
 
   const session = indiaNow();
   let nseEod = {};
@@ -715,14 +757,9 @@ try {
     catch (e) { errors.push(`BSE EOD finalization: ${e.message}`); }
   }
 
-  const snapIndia = snap.status === 'fulfilled' ? snap.value.india : null;
-  const snapNifty = extractSnapObservation(snapIndia, 'nifty 50');
-  const snapBank = extractSnapObservation(snapIndia, 'nifty bank');
-
   const nseByName = new Map((nse?.indices || []).map(x => [x.name, x]));
-  const fallback = (name, snapRow) => snapRow ? { name, value: snapRow.value, change: null, pct: null, kind: 'index', asOf: snapRow.asOf, source: snapRow.source } : null;
-  const liveNifty = nseByName.get('NIFTY 50') || byName.get('NIFTY 50') || fallback('NIFTY 50', snapNifty);
-  const liveBank = nseByName.get('BANK NIFTY') || byName.get('BANK NIFTY') || fallback('BANK NIFTY', snapBank);
+  const liveNifty = nseByName.get('NIFTY 50') || byName.get('NIFTY 50') || null;
+  const liveBank = nseByName.get('BANK NIFTY') || byName.get('BANK NIFTY') || null;
   const liveSensex = bseSensex.status === 'fulfilled' ? bseSensex.value : (byName.get('SENSEX') || null);
   const finalNifty = session.afterCashClose ? (nseEod['NIFTY 50'] || null) : null;
   const finalBank = session.afterCashClose ? (nseEod['BANK NIFTY'] || null) : null;
@@ -741,11 +778,27 @@ try {
   const global = ['S&P 500','NASDAQ 100','FTSE 100','HANG SENG'].map(n => byName.get(n) || tvByName.get(n)).filter(Boolean);
   const usdInr = byName.get('USD/INR') || tvByName.get('USD/INR');
   const fxRate = usdInr?.value ?? (fx.status === 'fulfilled' ? num(fx.value?.rates?.INR) : null);
-  let xausMetals = xaus.status === 'fulfilled' ? xaus.value : null;
   const commodities = [];
-  if (usdInr) commodities.push({ name: 'USD/INR', ...usdInr, unit: '₹', source: usdInr.source });
-  if (xausMetals?.gold10g != null) commodities.push({ name: 'GOLD', value: xausMetals.gold10g, change: null, pct: null, unit: '₹/10g', asOf: xausMetals.goldAsOf, source: xausMetals.goldSource, note: null });
-  if (xausMetals?.silverKg != null) commodities.push({ name: 'SILVER', value: xausMetals.silverKg, change: null, pct: null, unit: '₹/kg', asOf: xausMetals.silverAsOf, source: xausMetals.silverSource, note: null });
+  if (usdInr) commodities.push({ name: 'USD/INR', ...usdInr, unit: '₹' });
+  const metalsPayload = metals.status === 'fulfilled' ? metals.value : null;
+  const metalFx = fxRate;
+  const goldUsd = num(metalsPayload?.gold?.price);
+  const silverUsd = num(metalsPayload?.silver?.price);
+  const goldUpdated = metalsPayload?.gold?.updatedAt || null;
+  const silverUpdated = metalsPayload?.silver?.updatedAt || null;
+  if (goldUsd != null && metalFx != null) commodities.push({
+    name: 'GOLD', value: goldUsd, unit: '$/oz', pct: num(metalsPayload?.gold?.changePercent), change: num(metalsPayload?.gold?.change),
+    asOf: goldUpdated, source: 'Gold-API live XAU spot', precious: true,
+    usdPerOz: goldUsd, inrPer10g: metalInr(goldUsd, metalFx, '₹/10g'), fxRate: metalFx, fxAsOf: usdInr?.asOf || null,
+    displayUnit: '$/troy oz + ₹/10g'
+  });
+  if (silverUsd != null && metalFx != null) commodities.push({
+    name: 'SILVER', value: silverUsd, unit: '$/oz', pct: num(metalsPayload?.silver?.changePercent), change: num(metalsPayload?.silver?.change),
+    asOf: silverUpdated, source: 'Gold-API live XAG spot', precious: true,
+    usdPerOz: silverUsd, inrPerKg: metalInr(silverUsd, metalFx, '₹/kg'), fxRate: metalFx, fxAsOf: usdInr?.asOf || null,
+    displayUnit: '$/troy oz + ₹/kg'
+  });
+  if (metals.status === 'rejected') errors.push(`Gold/Silver API: ${metals.reason?.message || metals.reason}`);
   for (const name of ['BRENT','WTI','NATURAL GAS']) {
     const q = byName.get(name) || tvByName.get(name);
     if (q) commodities.push({ name, ...q, unit: name === 'NATURAL GAS' ? '$/MMBtu' : '$/bbl' });
@@ -766,24 +819,39 @@ try {
     fii = await fetchFiiDii(cookie);
   } catch (e) { errors.push(`FII/DII: ${e.message}`); }
 
-  let ipoBase = { mainboard: [], sme: [] };
-  let ipoGuruError = null;
+  let officialIpos = [];
+  let freeIpoRecords = [];
   try {
-    ipoBase = await fetchIpoGuru();
+    let cookie = nse?.cookie;
+    if (!cookie) cookie = await createNseSession();
+    officialIpos = await fetchNseIpos(cookie);
   } catch (e) {
-    ipoGuruError = e;
-    errors.push(`IPO Guru: ${e.message}`);
-    try {
-      let cookie = nse?.cookie;
-      if (!cookie) cookie = await createNseSession();
-      ipoBase = await fetchNseIpos(cookie);
-    } catch (fallbackError) {
-      errors.push(`NSE IPO fallback: ${fallbackError.message}`);
-    }
+    errors.push(`NSE IPO feed: ${e.message}`);
   }
+  if (freeIpoResult.status === 'fulfilled') {
+    freeIpoRecords = freeIpoResult.value.records || [];
+    for (const e of freeIpoResult.value.errors || []) errors.push(`Free IPO source: ${e}`);
+  } else {
+    errors.push(`Free IPO sources: ${freeIpoResult.reason?.message || freeIpoResult.reason}`);
+  }
+  const mergedIpos = mergeIpoRecords(officialIpos, freeIpoRecords);
+  const sortIpos = list => [...list].sort((a, b) => {
+    const statusWeight = x => x === 'Open' ? 0 : 1;
+    const sw = statusWeight(a.status) - statusWeight(b.status);
+    if (sw) return sw;
+    const ad = a.closeDate || a.openDate || '9999-12-31';
+    const bd = b.closeDate || b.openDate || '9999-12-31';
+    return String(ad).localeCompare(String(bd)) || String(a.name).localeCompare(String(b.name));
+  });
+  const mainboard = sortIpos(mergedIpos.filter(x => x.type === 'Mainboard' && ['Open','Upcoming'].includes(x.status)));
+  const sme = sortIpos(mergedIpos.filter(x => x.type === 'SME' && ['Open','Upcoming'].includes(x.status)));
+  if (!mainboard.length && !sme.length) errors.push('IPO: no open/upcoming IPO records were published');
 
-  const mainboard = ipoBase.mainboard || [];
-  const sme = ipoBase.sme || [];
+  const providerStatus = {
+    nseMarket: nseMarket.status, bseSensex: bseSensex.status, yahoo: yahoo.status,
+    giftNifty: giftNifty.status, tradingView: tvMarket.status, metals: metals.status,
+    fx: fx.status, news: news.status, ipo: freeIpoResult.status
+  };
 
   const result = {
     updatedAt: now,
@@ -794,12 +862,12 @@ try {
       cashMarketClosed: session.afterCashClose,
       closeFinalization: session.afterCashClose ? 'EOD exchange close attempted' : 'intraday exchange quote'
     },
-    source: 'Exchange-first free shared feed — NSE/BSE + TradingView/Gold-API/Yahoo fallbacks',
-    refresh: { status: 'ok', updatedAt: now, cadence: '10 minutes', partial: errors.length > 0, errors },
+    source: 'API-only shared feed — free public/exchange sources; no snapshot fallback',
+    refresh: { status: 'ok', updatedAt: now, cadence: '10 minutes', partial: errors.length > 0, errors, providerStatus },
     dataPolicy: {
       primary: 'API-only', noSnapshotFallback: true, noPerVisitorProviderCalls: true,
-      replaceOldDataOnSuccessfulRefresh: true, refreshCadence: '10 minutes',
-      indianEquitiesPrimary: 'NSE/BSE public exchange feeds', giftNiftyPrimary: 'TradingView public scanner · NSE International Exchange', globalPrimary: 'Yahoo Finance public chart feed; TradingView fallback'
+      replaceOldDataOnSuccessfulRefresh: true, refreshCadence: '10 minutes', noPaidApiKeysRequired: true,
+      indianEquitiesPrimary: 'NSE/BSE public exchange feeds; no snapshot fallback', giftNiftyPrimary: 'TradingView public scanner · NSE International Exchange', globalPrimary: 'Yahoo Finance public chart feed; TradingView fallback', ipoPrimary: 'FinAPI free IPO + GMP Today free public dataset + NSE official IPO details; no API key'
     },
     market: { indices, global, commodities, stocks },
     fiiDii: fii,
@@ -807,8 +875,11 @@ try {
     news: news.status === 'fulfilled' ? news.value : []
   };
 
-  const minimum = result.market.indices.length >= 3 && result.market.global.length >= 2 && result.market.commodities.length >= 4;
-  if (!minimum) throw new Error(`Refresh incomplete: ${result.market.indices.length} Indian indices, ${result.market.global.length} global indices and ${result.market.commodities.length} commodities available.`);
+  // Never fail the whole refresh because one free provider is blocked. Publish only
+  // data actually returned by APIs. If absolutely no market/IPO/news data arrives,
+  // keep the previous dataset instead of replacing it with an empty snapshot.
+  const usableRecords = result.market.indices.length + result.market.global.length + result.market.commodities.length + result.market.stocks.length + result.ipo.mainboard.length + result.ipo.sme.length + result.news.length;
+  if (usableRecords < 3) throw new Error(`No usable API data returned. Providers failed: ${errors.join(' | ')}`);
   await writeDataset(result);
   console.log(JSON.stringify({
     ok: true, updatedAt: now, errors,
