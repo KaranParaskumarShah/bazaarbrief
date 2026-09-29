@@ -1,22 +1,46 @@
 # Provider contracts
 
-## IPO
-- FinAPI: `https://finapi.upvaly.com/api/ipo` — free tier endpoint advertised without signup/key; used for current IPO issue data.
-- GMP Today: `https://gmptoday.in/api/gmp.json` — public machine-readable GMP dataset.
-- GitHub mirror: `https://raw.githubusercontent.com/Spectrumz00/india-ipo-gmp-data/main/data/gmp-latest.json` — open mirror of the GMP Today dataset.
-- NSE public IPO endpoints are attempted when reachable. They are treated as an optional enrichment source, not a hard dependency, because exchange web endpoints may reject automated requests.
+## Free / no-key providers
 
-## Market
-- NSE/BSE public feeds are attempted for Indian indices.
-- Yahoo public chart feed and TradingView public scanner are used for free global/commodity/GIFT-Nifty coverage. These are public/undocumented feeds and can be delayed or unavailable.
-- No snapshot fallback is bundled into the project.
+### FinAPI IPO
 
-## Metals
-- Gold-API public XAU/XAG spot feed, no key.
-- USD/INR is taken from the dashboard FX source for INR conversion.
+`https://finapi.upvaly.com/api/ipo`
 
-## News
-- Google News RSS.
+Used for basic IPO issue data. The provider currently advertises this endpoint as available in its free tier without signup/API key.
 
-## Commercial-use note
-Free/public feeds can have their own rate limits, delay, redistribution and licensing conditions. BazaarBrief should verify the terms of each provider before commercial redistribution of their data.
+### GMP Today
+
+`https://gmptoday.in/api/gmp.json`
+
+Used for unofficial GMP, ranges, subscription and confidence fields where supplied.
+
+GMP is not exchange data and must remain labelled unofficial.
+
+### NSE / BSE public feeds
+
+Used for Indian indices, NIFTY 50 constituent quotes, and final EOD closes.
+
+Public exchange web endpoints can reject automated/cloud requests. The collector treats optional enrichment as optional and does not manufacture data when a request is blocked.
+
+### Yahoo public chart feed
+
+Used for global indices, USD/INR and energy contracts. This is a public/undocumented feed and may be delayed or unavailable.
+
+### Gold-API
+
+`https://api.gold-api.com/price/XAU`
+`https://api.gold-api.com/price/XAG`
+
+No API key is required for the real-time price endpoints. Gold and silver are returned as USD/troy-ounce spot prices. BazaarBrief also calculates an INR equivalent using its shared USD/INR quote.
+
+### TradingView public scanner
+
+Used for GIFT Nifty. The quote is explicitly treated as a futures/pre-market indicator and not as NIFTY 50 spot.
+
+### Google News RSS
+
+Used only for headlines and source links.
+
+## Commercial / redistribution note
+
+Free public feeds can have their own rate limits, delays, terms and redistribution conditions. Verify the provider terms before commercial redistribution. BazaarBrief should show source/timestamp context rather than implying exchange-grade tick-by-tick licensing where none exists.

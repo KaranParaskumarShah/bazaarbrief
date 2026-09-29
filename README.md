@@ -1,33 +1,80 @@
-# BazaarBrief — free API-only market + IPO feed
+# BazaarBrief — Clean Free API Architecture
 
-BazaarBrief is a static React/Vite market-information site. The browser never calls financial providers directly. GitHub Actions collects public/free API data and writes `public/data/latest.json`; Vercel serves the static site.
+BazaarBrief is a static React/Vite market-information website. The browser reads one shared JSON file and never calls financial providers directly.
 
-## Refresh architecture
+## Data flow
 
-- GitHub Actions: every 10 minutes.
-- Browser: checks the shared JSON about every 60 seconds.
-- No paid API keys are required.
-- No bundled financial snapshots are used.
-- If a provider fails, that field is omitted and the error is recorded. The refresh is not failed merely because one provider is blocked.
-- If virtually no provider returns usable data, the workflow fails and the previous valid dataset is left untouched.
+```text
+Free public/exchange providers
+        ↓
+GitHub Actions refresh every 10 minutes
+        ↓
+public/data/latest.json
+        ↓
+Vercel / static hosting
+        ↓
+React dashboard
+```
+
+### No API keys
+
+The current collector requires **no paid API and no API secret**.
+
+The only optional GitHub repository variable is:
+
+```text
+GIFT_NIFTY_SYMBOL=NIFTY1!
+```
+
+That is a public instrument symbol, not a secret.
+
+## Providers
+
+| Data | Provider | Key | Policy |
+|---|---|---:|---|
+| NIFTY 50 | NSE public market feed | No | Exchange source only |
+| BANK NIFTY | NSE public market feed | No | Exchange source only |
+| SENSEX | BSE public market feed | No | Exchange source only |
+| Final NIFTY/BANK close | NSE historical index data | No | Used after cash-market close |
+| Final SENSEX close | BSE historical index data | No | Used after cash-market close |
+| Indian stocks | NSE NIFTY 50 feed | No | No community fallback |
+| GIFT Nifty | TradingView public scanner / NSEIX | No | Futures indicator |
+| S&P 500 / NASDAQ 100 / FTSE / Hang Seng | Yahoo public chart | No | Provider timestamp retained |
+| USD/INR | Yahoo public chart | No | Same quote used for metal INR conversion |
+| Brent / WTI / Natural Gas | Yahoo public chart | No | Futures/commodity quote |
+| Gold / Silver | Gold-API | No | USD spot + INR equivalent |
+| IPO issue data | FinAPI free IPO endpoint | No | Primary free IPO feed |
+| IPO official enrichment | NSE public IPO endpoints | No | Optional; failure does not block IPOs |
+| GMP / subscription | GMP Today public dataset | No | Unofficial market-reported data |
+| News | Google News RSS | No | Headlines only |
 
 ## IPO priority
 
-IPO data uses free, no-key sources: **FinAPI free IPO endpoint**, **GMP Today public dataset/API**, and **NSE public IPO endpoints when reachable**. GMP Today publishes a machine-readable dataset refreshed during the day. GMP is unofficial and is clearly labelled as such.
+IPO data is intentionally independent from the rest of the market refresh. If NSE web automation is blocked, the IPO feed can still publish from the free IPO provider + GMP Today.
 
-The collector normalizes multiple field names for price band, lot size, issue size, dates, subscription, GMP and board type, then merges sources by normalized company name. Open IPOs are shown before upcoming IPOs.
+The collector normalizes and merges records by normalized company name. Exchange-style fields are preferred from NSE when available; GMP/subscription fields are preferred from GMP Today.
 
-## Gold / silver
+GMP is always labelled unofficial.
 
-Gold and silver use public spot data in USD/troy oz and calculate an INR equivalent using the same USD/INR feed used by the dashboard. The UI shows both USD/oz and INR/10g or INR/kg. It is spot-equivalent pricing, not a local jewellery/retail quote.
+## No static financial values
 
-## Market close accuracy
+`public/data/latest.json` starts empty. It is populated only by a successful API refresh.
 
-For NIFTY 50, BANK NIFTY and SENSEX, the collector attempts to switch from intraday exchange quotes to exchange historical EOD close after the Indian cash session. It never replaces a failed EOD lookup with a fabricated value.
+The collector does not contain a packaged market-price dataset and does not manufacture values when a provider fails. If a provider is unavailable, that field is omitted and the refresh is marked partial. If almost no API data is available, the job fails and does not write an empty replacement dataset.
 
-## GIFT Nifty
+## Market-close rule
 
-GIFT Nifty is displayed as a futures/pre-market indicator using the public market scanner where available. It is not labelled as NIFTY 50 spot.
+During the Indian cash session, NIFTY 50, BANK NIFTY and SENSEX use exchange LTP data.
+
+After the cash market close, the collector attempts to replace those intraday values with the exchange historical EOD close. The UI labels the value `FINAL CLOSE` only when an official EOD record was obtained.
+
+This is specifically designed for the requirement that a final close should not be replaced by a random third-party quote later in the evening.
+
+## Refresh cadence
+
+- GitHub Actions: every 10 minutes.
+- Browser: checks `latest.json` every 60 seconds and on tab visibility changes.
+- Visitors never call financial providers.
 
 ## Local development
 
@@ -36,13 +83,13 @@ npm install
 npm run dev
 ```
 
-Build:
+Production build:
 
 ```bash
 npm run build
 ```
 
-Validate refresh script:
+Refresh-script syntax check:
 
 ```bash
 npm run validate
