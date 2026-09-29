@@ -1,0 +1,22 @@
+.ccard {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow-sm); padding: 1.15rem 1.25rem 1.3rem; min-height: 132px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  transition: box-shadow 0.15s ease;
+}
+.ccard:hover { box-shadow: var(--shadow-md); }
+.ccard__head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.ccard__head h3 { margin: 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: var(--ink); }
+.ccard__unit { color: var(--muted); font-size: 0.78rem; }
+.ccard__prices { margin-top: 0.9rem; display: flex; align-items: baseline; gap: 1.4rem; flex-wrap: wrap; }
+.ccard__price { display: flex; align-items: baseline; gap: 0.2rem; font-size: 1.55rem; font-weight: 600; color: var(--ink); }
+.ccard__price--secondary { font-size: 1.15rem; color: var(--gold-deep); }
+.ccard__currency { font-size: 0.85rem; color: var(--muted); }
+.ccard__price--secondary .ccard__currency { color: var(--gold-deep); opacity: 0.75; }
+.ccard__freshness { display: block; margin-top: 0.6rem; font-size: 0.72rem; color: var(--muted); }
+.ccard__freshness--error { color: var(--loss); }
+.ccard__loading { margin-top: 1rem; color: var(--muted); font-size: 0.9rem; }
+.ccard__empty { margin-top: 0.9rem; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+.ccard__empty p { margin: 0 0 0.3rem; }
+.ccard__empty code { font-family: var(--font-num); font-size: 0.78rem; background: var(--bg); padding: 0.15rem 0.4rem; border-radius: 3px; border: 1px solid var(--line); }
+.ccard__empty--error span { color: var(--loss); }

@@ -1,0 +1,6 @@
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.85rem; }
+.news-card { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow-sm); padding: 1rem 1.1rem; text-decoration: none; color: inherit; transition: box-shadow 0.15s ease; }
+.news-card:hover { box-shadow: var(--shadow-md); }
+.news-card__date { font-size: 0.72rem; color: var(--muted); }
+.news-card h4 { margin: 0.35rem 0 0.4rem; font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--ink); }
+.news-card p { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }

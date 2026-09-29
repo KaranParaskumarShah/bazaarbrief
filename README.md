@@ -1,108 +1,77 @@
-# BazaarBrief — Static React frontend + scheduled shared market API feed
+# Bazaar Brief (bazaarbrief.in)
 
-BazaarBrief is a static Vite/React site. The browser does **not** call financial providers directly and no provider API key is shipped to visitors.
-
-## Architecture
-
-```text
-Official/public providers
-       │
-       │ scheduled fetch
-       ▼
-GitHub Actions (every 10 minutes)
-       │
-       ├── NSE India → NIFTY 50 / BANK NIFTY / stock feed / FII-DII / IPO fallback
-       ├── BSE India → SENSEX
-       ├── IPO Guru → active IPO + GMP + subscription (free key)
-       ├── Yahoo Finance → global indices / USD-INR / Brent / WTI / Natural Gas
-       ├── XAUS → INR gold/silver spot
-       ├── TradingView scanner → GIFT Nifty fallback/indicator
-       └── Google News RSS → market/news headlines
-       │
-       ▼
-public/data/latest.json
-       │
-       ▼
-Static React/Vite frontend
-       │
-       └── browser checks shared JSON every 60 seconds
-```
-
-This keeps the site frontend/static while giving it an automatically refreshed shared dataset. There are **no per-visitor provider calls** and no bundled financial-value snapshots.
-
-## Refresh cadence
-
-- GitHub Actions: every **10 minutes**.
-- Browser: checks the shared JSON every **60 seconds** and immediately checks again when the tab becomes visible.
-- GitHub scheduled jobs can occasionally start late because GitHub controls scheduled-job execution. The `updatedAt` field in `public/data/latest.json` is the authoritative freshness timestamp.
-- If a provider fails, BazaarBrief does not invent a value or silently reuse an old financial snapshot.
-
-## API key setup
-
-The only required optional key is for IPO Guru's IPO/GMP/subscription enrichment.
-
-1. Request a free IPO Guru API key from the provider.
-2. In GitHub open:
-   `Settings → Secrets and variables → Actions → New repository secret`
-3. Create:
-
-```text
-IPOGURU_API_KEY = your_actual_key
-```
-
-4. Optional repository variable:
-
-```text
-GIFT_NIFTY_SYMBOL = NIFTY1!
-```
-
-The secret is only available to the GitHub Actions refresh job. **Do not put the real key in React, `main.jsx`, `public/`, `latest.json`, or a committed `.env` file.**
-
-IPO Guru documents a free REST API with 300 requests/day and 15 requests/minute. This build uses **one `/ipos` request per scheduled run**, so a 10-minute cadence is 144 scheduled requests/day, leaving room for manual runs. See the provider documentation for current limits and commercial-use terms.
-
-## Run locally
+News + market data + IPO center + financial calculators. React 19 + Vite + react-router, no
+backend, light/premium theme.
 
 ```bash
 npm install
-npm run dev
+npm run dev      # local
+npm run build    # generates sitemap.xml/robots.txt, then builds to dist/
 ```
+Deploy `dist/` anywhere. `vercel.json` and `public/_redirects` (Netlify/Cloudflare) already
+handle SPA routing so `/ipo/gmp` works on refresh.
 
-Validate the refresh script:
+## What changed in this pass
+1. **Fixed gold & silver** — the goldprice.dev endpoint was wrong the whole time
+   (`/v1/prices?symbol=...` doesn't exist; the real one is `/v1/spot/XAU-USD-SPOT`, returning a
+   flat object, not `{symbols:[...]}`). Fixed against goldprice.dev's own docs.
+2. **Removed everything that needed a stock/index data key** — Sector Watch, Nifty/Sensex/Bank
+   Nifty, Nasdaq/S&P/Dow. All of it showed "Needs a key" and added nothing without a paid-ish
+   signup. Deleted, along with the unused code behind it.
+3. **Added stock & IPO calculators in that space instead** — the homepage now links every
+   calculator directly under "Stock Calculators" and "IPO Calculators". No API, no key, always
+   works.
+4. **Live news, real feed, every 2 hours** — `src/services/news.js` fetches and parses the
+   Economic Times Markets RSS feed client-side (top 8 items), through the same CORS-relay
+   fallback as the price data, cached the same way. Falls back to `src/data/newsItems.json` if
+   it's never fetched successfully on a given browser.
 
-```bash
-npm run validate
-```
+## Data flow
+- Every successful fetch is saved to **localStorage** with a timestamp.
+- Every page load shows the **stored value immediately** — no blank flash.
+- It only refetches once a value is older than **2 hours** (`REFRESH_INTERVAL_MS` in `src/config.js`).
+- A failed refetch keeps showing the last good value instead of going blank.
+- Price cards show "Updated Xm ago".
 
-Build the static site:
+## Design
+Light, premium theme — ivory page background, white cards with a soft shadow, a deep navy
+masthead/nav bar, muted gold accent. Tokens in `src/index.css`.
 
-```bash
-npm run build
-```
+## Live data
+| Data | Source | Key? |
+|---|---|---|
+| Gold, Silver | goldprice.dev | No |
+| Brent | ukoilwatch.com | No |
+| WTI | americasoilwatch.com | No |
+| USD/INR | open.er-api.com | No |
+| Markets news (top 8) | Economic Times RSS | No |
+| Copper | metalpriceapi.com | Free key → `METALPRICE_KEY` |
 
-## First production refresh
+## What I could not verify from here
+No browser to test in, so two things are my best implementation rather than confirmed-working:
+- The **CORS relay** (`allorigins.win`) actually getting through in your browser. If a
+  commodity card still won't load, tell me which one.
+- The **RSS parsing** — couldn't fetch the feed's raw XML from this environment to check exact
+  tag names, so `services/news.js` parses it as standard RSS 2.0. If headlines don't show up,
+  open the feed URL in a browser tab and compare its tags to what `fetchLatestNews()` reads.
 
-After pushing the repository:
+## Manually maintained (no free API exists for these)
+- `src/data/ipos.js` — all IPO data is fictional placeholder data. Replace with figures from
+  each company's RHP and NSE/BSE circulars before publishing. GMP is always unofficial.
+- `src/data/fiiDii.json` — daily FII/DII, update from NSDL/NSE reports.
+- `src/data/marketHighlights.json` — daily bullets.
+- Natural gas price isn't wired up — no free keyless source was found.
 
-1. Open **Actions**.
-2. Select **Refresh Bazaar Brief shared data**.
-3. Click **Run workflow** once.
-4. Confirm the job succeeds.
-5. Open `public/data/latest.json` and confirm `refresh.status` is `ok` and `updatedAt` is recent.
-6. Deploy the same repository to Vercel.
+## Known limitation — the CORS relay
+`allorigins.win` has no uptime guarantee. Fine for personal use; for production, a small
+serverless function (Vercel/Netlify Function) that fetches server-side is the durable fix.
 
-After that, the scheduled workflow keeps replacing `latest.json` with the newest successful API result.
+## Adding an IPO / a tool
+- IPO: copy an entry in `src/data/ipos.js`, change `slug`. Appears everywhere automatically.
+- Calculator: add an object to `src/data/calculators.js` — `/tools/<slug>` exists immediately.
+- Live-data tool: add an object to `src/data/marketTools.js`.
 
-## Data integrity rules
-
-- No hard-coded market prices.
-- No fake chart/sparkline values. Sparklines are rendered only when the API supplies a real price series.
-- Every quote carries provider/source information and, when the provider exposes it, the provider's actual timestamp.
-- Gold and silver are direct INR spot-equivalent values from the metal provider, not Indian retail/jewellery rates.
-- Brent/WTI/Natural Gas are market futures/commodity quotes, not Indian retail fuel prices.
-- GIFT Nifty is a futures/pre-market indicator and may be delayed. It is never presented as NIFTY 50 spot.
-- GMP is unofficial/market-reported and is explicitly labelled as such.
-- A stale precious-metal response is rejected rather than published as if it were live.
-
-## Important limitation
-
-Free public feeds cannot guarantee licensed exchange-grade tick-by-tick real-time redistribution. NSE's own market-live page describes its web market data as approximately 1–3 minutes behind trading in some views. TradingView also states that exchange real-time redistribution on its public widgets is subject to exchange licensing and that website data can be delayed. Therefore the UI uses source-specific freshness labels rather than claiming every number is tick-by-tick real-time.
+## SEO
+This is a client-rendered SPA. Google can index it, but less reliably than server-rendered HTML.
+If organic search is central to the plan, prerendering each route (or moving to Next.js/Astro)
+is the next real step.
