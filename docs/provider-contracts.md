@@ -1,29 +1,64 @@
-# Bazaar Brief free-data provider contracts
+# BazaarBrief provider contracts
 
-## Shared refresh model
+## 1. NSE India
 
-The browser reads only `/data/latest.json`. GitHub Actions is the single scheduled caller and refreshes the dataset every two hours. There are no per-user provider calls.
+Primary source for Indian exchange data where the public web endpoint is available:
 
-## Providers
+- NIFTY 50
+- BANK NIFTY
+- NIFTY 50 constituent stock quotes
+- FII/DII public data
+- IPO fallback
 
-| Dataset | Provider | Auth | Freshness / caveat |
-|---|---|---|---|
-| NIFTY 50 / SENSEX / BANK NIFTY | Yahoo Finance public chart feed | None | Public/undocumented feed; may be delayed or unavailable |
-| GIFT NIFTY | Yahoo Finance public chart feed, configurable symbol | None | Futures quote; symbol availability can change |
-| Global indices | Yahoo Finance public chart feed | None | Public/undocumented feed; may be delayed |
-| Gold / Silver | Gold-API | None | Live USD/troy-oz spot with timestamp; converted to INR using live USD/INR quote |
-| USD/INR | Yahoo Finance + Frankfurter fallback | None | Yahoo quote preferred; ECB reference rate as fallback |
-| Brent / WTI / Natural Gas | Yahoo Finance futures symbols | None | Public feed; may be delayed |
-| India index fallback | Snapdata | None | Daily snapshot only; used only when Yahoo misses an index, never bundled in the app |
-| FII/DII | NSE public endpoint | None | Exchange endpoint; may reject automated requests depending on edge protection |
-| IPO base data | IndianAPI `/ipo` | None | Dynamic IPO lifecycle feed; field coverage can vary |
-| GMP / subscription | IPO Guru | Free API key | Free developer API; GMP is unofficial/market-reported |
-| News | Google News RSS | None | RSS aggregation; headline timestamps preserved |
+NSE's public market-live page states that its market view can run about 1–3 minutes behind real-time trading. NSE endpoints may also reject automated traffic; the refresh script retries and falls back where appropriate.
 
-## No snapshot policy
+## 2. BSE India
 
-`public/data/latest.json` starts empty. The refresh script never writes a fabricated financial number. If a provider fails, that field is omitted and the refresh result records the error.
+Primary source for SENSEX through BSE's public real-time endpoint.
 
-## Commercial-use warning
+## 3. IPO Guru
 
-Free public feeds can have licensing, attribution, rate-limit, delay, and redistribution restrictions. Bazaar Brief should verify each provider's current terms before commercial redistribution. Free does not mean exchange-licensed real-time market data.
+Primary IPO enrichment source when `IPOGURU_API_KEY` is configured.
+
+One `/api/v1/ipos` request is made per scheduled refresh. The response is split into Mainboard and SME and normalized into the site's common IPO schema.
+
+The API supplies issue dates, price band, lot size, issue size, subscription and unofficial GMP fields. GMP and subscription carry their own update timestamps when supplied by the provider.
+
+## 4. Yahoo Finance public chart feed
+
+Used for:
+
+- S&P 500
+- NASDAQ 100
+- FTSE 100
+- HANG SENG
+- USD/INR
+- Brent
+- WTI
+- Natural Gas
+
+Yahoo's chart response supplies a provider market timestamp and intraday close series. The site uses that timestamp rather than pretending the GitHub fetch time is the quote time.
+
+The feed is public/undocumented and can be delayed or unavailable. It is a fallback-oriented free source and should not be treated as a licensed exchange redistribution feed.
+
+## 5. XAUS
+
+Used for gold and silver spot-equivalent values in INR. A stale response is rejected; BazaarBrief does not publish a stale metal price as a fresh value.
+
+The displayed gold unit is ₹/10g and silver is ₹/kg.
+
+## 6. TradingView scanner
+
+Used primarily for the GIFT Nifty indicator and as a fallback for global/commodity quotes when Yahoo does not return a usable value.
+
+GIFT Nifty is a futures indicator, not NIFTY 50 spot. TradingView's website data can be delayed depending on the market/data entitlement.
+
+## 7. Google News RSS
+
+Used for current market/news headlines. News is informational and is not treated as a price source.
+
+## Failure behavior
+
+The refresh job uses `Promise.allSettled` for independent providers. A provider failure is recorded in `refresh.errors`. A successful refresh replaces `latest.json` with the newly assembled dataset.
+
+The job refuses to publish the dataset if the minimum required market coverage is not present. It does not silently create snapshot prices to satisfy the minimum.

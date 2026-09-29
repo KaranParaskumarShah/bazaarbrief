@@ -1,257 +1,30 @@
 {
-  "updatedAt": "2026-09-29T07:41:05.509Z",
-  "source": "Free live API aggregation — shared scheduled feed",
+  "updatedAt": null,
+  "source": "Waiting for free exchange-first API refresh",
   "refresh": {
-    "status": "ok",
-    "updatedAt": "2026-09-29T07:41:05.509Z",
-    "cadence": "2 hours",
-    "partial": true,
-    "errors": [
-      "Stocks: fetch failed",
-      "IPO: 403 Forbidden: https://analyst.indianapi.in/ipo",
-      "GMP API key not configured. IPO structure is dynamic; GMP requires a free IPO Guru API key."
-    ]
+    "status": "not_refreshed",
+    "cadence": "10 minutes",
+    "errors": []
   },
   "dataPolicy": {
     "primary": "API-only",
     "noSnapshotFallback": true,
     "noPerVisitorProviderCalls": true,
     "replaceOldDataOnSuccessfulRefresh": true,
-    "refreshCadence": "2 hours"
+    "refreshCadence": "10 minutes",
+    "indianEquitiesPrimary": "NSE/BSE public exchange feeds",
+    "globalPrimary": "Yahoo Finance public chart feed"
   },
   "market": {
-    "indices": [
-      {
-        "name": "NIFTY 50",
-        "kind": "index",
-        "value": 22691.45,
-        "change": -449.0499999999993,
-        "pct": -1.9405371534755051,
-        "asOf": "2026-09-29T07:41:05.000Z",
-        "currency": "INR",
-        "providerSymbol": "^NSEI",
-        "source": "Yahoo Finance public chart feed"
-      },
-      {
-        "name": "SENSEX",
-        "kind": "index",
-        "value": 72427.1,
-        "change": -1468.5999999999913,
-        "pct": -1.9873957483317586,
-        "asOf": "2026-09-29T07:26:03.000Z",
-        "currency": "INR",
-        "providerSymbol": "^BSESN",
-        "source": "Yahoo Finance public chart feed"
-      },
-      {
-        "name": "BANK NIFTY",
-        "kind": "index",
-        "value": 54302.8,
-        "change": -1277.5999999999985,
-        "pct": -2.298652042806454,
-        "asOf": "2026-09-29T07:41:04.000Z",
-        "currency": "INR",
-        "providerSymbol": "^NSEBANK",
-        "source": "Yahoo Finance public chart feed"
-      }
-    ],
-    "global": [
-      {
-        "name": "S&P 500",
-        "kind": "index",
-        "value": 7683.69,
-        "change": -59.720000000000255,
-        "pct": -0.7712364449254302,
-        "asOf": "2026-09-28T20:00:00.000Z",
-        "currency": "USD",
-        "providerSymbol": "^GSPC",
-        "source": "Yahoo Finance public chart feed"
-      },
-      {
-        "name": "NASDAQ 100",
-        "kind": "index",
-        "value": 30276.81,
-        "change": -331.3249999999971,
-        "pct": -1.0824736626390243,
-        "asOf": "2026-09-28T21:15:59.000Z",
-        "currency": "USD",
-        "providerSymbol": "^NDX",
-        "source": "Yahoo Finance public chart feed"
-      },
-      {
-        "name": "FTSE 100",
-        "kind": "index",
-        "value": 10734.55,
-        "change": 49.67000000000007,
-        "pct": 0.464862497285885,
-        "asOf": "2026-09-29T07:26:03.000Z",
-        "currency": "GBP",
-        "providerSymbol": "^FTSE",
-        "source": "Yahoo Finance public chart feed"
-      },
-      {
-        "name": "HANG SENG",
-        "kind": "index",
-        "value": 24558.46,
-        "change": 48.36000000000058,
-        "pct": 0.1973064165384906,
-        "asOf": "2026-09-29T07:26:02.000Z",
-        "currency": "HKD",
-        "providerSymbol": "^HSI",
-        "source": "Yahoo Finance public chart feed"
-      }
-    ],
-    "commodities": [
-      {
-        "name": "USD/INR",
-        "kind": "fx",
-        "value": 96,
-        "change": 0.027000000000001023,
-        "pct": 0.028132912381608394,
-        "asOf": "2026-09-29T07:40:59.000Z",
-        "currency": "INR",
-        "providerSymbol": "INR=X",
-        "source": "Yahoo Finance public chart feed",
-        "unit": "₹"
-      },
-      {
-        "name": "GOLD",
-        "value": 127950.79635404621,
-        "change": null,
-        "pct": null,
-        "unit": "₹/10g",
-        "asOf": "2026-09-29T07:40:38Z",
-        "source": "Gold-API live spot × live FX"
-      },
-      {
-        "name": "SILVER",
-        "value": 188318.86536877448,
-        "change": null,
-        "pct": null,
-        "unit": "₹/kg",
-        "asOf": "2026-09-29T07:40:37Z",
-        "source": "Gold-API live spot × live FX"
-      },
-      {
-        "name": "BRENT",
-        "kind": "commodity",
-        "value": 98.91,
-        "change": 1.0799999999999983,
-        "pct": 1.1039558417663278,
-        "asOf": "2026-09-29T07:31:03.000Z",
-        "currency": "USD",
-        "providerSymbol": "BZ=F",
-        "source": "Yahoo Finance public chart feed",
-        "unit": "$/bbl"
-      },
-      {
-        "name": "WTI",
-        "kind": "commodity",
-        "value": 93.42,
-        "change": 0.8200000000000074,
-        "pct": 0.8855291576673946,
-        "asOf": "2026-09-29T07:31:03.000Z",
-        "currency": "USD",
-        "providerSymbol": "CL=F",
-        "source": "Yahoo Finance public chart feed",
-        "unit": "$/bbl"
-      },
-      {
-        "name": "NATURAL GAS",
-        "kind": "commodity",
-        "value": 3.117,
-        "change": 0.01100000000000012,
-        "pct": 0.35415325177077017,
-        "asOf": "2026-09-29T07:30:56.000Z",
-        "currency": "USD",
-        "providerSymbol": "NG=F",
-        "source": "Yahoo Finance public chart feed",
-        "unit": "$/MMBtu"
-      }
-    ],
+    "indices": [],
+    "global": [],
+    "commodities": [],
     "stocks": []
   },
-  "fiiDii": {
-    "fii": -5353.22,
-    "dii": 5189.02,
-    "date": "28-Sep-2026",
-    "source": "NSE public FII/DII endpoint",
-    "asOf": "2026-09-29T07:41:05.509Z"
-  },
+  "fiiDii": {},
   "ipo": {
     "mainboard": [],
     "sme": []
   },
-  "news": [
-    {
-      "tag": "MARKET NEWS",
-      "title": "Varmora Granito shares list at 5% premium over IPO price, beat expectations - Business Standard",
-      "source": "Google News RSS",
-      "age": "Tue, 29 Sep 2026 05:16:46 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNTEMzUVd1WG0waDZ1VUo2czYxa2FBSkxfMXNrNXA1ZFhuU18yYnpEczJyTi1yVmNweWRPYTZRWnktRVpYT0RiTU9DSWp3UXNtdXlSZ0xlQ1hBVkRza2xYRkxYSGdtOWxlQnNoT3k0MEdReEE3ZXNobXFRNm1fUWFjaWkxbE5BOGcwdUQ0Y3pGakZCSmlwcWp0YmllZUhrYkJKQlR5QnJ4U2dUTGJxR05ueW5fWEVlQVBPcXZNb1Q3RzVoR0RTOWpjS3Exb2NWVEcxM001M0dnZ9IB3AFBVV95cUxNenp4eGdNY183Qlc3OERIZjM5SVhGeFVSTXpDNVlUcGxzTnFUMUlwTmJiSjgxWlFjTW1SZHBDaVhKYkpLMlRTMHE2elpxUko4N1N5bjBKc3k5bWtzSmpGN1QxaE5rbmRWWjZHdDV5dW4tanNWS0dsUWtMZnVFd3VWaXRjdmFOblg2UjhHNzltWmtHdG9POHZfWUUxeTBkVW5jNzlXR2FTZWV5dWF0eVdpZ2pPb2xiTko0LUJxR3FMbTd6bXRHbTc2YnM4TXdtXzg4eS1jaUt6SjFrbEtu?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Stock Markets Today: Sensex, Nifty Fall as Crude Oil Prices Surge, Foreign Funds Exit - Rediff",
-      "source": "Google News RSS",
-      "age": "Tue, 29 Sep 2026 04:58:38 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxPdEtsRXRUYUFoRWtEWVk0bk9sSjRqZmdVTl9tblZDajQ3ZThtdkNLeHI5N1RldUlCdGJrZGtqSjQtS2ZaVklJdVl4dDEtWWxlYXRwd2FrMjRoX293RHFHd1U0YmJDWEFDVEx4ZHp0TllHN2xyNWNpalNjZkRUREY3dmRFZmQtZnhOeV83cFhhemVvcVdXMWJiU2hkYmxCMjAxMUQwTmliOWtwSWNfYWt3anRkLWJkS3ZyTUltZDJmRjIxUVJsMUV1a0hkckcyaURtRzd2d2I2LWhRc1VfZTd3bjBrYVNvejRO0gHrAUFVX3lxTE1EQjlZNktDUlhqUnRabk5scnZkN0Ezby1pZ08zTExWMDlhVlJmOTFRYjlxZ2pFWlpSWndzam5QRjh1V2ZzTlphNzZJT09wX1h6eE1lWTRjeUo2M2l2dXNiekhMc0FGTHJQUE52dlBRZ3NVWERmdDVLWXdXdU9SVnlmV0owX2FsYTJCeDB4TUJ0NkVSbDJDa2c3aUNDNmdDbVNCYmwtLWxDUXBGZTFEVXZkM2N1dXlZNV8tYVgwRk5oRTlob2dEbV9HN2dvV3RYWkhFZHlFMktUd0ctY1RtVGpfSlBnZWJ6ZmJHMTA?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Sensex drops 1100+ points after Iran's fiery UN speech, Indian Ocean warning; NSE IPO debuts | Business News - Hindustan Times",
-      "source": "Google News RSS",
-      "age": "Thu, 24 Sep 2026 03:46:25 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxQeFZrYlhlYTJkTlc3U3hadjE4WVEtcHg1VEZNQ19ialJtQlc0WUxtWmlianlLUHpwZm5sUmxjeHozbkoxT0ltVEVndzNYWFkxeWhBMmpVRGFyTG5QSW1PWkpkWklOV2Z0OERYYjNMMlA0a0l1ZUF5TUR2N2c3djdhOHd4OWJBb3NBNEpBZml1V1RpZzJFNE94Z0NVbEk1WENGdXEyU3I4cTcxbDdqZnRsS0dGZ1hHN0FEaDlEcUlhLU5oS1pUUDM0LWdFRG9EZVRyejVxTTh6S3RxZExBdWlhY1dsbG9aZXFfRklHdHl6YmtvUGNhZ3pqd202SFZqQdIBgwJBVV95cUxNMnRfTDhjRHdIWDNiZ1Z0ZU1DdERsOHVSU3V1Z1BKbGJuRXd0ZWJib3Z6T1FVa2R6b3NrU2hPTFVIRWR1MzQ4cWtjQk5CZl9oLXZzLU1sSlFRMkVrV00yNVV0QVZsXzl4WG5NVXVranRfNTBiYnhsbF96eGJaUUU0X21sdS1WSXRUZ2VyU2dUREpjLTRTRkMtbThXNVR2MklFZDlPV083WHZ5YWxjeEM4Ulo0ZkgyQmhVOFhRZ1dFY1ZxT1Z5LUI5QTUxclk3aldJcHhxdjlkN0I3WTBKSzJ6dExyZWpqaTFoeHZKUHlVOXBBdHNTQmhUUTdRY0JnUi04aW8w?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "National Stock Exchange (NSE) shares fall below IPO price; here is why - Upstox",
-      "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 05:12:09 GMT",
-      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQUFFFcU9GYzFBSFZPdmNFQ2lpdmtNM2FpdV9vdzlSMWR5ZG91SU10b0JNVkNQWUNGMFdaYTRjamJYelpnR1RSSXZ6d0sxT3N2R0k1OWc5MV9vNzlLN2RzcXYwZjNubnpmWjVmenhmWjQxNjBqSEFfdHFZUjZfZEJueE1ZNGs3LTNzMlYxakxiT0tYeUdLZUFMNm56ZFhvaHJza3d5dmlBdTFwZ3Q0R3JtYWlGdm53WF9xOFhtVWhlNGpRZURz?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "NSE stock slips below IPO price as bears continue to outperform bulls — What should investors do? Stop-loss, resistance - Livemint",
-      "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 05:17:49 GMT",
-      "url": "https://news.google.com/rss/articles/CBMikwJBVV95cUxQT2ttMEp4YXVaUUJkajVSai1TdTdQN3ZjdFhTNE1ldTR0a1BYQW9YVG41TmZ6THBxVGNKMERRb3dCZlE1MFZmXy1iRy16WWk3Zk56M2VtNV9sNUJyRDJYTld2dHZ1c1dOaHlOOTVXa25CSXRqRHZUUWdaTlpYRmlMcjRFNHU0YW1qUjRiZ2s0Y2tsTjdDTzd6ellEM1VuMEtFUVdnbHM1amNSNF9YNEhnMHZfQVNJTURZeXl4aHF1VVdDazFldHhuVUxhc2JHckJkcXU3WE9Qc3hFSjBWeEVjeFk5NTFsVk1HOHVDS3ZTdzh2QnpBTWRLdXppLThjNDdlY0t5dlA5VGtJN25mSGIzYmdrb9IBmAJBVV95cUxOd0FCZEVNcUtXcmtIR0FzTUt3Y29ZZlF6SUV1STNTSVNlczdYSm9udDRnRkJaT09CVi1XYjV0dm1qUDkxdFd1XzkzSnRGeFZNeUV3VWh6aUEyX0NCaER4dDJJMklXWXVVeThlbjJqVXp1X1RLZ3VTTE50dzFxSk8wQ3otNTF0cmRIYktod0pIcnBlOHBTdzhkRUhtTmhNLVVIZjA5UjkwQW1EX0xLOVV0c3Bub2k4MUZSSldnR0NJV1JPSloyVFJQVFdIMWhQaTJTZklQUVJoQXhVOU5LTDFPcUUwbzdINUMwU2pROFpkdHdHc29TZmNkQm03MktLV2pVdGxSWFRuVXlmNzdGRHFZXzIwWHBNUE5D?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Moneyview IPO Allotment Status Today: How To Check On BSE, NSE And MUFG Intime India - NDTV Profit",
-      "source": "Google News RSS",
-      "age": "Tue, 29 Sep 2026 02:45:38 GMT",
-      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQb3FJNTlXSnoxWHM0M3lndEUtT1dwSWlXa1d2MHMxTC1wMVV3TVpQbjROUkJ4VldCRjZvbHJQZVFSQjIwMnBlcHRzRjNpWUNGOEpDdFJtUV9NNjBVR1RGb2d0X2hKRHJaVTZhRUVwa3ppZ2c4SHFaQy1HQ2NEZjk5RkgtWWh5ZzFzSklibjY4bW1Qdms2MUVjMGVueFEwQV9nUUp5bk93TWVjal9kSnEydHpLOTVFQVZFM19sX3V5TU1sVktt0gHMAUFVX3lxTE04ajVySmJHLVY1dkdoQnBxMVRkLXFKdWdoanlNWWR1UmdfRjZVekJZMmZQLXZhS3I2dnNHNWY1eGlMVHZpREdVQi1uWXVBVU9jc1I3YXNmcjJSdDRLakpDLWYycUthaU9Xc3NTcnNHX3plN21yM1E5YVBBazZvTHJybEloVERwSHZtdGhNbGpVUGZUQVNLMXZIVkpjZ3R0enlwV1JLc3dJUjB6bWVkN0Q1VGtFY0FteHBQVk1MUktkUjRlV2tLdUNaUlhNQg?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Stock Market Today Highlights, September 17: Nifty, Sensex close flat as high crude price concerns offset value buying - BusinessLine",
-      "source": "Google News RSS",
-      "age": "Thu, 24 Sep 2026 10:49:50 GMT",
-      "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPbGtLdWkzVldITkRZeFhIdEJ1R1dXUllaSG1YdlAxWk1NdldvWFRfWGdMSVBMc1dvNHpXMGF2MUNVOGNCUjc2Tkhfb3pjbDdJOWVEdFRzSVBxblNJbS1vVkZobFhQR0pCVDEzMEwwV1lhNHdMbTlPdkNSNTVEUlhRV0I2NVpzcWNWX3VBQkRhY3NPRERzT3hWWkpLb04wS3JuR2JXUzN6dF9PMHZrZjZvQkdJdVJsLUV3emQ0QzJWQTVJOVJLUVpSY9IBzwFBVV95cUxPYjQ5YjJGSDRiVXpEWmJYcEhtaW8ySlFnMHJsVzRGUXZPYXFScURUX042SGVCdENpVFZSYlRmajZsSmlGZmxheFFSZ3BNVDJ2STNYekRRM1hQcVR6VlFuOVFrUzZtTW5Nck1qSjUzZDFGUEJaVUQ0eDdZU3FnWm9qckFaSmhCNnlwZlJJYnJFZlVXT2ZVVV9EaXpPcFRZZzc0OS1YeDVQLTZlNXNVbEotVkFoR3FFV1NWRmgtcUFKeDlKOTFtR3BTR1hKV1JqeFU?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Top performing IPOs of September: ESDS Software Solutions, SS Retail, Hero Motors and others gain up to 300% despite gloomy market - Upstox",
-      "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 08:23:54 GMT",
-      "url": "https://news.google.com/rss/articles/CBMimwJBVV95cUxONVhqUVJSQ1dfY2UtT3RSSjl6eFhWZVpfY0dKVmxrNnBKb0VWYTFlVXBXOTdYM1d0ZmFHV2x6V2t6X2l4NnpTM3lsNk5fNWl1Zm0yczE1SkZhN2ItQ21qbW1hSFlpeGJkSjUzTEVVcWdEQlAyTmFuMGtpM0xOQkZJc1BVQmU0bkpUNHN2UjFNLXdGYzBfckxVS3FweWpfZmZfUXRfNjNSVVVUNmNDZU5zVTNLWFdpVV9SME1KOVdudkVOQ2FZblU0OEkzNHdEYWt6RG91VHBFV2xvTklIOUlSeTRERzhzY3d5dVBScFR3ZnU4YVRnemNUR25QeXd2VGtJMWZBalhGemplM0hQTU9qSEktaTliX19kSUJR?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "BSE stock falls 2.3% as SEBI mulls self-listing rules revamp, days after NSE IPO listing - Check details - Livemint",
-      "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 09:01:58 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxQMUlfeXBWN1NxZnktNUJ0X2o4NE9PdEJwZGtJQlh1c2lmWFo2anRvMWpsZGR0V1d3WWZ2WTZzQlp4ckpEbFF1SUJUVGFqbmZPamhHazVDbGtSXy1aZ1BaQVFPQllhSUpZWU9MdlhTR3FRdkxYaXVTWFA2dzhDWThxUi1Vei1qT1FfUDRWZ0RpNkJpQUNfSXgzcXZtMlNlR1dYRGt1T0dRTWVwVE0zcEFVQ0k3N1k1S2tMVnl5WFN3MFEwbHcyeGtudlc5MTFxdERadERrbDdLRVFxQWRJdFVWa0pPUnU1TkHSAewBQVVfeXFMT0hmQzAwZGJSRDdTTEhnVmI4T2ZEMW5SZUNvUUpjQjZwbHZaYVJsYWNzU2h6OUNRUEVQU2ZodU9mY3lzU3NuLUFiOGo2SUM2S1pwZ3VmXzN2RkdudDJnRUVzUDhCVS1JQlpnOFRwVEo4RDFLUGdGdjN4cVIyLXEwRDFDZU9CdVVFTl9uelA5cExUQk80QThVOEYwa3ZvSDN0X3E2RmlMZmpkbllpelVLSmdFV0Nud21Gdk1qVUpGdnpHTGppRE1fTl94ZzdhVWt3bkoxejREVW0wNGt6ODhzOEFxMEdlYWFxUzZ6bDQ?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "NSE shares fall below IPO price amid broader market crash; here's how you should trade - Moneycontrol.com",
-      "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 04:34:47 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxQSloyUGc1YUtMV0NidmhpdHFPMUpSTVZEZUdZelRhQUxBNUcyalVNUEJDa280RGNxRWR1dVVDSVZxSlJPWWpNTHpxM3YxblNHTlgzUmMtTm0tWF9vd1NNR2xycFZucEk4aTdva3ItbWdjLXZIWDhyNjFTWkRnTkhsSWNCQUJwSjhLSmhXQXI5WFp1LVdud05yZmxiME5WTElKcFlxTDlhejNuZ3psY3pGaGVlWHZ4OG4tZmVXbXFpeFNIbndQQkhGTGctR3YtQ3BEUktlTkFoWFNCaTdGNlVhZHpjSjbSAeoBQVVfeXFMUFR1bGtTN0xCNnVWRGowWXliNHI5TVVJUGw1T1BzaThYZ1RyOTR6eGhzMUJWV1U2VzdKRC1OMVY4NWV2czhrMjRpLXlHdDFremp5bE94WDFKSTFWcGE4UTJnX19IM2pwQXB4TExGVnE4ZDhyR2xwazhTbk8wZUZQdGMteVFIcERGaHMxeHlYYUwxeGIzWWZ3eTF1OUVMRlFqbWtqaUo2a0NaRGdhUEZIVWlnTkZIU3ZsNHNVTWhfNEExV0Fpd0s4YmRwdExZMnVaU1pUWGJkc2toQzFkMnFyYmZsNzdudnNjTEtn?oc=5"
-    }
-  ]
+  "news": []
 }

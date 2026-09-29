@@ -5,11 +5,15 @@ on:
     paths-ignore:
       - 'public/data/**'
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: bazaarbrief-live-refresh
+  cancel-in-progress: true
 
 jobs:
   refresh:
@@ -22,7 +26,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Refresh free live API dataset
+      - name: Check optional provider configuration
+        env:
+          IPOGURU_API_KEY: ${{ secrets.IPOGURU_API_KEY }}
+        run: |
+          if [ -n "$IPOGURU_API_KEY" ]; then
+            echo "IPOGURU_API_KEY configured: yes"
+          else
+            echo "IPOGURU_API_KEY configured: no — IPO Guru data will be unavailable and the script will try NSE fallback"
+          fi
+      - name: Refresh free exchange-first live API dataset
         env:
           GIFT_NIFTY_SYMBOL: ${{ vars.GIFT_NIFTY_SYMBOL }}
           IPOGURU_API_KEY: ${{ secrets.IPOGURU_API_KEY }}
@@ -32,5 +45,5 @@ jobs:
           git config user.name 'Bazaar Brief Data Bot'
           git config user.email 'actions@users.noreply.github.com'
           git add public/data/latest.json
-          git diff --cached --quiet || git commit -m "chore: refresh free market and IPO data"
+          git diff --cached --quiet || git commit -m "chore: refresh live market and IPO data"
           git push
