@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-09-28T20:36:27.381Z",
+  "updatedAt": "2026-09-29T00:03:50.977Z",
   "source": "Free live API aggregation — shared scheduled feed",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-09-28T20:36:27.381Z",
+    "updatedAt": "2026-09-29T00:03:50.977Z",
     "cadence": "2 hours",
     "partial": true,
     "errors": [
@@ -62,7 +62,7 @@
         "value": 7683.69,
         "change": -59.720000000000255,
         "pct": -0.7712364449254302,
-        "asOf": "2026-09-28T20:36:12.000Z",
+        "asOf": "2026-09-28T20:36:11.000Z",
         "currency": "USD",
         "providerSymbol": "^GSPC",
         "source": "Yahoo Finance public chart feed"
@@ -73,7 +73,7 @@
         "value": 30276.81,
         "change": -331.3249999999971,
         "pct": -1.0824736626390243,
-        "asOf": "2026-09-28T20:36:26.000Z",
+        "asOf": "2026-09-28T21:15:59.000Z",
         "currency": "USD",
         "providerSymbol": "^NDX",
         "source": "Yahoo Finance public chart feed"
@@ -106,9 +106,9 @@
         "name": "USD/INR",
         "kind": "fx",
         "value": 95.973,
-        "change": 0.17099999999999227,
-        "pct": 0.1784931421055847,
-        "asOf": "2026-09-28T20:17:19.000Z",
+        "change": 0,
+        "pct": 0,
+        "asOf": "2026-09-28T23:48:50.000Z",
         "currency": "INR",
         "providerSymbol": "INR=X",
         "source": "Yahoo Finance public chart feed",
@@ -116,29 +116,29 @@
       },
       {
         "name": "GOLD",
-        "value": 127049.74342807234,
+        "value": 127376.8292308402,
         "change": null,
         "pct": null,
         "unit": "₹/10g",
-        "asOf": "2026-09-28T20:36:07Z",
+        "asOf": "2026-09-29T00:03:37Z",
         "source": "Gold-API live spot × live FX"
       },
       {
         "name": "SILVER",
-        "value": 187556.66260499854,
+        "value": 187967.0747303723,
         "change": null,
         "pct": null,
         "unit": "₹/kg",
-        "asOf": "2026-09-28T20:36:06Z",
+        "asOf": "2026-09-29T00:03:36Z",
         "source": "Gold-API live spot × live FX"
       },
       {
         "name": "BRENT",
         "kind": "commodity",
-        "value": 98.34,
-        "change": 0.9000000000000057,
-        "pct": 0.9236453201970501,
-        "asOf": "2026-09-28T20:26:12.000Z",
+        "value": 98.67,
+        "change": 0.8400000000000034,
+        "pct": 0.8586323213738152,
+        "asOf": "2026-09-28T23:52:02.000Z",
         "currency": "USD",
         "providerSymbol": "BZ=F",
         "source": "Yahoo Finance public chart feed",
@@ -147,10 +147,10 @@
       {
         "name": "WTI",
         "kind": "commodity",
-        "value": 93.03,
-        "change": 0.6200000000000045,
-        "pct": 0.6709230602748669,
-        "asOf": "2026-09-28T20:26:20.000Z",
+        "value": 93.25,
+        "change": 0.6500000000000057,
+        "pct": 0.7019438444924468,
+        "asOf": "2026-09-28T23:53:35.000Z",
         "currency": "USD",
         "providerSymbol": "CL=F",
         "source": "Yahoo Finance public chart feed",
@@ -159,10 +159,10 @@
       {
         "name": "NATURAL GAS",
         "kind": "commodity",
-        "value": 3.147,
-        "change": -0.07800000000000029,
-        "pct": -2.4186046511627994,
-        "asOf": "2026-09-28T20:26:22.000Z",
+        "value": 3.137,
+        "change": 0.03100000000000014,
+        "pct": 0.9980682549903457,
+        "asOf": "2026-09-28T23:53:27.000Z",
         "currency": "USD",
         "providerSymbol": "NG=F",
         "source": "Yahoo Finance public chart feed",
@@ -176,20 +176,13 @@
     "dii": 5189.02,
     "date": "28-Sep-2026",
     "source": "NSE public FII/DII endpoint",
-    "asOf": "2026-09-28T20:36:27.381Z"
+    "asOf": "2026-09-29T00:03:50.977Z"
   },
   "ipo": {
     "mainboard": [],
     "sme": []
   },
   "news": [
-    {
-      "tag": "MARKET NEWS",
-      "title": "National Stock Exchange (NSE) shares fall below IPO price; here is why - Upstox",
-      "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 05:12:09 GMT",
-      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQUFFFcU9GYzFBSFZPdmNFQ2lpdmtNM2FpdV9vdzlSMWR5ZG91SU10b0JNVkNQWUNGMFdaYTRjamJYelpnR1RSSXZ6d0sxT3N2R0k1OWc5MV9vNzlLN2RzcXYwZjNubnpmWjVmenhmWjQxNjBqSEFfdHFZUjZfZEJueE1ZNGs3LTNzMlYxakxiT0tYeUdLZUFMNm56ZFhvaHJza3d5dmlBdTFwZ3Q0R3JtYWlGdm53WF9xOFhtVWhlNGpRZURz?oc=5"
-    },
     {
       "tag": "MARKET NEWS",
       "title": "NSE Share Price Falls Below IPO Price For The First Time, Stock Tanks Nearly 2% - NDTV Profit",
@@ -199,17 +192,17 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "BSE stock falls 2.3% as SEBI mulls self-listing rules revamp, days after NSE IPO listing - Check details - livemint.com",
+      "title": "NSE stock slips below IPO price as bears continue to outperform bulls — What should investors do? Stop-loss, resistance - Livemint",
       "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 09:01:58 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxQMUlfeXBWN1NxZnktNUJ0X2o4NE9PdEJwZGtJQlh1c2lmWFo2anRvMWpsZGR0V1d3WWZ2WTZzQlp4ckpEbFF1SUJUVGFqbmZPamhHazVDbGtSXy1aZ1BaQVFPQllhSUpZWU9MdlhTR3FRdkxYaXVTWFA2dzhDWThxUi1Vei1qT1FfUDRWZ0RpNkJpQUNfSXgzcXZtMlNlR1dYRGt1T0dRTWVwVE0zcEFVQ0k3N1k1S2tMVnl5WFN3MFEwbHcyeGtudlc5MTFxdERadERrbDdLRVFxQWRJdFVWa0pPUnU1TkHSAewBQVVfeXFMT0hmQzAwZGJSRDdTTEhnVmI4T2ZEMW5SZUNvUUpjQjZwbHZaYVJsYWNzU2h6OUNRUEVQU2ZodU9mY3lzU3NuLUFiOGo2SUM2S1pwZ3VmXzN2RkdudDJnRUVzUDhCVS1JQlpnOFRwVEo4RDFLUGdGdjN4cVIyLXEwRDFDZU9CdVVFTl9uelA5cExUQk80QThVOEYwa3ZvSDN0X3E2RmlMZmpkbllpelVLSmdFV0Nud21Gdk1qVUpGdnpHTGppRE1fTl94ZzdhVWt3bkoxejREVW0wNGt6ODhzOEFxMEdlYWFxUzZ6bDQ?oc=5"
+      "age": "Mon, 28 Sep 2026 05:17:49 GMT",
+      "url": "https://news.google.com/rss/articles/CBMikwJBVV95cUxQT2ttMEp4YXVaUUJkajVSai1TdTdQN3ZjdFhTNE1ldTR0a1BYQW9YVG41TmZ6THBxVGNKMERRb3dCZlE1MFZmXy1iRy16WWk3Zk56M2VtNV9sNUJyRDJYTld2dHZ1c1dOaHlOOTVXa25CSXRqRHZUUWdaTlpYRmlMcjRFNHU0YW1qUjRiZ2s0Y2tsTjdDTzd6ellEM1VuMEtFUVdnbHM1amNSNF9YNEhnMHZfQVNJTURZeXl4aHF1VVdDazFldHhuVUxhc2JHckJkcXU3WE9Qc3hFSjBWeEVjeFk5NTFsVk1HOHVDS3ZTdzh2QnpBTWRLdXppLThjNDdlY0t5dlA5VGtJN25mSGIzYmdrb9IBmAJBVV95cUxOd0FCZEVNcUtXcmtIR0FzTUt3Y29ZZlF6SUV1STNTSVNlczdYSm9udDRnRkJaT09CVi1XYjV0dm1qUDkxdFd1XzkzSnRGeFZNeUV3VWh6aUEyX0NCaER4dDJJMklXWXVVeThlbjJqVXp1X1RLZ3VTTE50dzFxSk8wQ3otNTF0cmRIYktod0pIcnBlOHBTdzhkRUhtTmhNLVVIZjA5UjkwQW1EX0xLOVV0c3Bub2k4MUZSSldnR0NJV1JPSloyVFJQVFdIMWhQaTJTZklQUVJoQXhVOU5LTDFPcUUwbzdINUMwU2pROFpkdHdHc29TZmNkQm03MktLV2pVdGxSWFRuVXlmNzdGRHFZXzIwWHBNUE5D?oc=5"
     },
     {
       "tag": "MARKET NEWS",
-      "title": "SRIT India IPO: GMP at 25%; check review, subscription &amp; other details - Business Standard",
+      "title": "Sensex drops 1100+ points after Iran's fiery UN speech, Indian Ocean warning; NSE IPO debuts | Business News - hindustantimes.com",
       "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 06:32:25 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQNXp1THVYeXFRalZMUG1hc3NfenZUSWl6SVotd244MEVfVnZWQ19yM3drTDJQcnZYalJNZVktdWRibC10eWtpWWtxXzNYT3prQVFfTmxCNURSdFJfX2ptSmtJVHU2Y1FrdG5jWVVrWFJvM2pVMUw0ZTYySFEtRk0yU0xZSGlOeU4waUpNS2xvekhuaGw3UjNDd01ldUh2VUtMU1NQWUlyZzhwWTZkc1ZWQVB0b19uS1VKSGQzdDAwWU5raW5RMVJWa0NWdEkyX1VZWG5hQtIB2gFBVV95cUxOMHNGMFhBOV9xdTlZYUZlSnRLUDVBVmZEbFpJUk9xYkFGZTA1bFNIV1pXTGxiaVpSOVlydlJtaHliT0RLa3FCNTBiWlkyejNiWG93U3RoY2tGSFdDd2g0YTBPVHhLcE9RNDRCQWtCZ2UwVERtSGlhR2dZa0RzSlBZd2RQWEJzS1ZqRGdKZk1CbVZOSUc1Wkg4SUMyNTVxV1B5M1VZREdWZ2NyOGE2ZXg2NlpBa1RuY2RxcXFYOTZuV0FSWkJuMWJSNjZEZWJpbEhxeXVsaXJqUGVodw?oc=5"
+      "age": "Thu, 24 Sep 2026 03:46:25 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxQeFZrYlhlYTJkTlc3U3hadjE4WVEtcHg1VEZNQ19ialJtQlc0WUxtWmlianlLUHpwZm5sUmxjeHozbkoxT0ltVEVndzNYWFkxeWhBMmpVRGFyTG5QSW1PWkpkWklOV2Z0OERYYjNMMlA0a0l1ZUF5TUR2N2c3djdhOHd4OWJBb3NBNEpBZml1V1RpZzJFNE94Z0NVbEk1WENGdXEyU3I4cTcxbDdqZnRsS0dGZ1hHN0FEaDlEcUlhLU5oS1pUUDM0LWdFRG9EZVRyejVxTTh6S3RxZExBdWlhY1dsbG9aZXFfRklHdHl6YmtvUGNhZ3pqd202SFZqQdIBgwJBVV95cUxNMnRfTDhjRHdIWDNiZ1Z0ZU1DdERsOHVSU3V1Z1BKbGJuRXd0ZWJib3Z6T1FVa2R6b3NrU2hPTFVIRWR1MzQ4cWtjQk5CZl9oLXZzLU1sSlFRMkVrV00yNVV0QVZsXzl4WG5NVXVranRfNTBiYnhsbF96eGJaUUU0X21sdS1WSXRUZ2VyU2dUREpjLTRTRkMtbThXNVR2MklFZDlPV083WHZ5YWxjeEM4Ulo0ZkgyQmhVOFhRZ1dFY1ZxT1Z5LUI5QTUxclk3aldJcHhxdjlkN0I3WTBKSzJ6dExyZWpqaTFoeHZKUHlVOXBBdHNTQmhUUTdRY0JnUi04aW8w?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -220,10 +213,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Sensex drops 1100+ points after Iran's fiery UN speech, Indian Ocean warning; NSE IPO debuts | Business News - Hindustan Times",
+      "title": "SRIT India IPO: GMP at 25%; check review, subscription &amp; other details - Business Standard",
       "source": "Google News RSS",
-      "age": "Thu, 24 Sep 2026 03:46:25 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxQeFZrYlhlYTJkTlc3U3hadjE4WVEtcHg1VEZNQ19ialJtQlc0WUxtWmlianlLUHpwZm5sUmxjeHozbkoxT0ltVEVndzNYWFkxeWhBMmpVRGFyTG5QSW1PWkpkWklOV2Z0OERYYjNMMlA0a0l1ZUF5TUR2N2c3djdhOHd4OWJBb3NBNEpBZml1V1RpZzJFNE94Z0NVbEk1WENGdXEyU3I4cTcxbDdqZnRsS0dGZ1hHN0FEaDlEcUlhLU5oS1pUUDM0LWdFRG9EZVRyejVxTTh6S3RxZExBdWlhY1dsbG9aZXFfRklHdHl6YmtvUGNhZ3pqd202SFZqQdIBgwJBVV95cUxNMnRfTDhjRHdIWDNiZ1Z0ZU1DdERsOHVSU3V1Z1BKbGJuRXd0ZWJib3Z6T1FVa2R6b3NrU2hPTFVIRWR1MzQ4cWtjQk5CZl9oLXZzLU1sSlFRMkVrV00yNVV0QVZsXzl4WG5NVXVranRfNTBiYnhsbF96eGJaUUU0X21sdS1WSXRUZ2VyU2dUREpjLTRTRkMtbThXNVR2MklFZDlPV083WHZ5YWxjeEM4Ulo0ZkgyQmhVOFhRZ1dFY1ZxT1Z5LUI5QTUxclk3aldJcHhxdjlkN0I3WTBKSzJ6dExyZWpqaTFoeHZKUHlVOXBBdHNTQmhUUTdRY0JnUi04aW8w?oc=5"
+      "age": "Mon, 28 Sep 2026 06:32:07 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQNXp1THVYeXFRalZMUG1hc3NfenZUSWl6SVotd244MEVfVnZWQ19yM3drTDJQcnZYalJNZVktdWRibC10eWtpWWtxXzNYT3prQVFfTmxCNURSdFJfX2ptSmtJVHU2Y1FrdG5jWVVrWFJvM2pVMUw0ZTYySFEtRk0yU0xZSGlOeU4waUpNS2xvekhuaGw3UjNDd01ldUh2VUtMU1NQWUlyZzhwWTZkc1ZWQVB0b19uS1VKSGQzdDAwWU5raW5RMVJWa0NWdEkyX1VZWG5hQtIB2gFBVV95cUxOMHNGMFhBOV9xdTlZYUZlSnRLUDVBVmZEbFpJUk9xYkFGZTA1bFNIV1pXTGxiaVpSOVlydlJtaHliT0RLa3FCNTBiWlkyejNiWG93U3RoY2tGSFdDd2g0YTBPVHhLcE9RNDRCQWtCZ2UwVERtSGlhR2dZa0RzSlBZd2RQWEJzS1ZqRGdKZk1CbVZOSUc1Wkg4SUMyNTVxV1B5M1VZREdWZ2NyOGE2ZXg2NlpBa1RuY2RxcXFYOTZuV0FSWkJuMWJSNjZEZWJpbEhxeXVsaXJqUGVodw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -234,10 +227,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Adroit Industries IPO: How to check allotment status on Bigshare, BSE, NSE; fresh GMP &amp; listing date - Business Today",
+      "title": "NSE IPO listing date: Key things retail investors should know before BSE debut - Upstox",
       "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 04:36:02 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi-gFBVV95cUxNaDZReENvMHlzTHduVm5IenNUY2ItZnVXODBIMHpubW01bWF4QkR5ckN5R18tY3N0ODBfT3ltejljV0dWaW5YenNCZzcwdzBWSHRhNVh4aGtEd3N0a1EzU1JLSWhMOHpKQnVOODdlQWJVUEdtams0akdSVVlDeUV6cFZfNnBGR1JRVURDODN0bEpxZU9XMHV3RmZVSWdFbTlaTl9ZMDAyYk1zZi1zNkRzZV9mc2hhdVhVUnp5UWZldURRY3dRcE1TeFNJNWhvUTdZbnE2aXZwLThLOVhWS0VGUHdDNjdiRGNQZXBSUU5RdUxJb1RUNUZXSjJ30gH_AUFVX3lxTE1DVkFONWZ5UVNXQ3RhWS1lcmZ5Z0JYai1yTWNKam1NUE9LQnFLV21XbUY4OW9EM3RPbk1WalVndXQzYmk4NlczUGRpbFFkTWRIWDdpMHNpdkFIcERwZlAtbkxkVE95UU8ybGtqNWRfdmxRVFhiaTJoR1lCb2dXT3JxTmZUYXNIY2ZXTWZ5b1RCWXZpdDVXbElwSXpsTnpMa0hxZEtSVC16VEc5NGRvVlhNU1U5YXRvMmtYbTFXNXg0dGNIRVp3ZUdNbVdhSUlYRFRBSWNfMnQ4WUh1RGdYbmk2MlNFVEJLR3kzMVBGWE1yYmI0dzRyQWhKenpxaGJzbw?oc=5"
+      "age": "Wed, 23 Sep 2026 02:30:48 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQYVBRMGRILVRBZ0FqcGdvOExIT08zWFZoZGxjUHVKTUNiVzVRY19VZHFjbU8xS284bV9mcUVqNHdCTmV6N1R0Y3BqS3RIMFRKYnpKM05hbVB0TWJhMEVlRDhBZUMxVXNGWmhPLXhRbUJvUGJGbkhBVFhTTzZtWU9FeUQ0T1FqWTlvTWswblQxYkJWMi1qdUNjekIyZnpLc2hHTG9YUXQtbHZwV0lmT2UxTkJ2TUhzbUtQ?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -248,10 +241,17 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "NSE shares fall below IPO price amid broader market crash; here's how you should trade - Moneycontrol.com",
+      "title": "NSE vs BSE: Which exchange should now be the preferred bet for investors? - IndiaIPO",
       "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 04:34:47 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxQSloyUGc1YUtMV0NidmhpdHFPMUpSTVZEZUdZelRhQUxBNUcyalVNUEJDa280RGNxRWR1dVVDSVZxSlJPWWpNTHpxM3YxblNHTlgzUmMtTm0tWF9vd1NNR2xycFZucEk4aTdva3ItbWdjLXZIWDhyNjFTWkRnTkhsSWNCQUJwSjhLSmhXQXI5WFp1LVdud05yZmxiME5WTElKcFlxTDlhejNuZ3psY3pGaGVlWHZ4OG4tZmVXbXFpeFNIbndQQkhGTGctR3YtQ3BEUktlTkFoWFNCaTdGNlVhZHpjSjbSAeoBQVVfeXFMUFR1bGtTN0xCNnVWRGowWXliNHI5TVVJUGw1T1BzaThYZ1RyOTR6eGhzMUJWV1U2VzdKRC1OMVY4NWV2czhrMjRpLXlHdDFremp5bE94WDFKSTFWcGE4UTJnX19IM2pwQXB4TExGVnE4ZDhyR2xwazhTbk8wZUZQdGMteVFIcERGaHMxeHlYYUwxeGIzWWZ3eTF1OUVMRlFqbWtqaUo2a0NaRGdhUEZIVWlnTkZIU3ZsNHNVTWhfNEExV0Fpd0s4YmRwdExZMnVaU1pUWGJkc2toQzFkMnFyYmZsNzdudnNjTEtn?oc=5"
+      "age": "Thu, 24 Sep 2026 07:02:19 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQZEp2dzlZMGJiTmZtRFVJTHhmZGdHUmdNaEJyT3Zvc1VTV3JIVE96dmJNVXFiM19KcUNaOGppOXR4bVB4Z29uUEFWUV9UU0RtcFZHb1BUdlN0em1TNjRtQTFVcE16WWZzSGkzbmZWTTdsVFNhSG45MnpraUhOUTRaRW1IUHBXVmRJTG5oSDhfLVlPSnEwMUszX2RqU1Fyc045VGl1UzgwYTRheU0?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Adroit Industries IPO: How to check allotment status on Bigshare, BSE, NSE; fresh GMP &amp; listing date - Business Today",
+      "source": "Google News RSS",
+      "age": "Mon, 28 Sep 2026 04:36:02 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi-gFBVV95cUxNaDZReENvMHlzTHduVm5IenNUY2ItZnVXODBIMHpubW01bWF4QkR5ckN5R18tY3N0ODBfT3ltejljV0dWaW5YenNCZzcwdzBWSHRhNVh4aGtEd3N0a1EzU1JLSWhMOHpKQnVOODdlQWJVUEdtams0akdSVVlDeUV6cFZfNnBGR1JRVURDODN0bEpxZU9XMHV3RmZVSWdFbTlaTl9ZMDAyYk1zZi1zNkRzZV9mc2hhdVhVUnp5UWZldURRY3dRcE1TeFNJNWhvUTdZbnE2aXZwLThLOVhWS0VGUHdDNjdiRGNQZXBSUU5RdUxJb1RUNUZXSjJ30gH_AUFVX3lxTE1DVkFONWZ5UVNXQ3RhWS1lcmZ5Z0JYai1yTWNKam1NUE9LQnFLV21XbUY4OW9EM3RPbk1WalVndXQzYmk4NlczUGRpbFFkTWRIWDdpMHNpdkFIcERwZlAtbkxkVE95UU8ybGtqNWRfdmxRVFhiaTJoR1lCb2dXT3JxTmZUYXNIY2ZXTWZ5b1RCWXZpdDVXbElwSXpsTnpMa0hxZEtSVC16VEc5NGRvVlhNU1U5YXRvMmtYbTFXNXg0dGNIRVp3ZUdNbVdhSUlYRFRBSWNfMnQ4WUh1RGdYbmk2MlNFVEJLR3kzMVBGWE1yYmI0dzRyQWhKenpxaGJzbw?oc=5"
     }
   ]
 }
