@@ -24,18 +24,17 @@ Public exchange web endpoints can reject automated/cloud requests. The collector
 
 ### Yahoo public chart feed
 
-Used for global indices, USD/INR and energy contracts. This is a public/undocumented feed and may be delayed or unavailable.
+Used for global indices and USD/INR. This is a public/undocumented feed and may be delayed or unavailable.
 
-### Gold-API
+### OroPocket
 
-`https://api.gold-api.com/price/XAU`
-`https://api.gold-api.com/price/XAG`
+`https://api.oropocket.com/public/prices`
 
-No API key is required for the real-time price endpoints. Gold and silver are returned as USD/troy-ounce spot prices. BazaarBrief also calculates an INR equivalent using its shared USD/INR quote.
+No API key is required. The public endpoint returns gold and silver buy/sell quotes in INR per gram, GST component and 24-hour change. BazaarBrief displays the buy rate and labels it as an India buy quote rather than a spot/MCX/LBMA benchmark. The collector calls it once per shared refresh, not once per visitor.
 
 ### TradingView public scanner
 
-Used for GIFT Nifty. The quote is explicitly treated as a futures/pre-market indicator and not as NIFTY 50 spot.
+Used for GIFT Nifty and as a fallback for NIFTY 50, BANK NIFTY and SENSEX when the primary NSE/BSE public exchange endpoints do not return a usable quote. Brent, WTI and Natural Gas also use the scanner. These values are labelled as public-scanner/provider quotes and are not claimed to be licensed exchange-grade real-time redistribution.
 
 ### Google News RSS
 

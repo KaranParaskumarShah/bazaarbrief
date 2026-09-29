@@ -55,11 +55,11 @@ After the Indian cash-market session, the collector requests historical EOD data
 
 ### Global / commodities
 
-Yahoo public chart feed is used consistently for global indices, USD/INR and energy contracts. Provider timestamps are retained.
+Yahoo public chart feed is used for global indices and USD/INR. Energy contracts use the TradingView public scanner so Brent/WTI do not inherit the stale Yahoo contract quote seen in the previous build. Provider timestamps are retained where available.
 
 ### Metals
 
-Gold-API supplies XAU/XAG USD spot prices. The dashboard uses the same Yahoo USD/INR quote for the INR equivalent, avoiding a second FX provider with a different timestamp.
+OroPocket supplies Indian gold/silver buy quotes directly in INR per gram. The dashboard does not synthesize Indian rates from USD spot and FX.
 
 ### GIFT Nifty
 

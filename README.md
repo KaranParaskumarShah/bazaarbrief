@@ -32,17 +32,17 @@ That is a public instrument symbol, not a secret.
 
 | Data | Provider | Key | Policy |
 |---|---|---:|---|
-| NIFTY 50 | NSE public market feed | No | Exchange source only |
-| BANK NIFTY | NSE public market feed | No | Exchange source only |
-| SENSEX | BSE public market feed | No | Exchange source only |
+| NIFTY 50 | NSE public market feed + TradingView fallback | No | Exchange preferred; fallback clearly labelled |
+| BANK NIFTY | NSE public market feed + TradingView fallback | No | Exchange preferred; fallback clearly labelled |
+| SENSEX | BSE public market feed + TradingView fallback | No | Exchange preferred; fallback clearly labelled |
 | Final NIFTY/BANK close | NSE historical index data | No | Used after cash-market close |
 | Final SENSEX close | BSE historical index data | No | Used after cash-market close |
 | Indian stocks | NSE NIFTY 50 feed | No | No community fallback |
 | GIFT Nifty | TradingView public scanner / NSEIX | No | Futures indicator |
 | S&P 500 / NASDAQ 100 / FTSE / Hang Seng | Yahoo public chart | No | Provider timestamp retained |
 | USD/INR | Yahoo public chart | No | Same quote used for metal INR conversion |
-| Brent / WTI / Natural Gas | Yahoo public chart | No | Futures/commodity quote |
-| Gold / Silver | Gold-API | No | USD spot + INR equivalent |
+| Brent / WTI / Natural Gas | TradingView public scanner | No | ICE/NYMEX continuous futures quotes |
+| Gold / Silver | OroPocket | No | India INR buy rate per gram |
 | IPO issue data | FinAPI free IPO endpoint | No | Primary free IPO feed |
 | IPO official enrichment | NSE public IPO endpoints | No | Optional; failure does not block IPOs |
 | GMP / subscription | GMP Today public dataset | No | Unofficial market-reported data |

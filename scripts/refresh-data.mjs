@@ -8,8 +8,8 @@ import path from 'node:path';
  * - Indian indices/stocks: NSE public feed; SENSEX: BSE public feed.
  * - Final Indian cash-market close: NSE/BSE historical EOD feeds.
  * - GIFT Nifty: TradingView public scanner, NSE International Exchange symbol.
- * - Global indices/FX/energy: Yahoo public chart feed.
- * - Gold/Silver: Gold-API public spot feed + the SAME Yahoo USD/INR quote used by the dashboard.
+ * - Global indices/FX: Yahoo public chart feed; energy: TradingView public scanner.
+ * - Gold/Silver: OroPocket public India buy/sell rate feed, INR per gram, no API key.
  * - IPO details: FinAPI free no-key IPO endpoint, with optional NSE public enrichment.
  * - GMP/subscription: GMP Today public dataset/API.
  * - News: Google News RSS.
@@ -171,13 +171,26 @@ function nseHeaders(cookie = '') {
 }
 
 async function createNseSession() {
-  const response = await fetch(NSE_IPO_PAGE, {
-    headers: nseHeaders(),
-    signal: AbortSignal.timeout(TIMEOUT)
-  });
-  if (!response.ok) throw new Error(`NSE session HTTP ${response.status}`);
-  const cookies = response.headers.getSetCookie?.() || [];
-  return cookies.map(cookie => cookie.split(';')[0]).join('; ');
+  const urls = [NSE_BASE, NSE_IPO_PAGE];
+  const cookieMap = new Map();
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        headers: nseHeaders(),
+        signal: AbortSignal.timeout(TIMEOUT)
+      });
+      if (!response.ok) continue;
+      const cookies = response.headers.getSetCookie?.() || [];
+      for (const cookie of cookies) {
+        const pair = cookie.split(';')[0];
+        const [name, ...rest] = pair.split('=');
+        if (name) cookieMap.set(name, rest.join('='));
+      }
+    } catch {
+      // Try the next NSE landing page; one successful page is enough.
+    }
+  }
+  return [...cookieMap.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
 }
 
 async function nseGet(pathname, cookie, attempts = 2) {
@@ -185,7 +198,11 @@ async function nseGet(pathname, cookie, attempts = 2) {
   for (let i = 0; i < attempts; i += 1) {
     try {
       const response = await fetch(`${NSE_BASE}${pathname}`, {
-        headers: nseHeaders(cookie),
+        headers: {
+          ...nseHeaders(cookie),
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache'
+        },
         signal: AbortSignal.timeout(TIMEOUT)
       });
       if (!response.ok) throw new Error(`${pathname} -> HTTP ${response.status}`);
@@ -218,10 +235,23 @@ function normalizeNseIndex(row, name) {
 
 async function fetchNseMarket() {
   const cookie = await createNseSession();
-  const [allIndices, niftyPayload] = await Promise.all([
-    nseGet('/api/allIndices', cookie),
-    nseGet('/api/equity-stockIndices?index=NIFTY%2050', cookie)
-  ]);
+  if (!cookie) throw new Error('NSE session could not be established');
+
+  let allIndices = null;
+  let niftyPayload = null;
+  const errors = [];
+
+  try {
+    allIndices = await nseGet('/api/allIndices', cookie);
+  } catch (error) {
+    errors.push(`allIndices: ${error.message}`);
+  }
+
+  try {
+    niftyPayload = await nseGet('/api/equity-stockIndices?index=NIFTY%2050', cookie);
+  } catch (error) {
+    errors.push(`equity-stockIndices: ${error.message}`);
+  }
 
   const rows = unwrapRows(allIndices);
   const find = pattern => rows.find(row => pattern.test(String(row?.indexName || row?.name || '')));
@@ -241,7 +271,11 @@ async function fetchNseMarket() {
     }))
     .filter(row => row.price != null);
 
-  return { cookie, indices: [nifty, bank].filter(Boolean), stocks };
+  if (!nifty && !bank && !stocks.length) {
+    throw new Error(`NSE returned no usable market records${errors.length ? ` (${errors.join('; ')})` : ''}`);
+  }
+
+  return { cookie, indices: [nifty, bank].filter(Boolean), stocks, errors };
 }
 
 function normalizeNseEod(row, name) {
@@ -281,16 +315,22 @@ async function fetchBseSensex() {
   const payload = await fetchJson('https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w', {
     headers: { Referer: 'https://www.bseindia.com/', Origin: 'https://www.bseindia.com' }
   });
-  const row = unwrapRows(payload)[0] || payload?.data?.[0] || payload?.Table?.[0] || payload;
-  const value = num(first(row?.LTP, row?.ltp, row?.Ltp, row?.Value));
-  if (value == null) throw new Error('BSE SENSEX feed returned no LTP');
+  const candidates = [
+    ...unwrapRows(payload),
+    ...unwrapRows(payload?.data),
+    ...unwrapRows(payload?.Table),
+    ...(payload && typeof payload === 'object' && !Array.isArray(payload) ? [payload] : [])
+  ];
+  const row = candidates.find(item => num(first(item?.LTP, item?.ltp, item?.Ltp, item?.Value, item?.IndexValue)) != null);
+  if (!row) throw new Error('BSE SENSEX feed returned no LTP');
+  const value = num(first(row?.LTP, row?.ltp, row?.Ltp, row?.Value, row?.IndexValue));
   const previous = num(first(row?.PrevClose, row?.prevClose, row?.PreviousClose));
   return {
     name: 'SENSEX', value,
-    change: num(first(row?.Change, row?.change)) ?? changePts(value, previous),
-    pct: num(first(row?.['Change %'], row?.ChangePercent, row?.changePercent)) ?? changePct(value, previous),
+    change: num(first(row?.Change, row?.change, row?.NetChange)) ?? changePts(value, previous),
+    pct: num(first(row?.['Change %'], row?.ChangePercent, row?.changePercent, row?.PChange)) ?? changePct(value, previous),
     kind: 'index',
-    asOf: first(row?.DateTime, NOW),
+    asOf: first(row?.DateTime, row?.dateTime, row?.UpdatedOn, NOW),
     source: 'BSE India public SENSEX feed',
     priceType: 'intraday_ltp',
     finalized: false,
@@ -407,6 +447,39 @@ async function tradingViewScan(tickers) {
   return Array.isArray(payload?.data) ? payload.data : [];
 }
 
+async function fetchTradingViewSet(definitions) {
+  const tickers = definitions.map(def => def.ticker);
+  const rows = await tradingViewScan(tickers);
+  const byTicker = new Map(rows.map(row => [String(row?.s || '').toUpperCase(), row]));
+  const good = [];
+  const errors = [];
+
+  for (const def of definitions) {
+    const row = byTicker.get(def.ticker.toUpperCase());
+    const values = row?.d;
+    const value = num(values?.[0]);
+    if (value == null) {
+      errors.push(`${def.name}: TradingView scanner returned no current quote`);
+      continue;
+    }
+    good.push({
+      name: def.name,
+      value,
+      pct: num(values?.[1]),
+      change: num(values?.[2]),
+      currency: text(values?.[3]) || 'USD',
+      kind: def.kind || 'market',
+      asOf: NOW,
+      providerSymbol: def.ticker,
+      source: 'TradingView public scanner',
+      priceType: def.priceType || 'market_quote',
+      finalized: false,
+      sessionStatus: 'provider'
+    });
+  }
+  return { good, errors };
+}
+
 async function fetchGiftNifty() {
   const ticker = `NSEIX:${process.env.GIFT_NIFTY_SYMBOL || 'NIFTY1!'}`;
   const rows = await tradingViewScan([ticker]);
@@ -425,11 +498,34 @@ async function fetchGiftNifty() {
 }
 
 async function fetchMetals() {
-  const [gold, silver] = await Promise.all([
-    fetchJson('https://api.gold-api.com/price/XAU'),
-    fetchJson('https://api.gold-api.com/price/XAG')
-  ]);
-  return { gold, silver };
+  const payload = await retryJson('https://api.oropocket.com/public/prices', {}, 2);
+  const data = payload?.data;
+  const gold = data?.gold;
+  const silver = data?.silver;
+  if (!gold || !silver) throw new Error('OroPocket returned no gold/silver India rates');
+  const goldBuy = num(gold.buy);
+  const silverBuy = num(silver.buy);
+  if (goldBuy == null || silverBuy == null) throw new Error('OroPocket returned invalid gold/silver buy rates');
+  return {
+    gold: {
+      buyPerGram: goldBuy,
+      sellPerGram: num(gold.sell),
+      gstPerGram: num(gold.gst),
+      changePercent: num(gold.change24h?.buy),
+      asOf: first(data.timestamp, NOW),
+      source: 'OroPocket India gold buy rate',
+      unit: 'INR per gram'
+    },
+    silver: {
+      buyPerGram: silverBuy,
+      sellPerGram: num(silver.sell),
+      gstPerGram: num(silver.gst),
+      changePercent: num(silver.change24h?.buy),
+      asOf: first(data.timestamp, NOW),
+      source: 'OroPocket India silver buy rate',
+      unit: 'INR per gram'
+    }
+  };
 }
 
 function metalInr(usdPerOz, usdInr, unit) {
@@ -710,7 +806,7 @@ function emptyDataset(errors, status = 'failed') {
 const errors = [];
 
 try {
-  const [nseMarket, bseSensex, yahoo, giftNifty, metals, news, finIpo, gmpToday] = await Promise.allSettled([
+  const [nseMarket, bseSensex, yahoo, giftNifty, tv, metals, news, finIpo, gmpToday] = await Promise.allSettled([
     fetchNseMarket(),
     fetchBseSensex(),
     fetchYahooSet([
@@ -718,12 +814,17 @@ try {
       { name: 'NASDAQ 100', symbol: '^NDX', kind: 'index' },
       { name: 'FTSE 100', symbol: '^FTSE', kind: 'index' },
       { name: 'HANG SENG', symbol: '^HSI', kind: 'index' },
-      { name: 'USD/INR', symbol: 'INR=X', kind: 'fx' },
-      { name: 'BRENT', symbol: 'BZ=F', kind: 'commodity' },
-      { name: 'WTI', symbol: 'CL=F', kind: 'commodity' },
-      { name: 'NATURAL GAS', symbol: 'NG=F', kind: 'commodity' }
+      { name: 'USD/INR', symbol: 'INR=X', kind: 'fx' }
     ]),
     fetchGiftNifty(),
+    fetchTradingViewSet([
+      { name: 'BRENT', ticker: 'ICEEUR:BRN1!', kind: 'commodity', priceType: 'futures_quote' },
+      { name: 'WTI', ticker: 'NYMEX:CL1!', kind: 'commodity', priceType: 'futures_quote' },
+      { name: 'NATURAL GAS', ticker: 'NYMEX:NG1!', kind: 'commodity', priceType: 'futures_quote' },
+      { name: 'NIFTY 50 TV', ticker: 'NSE:NIFTY', kind: 'index', priceType: 'index_quote' },
+      { name: 'BANK NIFTY TV', ticker: 'NSE:BANKNIFTY', kind: 'index', priceType: 'index_quote' },
+      { name: 'SENSEX TV', ticker: 'BSE:SENSEX', kind: 'index', priceType: 'index_quote' }
+    ]),
     fetchMetals(),
     fetchNews(),
     fetchFinApiIpos(),
@@ -732,6 +833,7 @@ try {
 
   const nse = nseMarket.status === 'fulfilled' ? nseMarket.value : null;
   if (!nse) errors.push(`NSE market: ${nseMarket.reason?.message || nseMarket.reason}`);
+  else if (nse.errors?.length) errors.push(...nse.errors.map(error => `NSE market: ${error}`));
   const sensexLive = bseSensex.status === 'fulfilled' ? bseSensex.value : null;
   if (!sensexLive) errors.push(`BSE SENSEX: ${bseSensex.reason?.message || bseSensex.reason}`);
 
@@ -743,27 +845,51 @@ try {
   const gift = giftNifty.status === 'fulfilled' ? giftNifty.value : null;
   if (!gift) errors.push(`GIFT Nifty: ${giftNifty.reason?.message || giftNifty.reason}`);
 
+  const tvGood = tv.status === 'fulfilled' ? tv.value.good : [];
+  if (tv.status === 'fulfilled') errors.push(...tv.value.errors.map(error => `TradingView: ${error}`));
+  else errors.push(`TradingView: ${tv.reason?.message || tv.reason}`);
+  const tvByName = new Map(tvGood.map(item => [item.name, item]));
+
   const metalPayload = metals.status === 'fulfilled' ? metals.value : null;
   if (!metalPayload) errors.push(`Gold/Silver: ${metals.reason?.message || metals.reason}`);
 
   const session = indiaNow();
+  const officialNifty = nse?.indices?.find(item => item.name === 'NIFTY 50');
+  const officialBank = nse?.indices?.find(item => item.name === 'BANK NIFTY');
+  const officialSensex = sensexLive;
+  const tvNifty = tvByName.get('NIFTY 50 TV');
+  const tvBank = tvByName.get('BANK NIFTY TV');
+  const tvSensex = tvByName.get('SENSEX TV');
+
   let indices = [
-    ...(nse?.indices || []),
-    ...(sensexLive ? [sensexLive] : []),
-    ...(gift ? [gift] : [])
-  ];
+    officialNifty || (tvNifty ? { ...tvNifty, name: 'NIFTY 50', source: 'TradingView public scanner · NSE index fallback', finalized: false } : null),
+    officialBank || (tvBank ? { ...tvBank, name: 'BANK NIFTY', source: 'TradingView public scanner · NSE index fallback', finalized: false } : null),
+    officialSensex || (tvSensex ? { ...tvSensex, name: 'SENSEX', source: 'TradingView public scanner · BSE index fallback', finalized: false } : null),
+    gift
+  ].filter(Boolean);
 
   if (session.afterCashClose) {
     try {
-      const eod = nse?.cookie ? await fetchNseEod(nse.cookie) : {};
-      indices = indices.map(item => eod[item.name] ? { ...item, ...eod[item.name], note: `Final NSE close for ${eod[item.name].closeDate}` } : item);
+      const eodCookie = nse?.cookie || await createNseSession();
+      const eod = eodCookie ? await fetchNseEod(eodCookie) : {};
+      for (const [name, record] of Object.entries(eod)) {
+        const exists = indices.some(item => item.name === name);
+        if (exists) {
+          indices = indices.map(item => item.name === name ? { ...item, ...record, note: `Final NSE close for ${record.closeDate}` } : item);
+        } else {
+          indices.push(record);
+        }
+      }
     } catch (error) {
       errors.push(`NSE EOD close: ${error.message}`);
     }
     try {
-      if (sensexLive) {
-        const eodSensex = await fetchBseEodSensex();
+      const eodSensex = await fetchBseEodSensex();
+      const exists = indices.some(item => item.name === 'SENSEX');
+      if (exists) {
         indices = indices.map(item => item.name === 'SENSEX' ? { ...item, ...eodSensex, note: `Final BSE close for ${eodSensex.closeDate}` } : item);
+      } else {
+        indices.push(eodSensex);
       }
     } catch (error) {
       errors.push(`BSE EOD close: ${error.message}`);
@@ -778,49 +904,53 @@ try {
   const commodities = [];
   if (usdInr) commodities.push({ name: 'USD/INR', ...usdInr, unit: '₹' });
 
-  const goldUsd = num(metalPayload?.gold?.price);
-  const silverUsd = num(metalPayload?.silver?.price);
-  if (goldUsd != null && usdInr?.value != null) {
+  const goldBuy = num(metalPayload?.gold?.buyPerGram);
+  const silverBuy = num(metalPayload?.silver?.buyPerGram);
+  if (goldBuy != null) {
     commodities.push({
       name: 'GOLD',
-      value: goldUsd,
-      usdPerOz: goldUsd,
-      inrPer10g: metalInr(goldUsd, usdInr.value, '10g'),
-      fxRate: usdInr.value,
-      fxAsOf: usdInr.asOf,
-      unit: '$/troy oz',
-      displayUnit: '$/troy oz + ₹/10g',
-      pct: num(metalPayload?.gold?.changePercent),
-      change: num(metalPayload?.gold?.change),
-      asOf: metalPayload?.gold?.updatedAt || NOW,
-      source: 'Gold-API live XAU spot + Yahoo USD/INR',
-      precious: true
+      value: goldBuy * 10,
+      inrPer10g: goldBuy * 10,
+      inrPerGram: goldBuy,
+      gstPerGram: metalPayload.gold.gstPerGram,
+      sellPerGram: metalPayload.gold.sellPerGram,
+      pct: metalPayload.gold.changePercent,
+      asOf: metalPayload.gold.asOf,
+      unit: '₹/10g',
+      displayUnit: '₹/10g',
+      source: metalPayload.gold.source,
+      precious: true,
+      domestic: true,
+      note: '24K India buy quote · GST is not included in the displayed buy rate.'
     });
   }
-  if (silverUsd != null && usdInr?.value != null) {
+  if (silverBuy != null) {
     commodities.push({
       name: 'SILVER',
-      value: silverUsd,
-      usdPerOz: silverUsd,
-      inrPerKg: metalInr(silverUsd, usdInr.value, 'kg'),
-      fxRate: usdInr.value,
-      fxAsOf: usdInr.asOf,
-      unit: '$/troy oz',
-      displayUnit: '$/troy oz + ₹/kg',
-      pct: num(metalPayload?.silver?.changePercent),
-      change: num(metalPayload?.silver?.change),
-      asOf: metalPayload?.silver?.updatedAt || NOW,
-      source: 'Gold-API live XAG spot + Yahoo USD/INR',
-      precious: true
+      value: silverBuy * 1000,
+      inrPerKg: silverBuy * 1000,
+      inrPerGram: silverBuy,
+      gstPerGram: metalPayload.silver.gstPerGram,
+      sellPerGram: metalPayload.silver.sellPerGram,
+      pct: metalPayload.silver.changePercent,
+      asOf: metalPayload.silver.asOf,
+      unit: '₹/kg',
+      displayUnit: '₹/kg',
+      source: metalPayload.silver.source,
+      precious: true,
+      domestic: true,
+      note: 'India silver buy quote · GST is not included in the displayed buy rate.'
     });
   }
 
+
   for (const name of ['BRENT', 'WTI', 'NATURAL GAS']) {
-    const quote = yahooByName.get(name);
+    const quote = tvByName.get(name);
     if (quote) commodities.push({
       name,
       ...quote,
-      unit: name === 'NATURAL GAS' ? '$/MMBtu' : '$/bbl'
+      unit: name === 'NATURAL GAS' ? '$/MMBtu' : '$/bbl',
+      source: `TradingView public scanner · ${name === 'BRENT' ? 'ICE Brent futures' : name === 'WTI' ? 'NYMEX WTI futures' : 'NYMEX Henry Hub futures'}`
     });
   }
 
@@ -864,6 +994,7 @@ try {
     bseSensex: bseSensex.status,
     yahoo: yahoo.status,
     giftNifty: giftNifty.status,
+    tradingView: tv.status,
     metals: metals.status,
     news: news.status,
     finapiIpo: finIpo.status,
@@ -897,7 +1028,8 @@ try {
       refreshCadence: '10 minutes',
       indianEquities: 'NSE/BSE public exchange feeds only',
       ipo: 'FinAPI free no-key + GMP Today public dataset + optional NSE enrichment',
-      metals: 'Gold-API USD spot + same Yahoo USD/INR quote used for dashboard conversion'
+      metals: 'OroPocket India gold/silver buy quotes in INR per gram; no synthetic USD-to-INR conversion',
+      energy: 'TradingView public scanner for ICE Brent, NYMEX WTI and NYMEX Henry Hub futures'
     },
     market: { indices, global, commodities, stocks },
     fiiDii: fii,
