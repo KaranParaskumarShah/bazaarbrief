@@ -1,5 +1,0 @@
-.highlight-list { margin: 0 0 1.25rem; padding-left: 1.2rem; color: var(--ink); font-size: 0.92rem; line-height: 1.75; }
-
-.tools-teaser-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-.tools-teaser-grid__item { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm); border-radius: 999px; padding: 0.5rem 1.05rem; font-size: 0.85rem; font-weight: 500; color: var(--ink); text-decoration: none; }
-.tools-teaser-grid__item:hover { border-color: var(--gold); color: var(--gold-deep); }

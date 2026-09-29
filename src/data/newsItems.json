@@ -1,9 +1,0 @@
-{
-  "note": "Fallback only — shown until the live RSS feed (src/services/news.js) fetches successfully at least once on this browser.",
-  "items": [
-    { "date": "2026-09-27", "title": "Orbit Data Systems IPO subscribed 8.1x on Day 3", "summary": "Institutional demand led the book; retail crossed 3x by the final hour of bidding.", "url": "/ipo/orbit-data-systems-ipo" },
-    { "date": "2026-09-27", "title": "FIIs extend selling streak as DIIs keep buying", "summary": "Net FII outflow crossed ₹1,800 crore Friday, offset almost entirely by domestic institutional buying.", "url": "/ipo/gmp" },
-    { "date": "2026-09-20", "title": "Meridian Defence Systems sets IPO price band at ₹268–282", "summary": "The issue opens October 6 and aims to raise ₹960 crore via fresh issue alone.", "url": "/ipo/meridian-defence-systems-ipo" },
-    { "date": "2026-09-15", "title": "Northline Fintech lists at a 17% premium", "summary": "Shares opened at ₹178 against the ₹152 issue price on listing day.", "url": "/ipo/northline-fintech-ipo" }
-  ]
-}

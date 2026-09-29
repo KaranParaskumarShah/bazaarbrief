@@ -1,0 +1,30 @@
+{
+  "updatedAt": null,
+  "source": "Waiting for free exchange-first API refresh",
+  "refresh": {
+    "status": "not_refreshed",
+    "cadence": "10 minutes",
+    "errors": []
+  },
+  "dataPolicy": {
+    "primary": "API-only",
+    "noSnapshotFallback": true,
+    "noPerVisitorProviderCalls": true,
+    "replaceOldDataOnSuccessfulRefresh": true,
+    "refreshCadence": "10 minutes",
+    "indianEquitiesPrimary": "NSE/BSE public exchange feeds",
+    "globalPrimary": "Yahoo Finance public chart feed"
+  },
+  "market": {
+    "indices": [],
+    "global": [],
+    "commodities": [],
+    "stocks": []
+  },
+  "fiiDii": {},
+  "ipo": {
+    "mainboard": [],
+    "sme": []
+  },
+  "news": []
+}

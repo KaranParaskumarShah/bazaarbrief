@@ -1,5 +1,0 @@
-.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
-.tools-grid__item { display: flex; flex-direction: column; gap: 0.35rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow-sm); padding: 1rem 1.1rem; text-decoration: none; color: inherit; transition: box-shadow 0.15s ease, border-color 0.15s ease; }
-.tools-grid__item:hover { border-color: var(--gold); box-shadow: var(--shadow-md); }
-.tools-grid__title { font-weight: 600; font-size: 0.95rem; color: var(--ink); }
-.tools-grid__desc { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
