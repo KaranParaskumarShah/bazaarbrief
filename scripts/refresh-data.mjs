@@ -366,7 +366,8 @@ async function fetchBseEodSensex() {
 }
 
 async function fetchFiiDii(cookie) {
-  if (!cookie) throw new Error('NSE session unavailable for FII/DII');
+  const sessionCookie = cookie || await createNseSession();
+  if (!sessionCookie) throw new Error('NSE session unavailable for FII/DII');
 
   const readRows = payload => unwrapRows(payload).flatMap(row => {
     if (Array.isArray(row)) return row;
@@ -375,7 +376,8 @@ async function fetchFiiDii(cookie) {
 
   const normalize = rows => {
     const result = { fii: null, dii: null, fiiBuy: null, fiiSell: null, diiBuy: null, diiSell: null, date: null };
-    for (const row of rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    for (const row of list) {
       const category = String(first(row?.category, row?.Category, row?.clientType, row?.type, row?.participant, row?.PARTICIPANT_TYPE) || '').toUpperCase();
       const buy = num(first(row?.buyValue, row?.BuyValue, row?.buy, row?.BUY_VALUE, row?.buyValueCr));
       const sell = num(first(row?.sellValue, row?.SellValue, row?.sell, row?.SELL_VALUE, row?.sellValueCr));
@@ -392,12 +394,24 @@ async function fetchFiiDii(cookie) {
         result.diiSell = sell;
       }
     }
+    // NSE has also returned a compact grouped shape in some revisions:
+    // { fiinet, fiibuy, fiisell, diinet, diibuy, diisell, date }.
+    if (list.length === 1) {
+      const row = list[0] || {};
+      result.fii = result.fii ?? num(first(row.fiinet, row.FIINet, row.fiiNet));
+      result.dii = result.dii ?? num(first(row.diinet, row.DIINet, row.diiNet));
+      result.fiiBuy = result.fiiBuy ?? num(first(row.fiibuy, row.FIIBuy, row.fiiBuy));
+      result.fiiSell = result.fiiSell ?? num(first(row.fiisell, row.FIISell, row.fiiSell));
+      result.diiBuy = result.diiBuy ?? num(first(row.diibuy, row.DIIBuy, row.diiBuy));
+      result.diiSell = result.diiSell ?? num(first(row.diisell, row.DIISell, row.diiSell));
+      result.date = result.date || toISODate(first(row.date, row.Date));
+    }
     return result;
   };
 
   // NSE's current public JSON endpoint is the primary source.
   try {
-    const payload = await nseGet('/api/fiidiiTradeReact', cookie);
+    const payload = await nseGet('/api/fiidiiTradeReact', sessionCookie, 3);
     const result = normalize(readRows(payload));
     if (result.fii != null || result.dii != null) {
       return {
@@ -414,7 +428,7 @@ async function fetchFiiDii(cookie) {
 
   // NSE also exposes the same activity on its public FII/DII report page.
   // This fallback is useful when the JSON endpoint is temporarily unavailable.
-  const html = await fetchText(`${NSE_BASE}/reports/fii-dii`, { headers: nseHeaders(cookie) });
+  const html = await fetchText(`${NSE_BASE}/reports/fii-dii`, { headers: nseHeaders(sessionCookie) });
   const rows = [];
   const trMatches = [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
   for (const match of trMatches) {
@@ -867,10 +881,11 @@ async function fetchNseIssueInformation(cookie, series, symbol, statusType) {
 }
 
 async function fetchNseIpos(cookie) {
-  if (!cookie) throw new Error('NSE session unavailable for IPO data');
+  const sessionCookie = cookie || await createNseSession();
+  if (!sessionCookie) throw new Error('NSE session unavailable for IPO data');
   const [currentPayload, upcomingPayload] = await Promise.all([
-    nseGet('/api/ipo-current-issue', cookie),
-    nseGet('/api/all-upcoming-issues?category=ipo', cookie)
+    nseGet('/api/ipo-current-issue', sessionCookie, 3),
+    nseGet('/api/all-upcoming-issues?category=ipo', sessionCookie, 3)
   ]);
   const listRows = [...unwrapRows(currentPayload), ...unwrapRows(upcomingPayload)];
   const base = listRows.map(row => normalizeIpo(row, 'NSE official IPO issue list')).filter(Boolean);
@@ -887,7 +902,7 @@ async function fetchNseIpos(cookie) {
     const series = record.type === 'SME' ? 'SME' : 'EQ';
     const statusType = record.status === 'Upcoming' ? 'Forthcoming' : 'Active';
     try {
-      const info = await fetchNseIssueInformation(cookie, series, record.symbol, statusType);
+      const info = await fetchNseIssueInformation(sessionCookie, series, record.symbol, statusType);
       detailed.push(normalizeNseIssue({ ...record, ...(info.payload?.data && typeof info.payload.data === 'object' ? info.payload.data : {}) }, info.details));
     } catch (error) {
       // Some already-closed/upcoming issues may not expose an issue-information payload.
@@ -1091,17 +1106,19 @@ try {
 
   const stocks = nse?.stocks || [];
 
+  // FII/DII and IPO must not depend on the intraday index request succeeding.
+  // NSE can block one API while still allowing another, so each domain gets its
+  // own fresh NSE session when necessary.
   let fii = {};
   try {
-    if (nse?.cookie) fii = await fetchFiiDii(nse.cookie);
+    fii = await fetchFiiDii(nse?.cookie || null);
   } catch (error) {
     errors.push(`FII/DII: ${error.message}`);
   }
 
   let nseIpoRecords = [];
   try {
-    const cookie = nse?.cookie || await createNseSession();
-    nseIpoRecords = await fetchNseIpos(cookie);
+    nseIpoRecords = await fetchNseIpos(nse?.cookie || null);
   } catch (error) {
     errors.push(`NSE IPO data: ${error.message}`);
   }
