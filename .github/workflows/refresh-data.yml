@@ -7,10 +7,11 @@ on:
   # Market feed: every hour from 10:00 through 17:00 IST, Monday-Friday.
   # GitHub cron is UTC; IST is UTC+5:30.
   schedule:
+    # Market feed: every hour from 10:00 through 17:00 IST, Monday-Friday.
     - cron: '30 4-11 * * 1-5'
-    # IPO + FII/DII feed: every 2 hours, every day. This also refreshes the
-    # market dataset so the final exchange close can be published after 15:45 IST.
-    - cron: '0 */2 * * *'
+    # IPO + FII/DII feed: every 2 hours, 24 hours a day, every day.
+    # :15 avoids the top-of-hour GitHub Actions scheduling hotspot.
+    - cron: '15 */2 * * *'
   workflow_dispatch:
 
 permissions:

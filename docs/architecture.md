@@ -13,7 +13,7 @@ The browser never calls NSE, BSE, TradingView or commodity providers directly.
 GitHub Actions runs the same collector on two schedules:
 
 - **Market:** every hour from 10:00 through 17:00 IST, Monday-Friday.
-- **IPO + FII/DII:** every 2 hours, every day.
+- **IPO + FII/DII:** every 2 hours at :15, 10:15-18:15 IST, every day.
 
 The second schedule also runs after the cash market close so official NSE/BSE EOD closes and the evening FII/DII report can be captured.
 

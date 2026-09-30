@@ -179,7 +179,7 @@ async function createNseSession() {
         signal: AbortSignal.timeout(TIMEOUT)
       });
       if (!response.ok) continue;
-      const cookies = response.headers.getSetCookie?.() || [];
+      const cookies = response.headers.getSetCookie?.() || (response.headers.get('set-cookie') ? [response.headers.get('set-cookie')] : []);
       for (const cookie of cookies) {
         const pair = cookie.split(';')[0];
         const [name, ...rest] = pair.split('=');
@@ -710,6 +710,10 @@ function normalizeNseIssue(raw, details, source = 'NSE official IPO Issue Inform
     biddingCenters: ['bidding centers', 'biddingcenters'],
     sampleForms: ['sample application forms', 'sampleapplicationforms'],
     securityParameters: ['security parameters (pre anchor)', 'securityparameterspreanchor'],
+    subscription: ['no. of times issue is subscribed', 'no of times issue is subscribed', 'subscription'],
+    qib: ['qib', 'qualified institutional buyers'],
+    nii: ['nii', 'non institutional', 'non-institutional'],
+    retail: ['retail', 'retail individual investors'],
     remark: ['remark']
   };
   for (const [field, list] of Object.entries(aliases)) {
@@ -718,6 +722,10 @@ function normalizeNseIssue(raw, details, source = 'NSE official IPO Issue Inform
   }
 
   const period = String(merged.issuePeriod || '');
+  if (merged.subscription == null) merged.subscription = num(detailValue(details, aliases.subscription));
+  if (merged.qib == null) merged.qib = num(detailValue(details, aliases.qib));
+  if (merged.nii == null) merged.nii = num(detailValue(details, aliases.nii));
+  if (merged.retail == null) merged.retail = num(detailValue(details, aliases.retail));
   const dates = [...period.matchAll(/(\d{1,2}[-\/]\w{3}[-\/]\d{4}|\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/gi)].map(m => toISODate(m[1])).filter(Boolean);
   if (dates[0]) merged.issueStartDate = dates[0];
   if (dates[1]) merged.issueEndDate = dates[1];
@@ -880,16 +888,94 @@ async function fetchNseIssueInformation(cookie, series, symbol, statusType) {
   return { payload: {}, details, source: 'NSE official IPO Issue Information page' };
 }
 
-async function fetchNseIpos(cookie) {
-  const sessionCookie = cookie || await createNseSession();
-  if (!sessionCookie) throw new Error('NSE session unavailable for IPO data');
-  const [currentPayload, upcomingPayload] = await Promise.all([
-    nseGet('/api/ipo-current-issue', sessionCookie, 3),
-    nseGet('/api/all-upcoming-issues?category=ipo', sessionCookie, 3)
-  ]);
-  const listRows = [...unwrapRows(currentPayload), ...unwrapRows(upcomingPayload)];
-  const base = listRows.map(row => normalizeIpo(row, 'NSE official IPO issue list')).filter(Boolean);
+function parseNseIpoListHtml(html) {
+  const rows = [];
+  const tableBlocks = [...html.matchAll(/<table[^>]*>([\s\S]*?)<\/table>/gi)].map(m => m[1]);
+  const blocks = tableBlocks.length ? tableBlocks : [html];
+  for (const block of blocks) {
+    const trs = [...block.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+    for (const tr of trs) {
+      const cells = [...tr[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m => text(m[1]));
+      if (cells.length < 5) continue;
+      const joined = cells.join(' | ').toLowerCase();
+      if (joined.includes('company name') || joined.includes('security type') || joined.includes('issue start date')) continue;
+      const [name, securityType, startDate, endDate, status, offeredReserved, bids, subscription] = cells;
+      if (!name || !securityType || !startDate || !endDate) continue;
+      if (!/(eq|sme|mainboard)/i.test(securityType)) continue;
+      const hrefs = [...tr[1].matchAll(/href=[\"']([^\"']+)[\"']/gi)].map(m => m[1]);
+      const issueHref = hrefs.find(h => /issue-information/i.test(h));
+      let symbol = null;
+      let series = null;
+      if (issueHref) {
+        try {
+          const u = new URL(issueHref, NSE_BASE);
+          symbol = u.searchParams.get('symbol');
+          series = u.searchParams.get('series');
+        } catch {}
+      }
+      rows.push({
+        name,
+        companyName: name,
+        symbol,
+        series: series || (/sme/i.test(securityType) ? 'SME' : 'EQ'),
+        securityType,
+        type: securityType,
+        issueStartDate: startDate,
+        issueEndDate: endDate,
+        openDate: startDate,
+        closeDate: endDate,
+        status,
+        offeredReserved,
+        bids,
+        subscription,
+        source: 'NSE official IPO public page HTML'
+      });
+    }
+  }
+  return rows;
+}
 
+async function fetchNseIpoList(sessionCookie) {
+  const errors = [];
+  let current = [];
+  let upcoming = [];
+  try {
+    current = unwrapRows(await nseGet('/api/ipo-current-issue', sessionCookie, 3));
+  } catch (error) {
+    errors.push(`current-issue API: ${error.message}`);
+  }
+  try {
+    upcoming = unwrapRows(await nseGet('/api/all-upcoming-issues?category=ipo', sessionCookie, 3));
+  } catch (error) {
+    errors.push(`upcoming-issues API: ${error.message}`);
+  }
+  let rows = [...current, ...upcoming];
+  if (!rows.length) {
+    const html = await fetchText(NSE_IPO_PAGE, { headers: nseHeaders(sessionCookie), timeout: 20000 });
+    rows = parseNseIpoListHtml(html);
+    if (!rows.length) throw new Error(`NSE IPO list returned no rows (${errors.join(' | ') || 'HTML parser found no rows'})`);
+    console.log(`NSE IPO list: API unavailable; recovered ${rows.length} rows from public IPO page HTML.`);
+  }
+  return rows;
+}
+
+async function fetchNseIpos(cookie) {
+  let sessionCookie = cookie || await createNseSession();
+  if (!sessionCookie) throw new Error('NSE session unavailable for IPO data');
+
+  let listRows;
+  try {
+    listRows = await fetchNseIpoList(sessionCookie);
+  } catch (firstError) {
+    // NSE/Akamai can invalidate a session independently of other NSE endpoints.
+    // Rotate the session once before giving up.
+    const rotated = await createNseSession();
+    if (!rotated || rotated === sessionCookie) throw firstError;
+    sessionCookie = rotated;
+    listRows = await fetchNseIpoList(sessionCookie);
+  }
+
+  const base = listRows.map(row => normalizeIpo(row, 'NSE official IPO issue list')).filter(Boolean);
   const unique = new Map();
   for (const record of base) {
     const key = ipoKey(record.symbol || record.name);
@@ -905,11 +991,9 @@ async function fetchNseIpos(cookie) {
       const info = await fetchNseIssueInformation(sessionCookie, series, record.symbol, statusType);
       detailed.push(normalizeNseIssue({ ...record, ...(info.payload?.data && typeof info.payload.data === 'object' ? info.payload.data : {}) }, info.details));
     } catch (error) {
-      // Some already-closed/upcoming issues may not expose an issue-information payload.
-      // Keep the official issue-list record instead of dropping the IPO.
       detailed.push({ ...record, detailFetchError: error.message });
     }
-    await sleep(150);
+    await sleep(250);
   }
   return detailed;
 }
@@ -956,6 +1040,7 @@ function emptyDataset(errors, status = 'failed') {
 }
 
 const errors = [];
+console.log(`BazaarBrief refresh started · scope=all · ${NOW}`);
 
 try {
   const [nseMarket, bseSensex, yahoo, giftNifty, tv, metals, news] = await Promise.allSettled([

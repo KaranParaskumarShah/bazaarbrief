@@ -10,10 +10,10 @@ The browser reads `/data/latest.json`. It does not call financial providers per 
 |---|---|---|
 | NIFTY 50 / BANK NIFTY | NSE public feed + EOD | Hourly 10:00-17:00 IST Mon-Fri |
 | SENSEX | BSE public feed + EOD | Hourly 10:00-17:00 IST Mon-Fri |
-| FII/FPI + DII | NSE public report/API | Every 2 hours |
-| IPO issue list | NSE public IPO endpoints | Every 2 hours |
-| IPO full issue information | NSE Issue Information per symbol | Every 2 hours |
-| IPO documents | NSE public links when exposed | Every 2 hours |
+| FII/FPI + DII | NSE public report/API | Every 2 hours at :15, 10:15-18:15 IST |
+| IPO issue list | NSE public IPO endpoints | Every 2 hours at :15, 10:15-18:15 IST |
+| IPO full issue information | NSE Issue Information per symbol | Every 2 hours at :15, 10:15-18:15 IST |
+| IPO documents | NSE public links when exposed | Every 2 hours at :15, 10:15-18:15 IST |
 | GIFT Nifty | TradingView public scanner | Scheduled refresh |
 | Gold / Silver | OroPocket India public rates | Scheduled refresh |
 | Brent / WTI / Natural Gas | TradingView public scanner | Scheduled refresh |
