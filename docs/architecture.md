@@ -1,96 +1,49 @@
-# BazaarBrief clean architecture
+# BazaarBrief architecture
 
-## 1. Provider adapters
+## Runtime model
 
-`scripts/refresh-data.mjs` is the only provider layer. Provider-specific URLs and response parsing stay there.
+The browser reads one static JSON file:
 
-Every provider result is normalized before it enters the shared schema:
+`/data/latest.json`
 
-```text
-provider response
-    ↓
-adapter / normalizer
-    ↓
-value + change + timestamp + source
-    ↓
-shared dataset
-```
+The browser never calls NSE, BSE, TradingView or commodity providers directly.
 
-## 2. Refresh orchestrator
+## Scheduled refresh
 
-GitHub Actions runs every 10 minutes. Independent providers use `Promise.allSettled`, so an unavailable provider does not erase unrelated successful data.
+GitHub Actions runs the same collector on two schedules:
 
-The workflow commits only when `public/data/latest.json` changes.
+- **Market:** every hour from 10:00 through 17:00 IST, Monday-Friday.
+- **IPO + FII/DII:** every 2 hours, every day.
 
-## 3. Shared dataset
+The second schedule also runs after the cash market close so official NSE/BSE EOD closes and the evening FII/DII report can be captured.
 
-`public/data/latest.json` is the only financial-data input used by the browser.
+## Indian market data
 
-A successful refresh replaces the dataset with newly fetched API data. No provider response is copied into the React source code.
+1. NSE public market feed → NIFTY 50, BANK NIFTY and NIFTY 50 stocks.
+2. BSE public market feed → SENSEX.
+3. After the cash-market close, NSE/BSE historical EOD feeds are attempted and marked `FINAL CLOSE` only when an official EOD record is returned.
+4. TradingView is only a free fallback for the index cards when the public exchange endpoint is temporarily unavailable.
 
-## 4. Frontend
+## FII/DII
 
-`src/main.jsx`:
+The collector first tries NSE's public `fiidiiTradeReact` endpoint. If that endpoint is unavailable or returns an unexpected shape, it parses the public NSE FII/FPI & DII report page. The stored record includes FII/FPI buy, sell and net values, DII buy, sell and net values, date, source and provisional status.
 
-- reads `/data/latest.json`;
-- checks it every 60 seconds;
-- checks again when the tab becomes visible;
-- never sends provider requests;
-- never receives provider credentials.
+## IPO architecture
 
-## 5. Provider map
+The IPO pipeline is now **NSE-first and GMP-independent**.
 
-### Indian markets
+1. Fetch NSE current/forthcoming IPO issue list.
+2. Deduplicate by NSE symbol.
+3. For each IPO, fetch NSE Issue Information using the correct board series:
+   - `EQ` for Mainboard.
+   - `SME` for SME.
+4. Try the public NSE JSON route first; fall back to the public Issue Information page when necessary.
+5. Store a normalized summary plus a complete `details` map of the fields exposed by NSE.
+6. Store document links when NSE exposes them.
+7. GMP is intentionally deferred and cannot block IPO publishing.
 
-- NIFTY 50: NSE public market feed.
-- BANK NIFTY: NSE public market feed.
-- SENSEX: BSE public market feed.
-- Indian stocks: NSE NIFTY 50 constituents feed.
+This gives BazaarBrief a much richer official IPO record: issue type, price range, lot, issue size, discount, face value, tick size, retail/QIB/NII limits, market timings, lead managers, sponsor banks, categories, UPI rules, registrar, registrar contact/address, ASBA link, RHP and other issue documents, plus the full NSE field set returned for that issue.
 
-No secondary community stock feed is used.
+## No snapshot fallback
 
-### Final closes
-
-After the Indian cash-market session, the collector requests historical EOD data from NSE/BSE. A quote is labelled `FINAL CLOSE` only after that EOD response succeeds.
-
-### Global / commodities
-
-Yahoo public chart feed is used for global indices and USD/INR. Energy contracts use the TradingView public scanner so Brent/WTI do not inherit the stale Yahoo contract quote seen in the previous build. Provider timestamps are retained where available.
-
-### Metals
-
-OroPocket supplies Indian gold/silver buy quotes directly in INR per gram. The dashboard does not synthesize Indian rates from USD spot and FX.
-
-### GIFT Nifty
-
-TradingView public scanner is used for the NSE International Exchange continuous GIFT Nifty futures symbol. It is shown as a futures indicator, not as NIFTY 50 spot.
-
-### IPOs
-
-FinAPI's free IPO endpoint is the primary no-key issue-data source. NSE public IPO endpoints are optional enrichment only. GMP Today supplies GMP/subscription enrichment.
-
-### News
-
-Google News RSS supplies headlines only.
-
-## 6. Failure behavior
-
-Provider failure → omit that provider's data → record the error → continue with independent providers.
-
-If there is not enough usable API data to publish a meaningful dataset, the refresh exits non-zero and does not overwrite the previous valid file with an empty dataset.
-
-The frontend does not fabricate a replacement value.
-
-## 7. Visitor traffic
-
-```text
-100,000 visitors
-       ↓
-100,000 reads of latest.json
-       ↓
-0 provider calls from visitors
-       ↓
-~144 scheduled provider refresh cycles/day
-```
-
-The refresh frequency is therefore independent of website traffic.
+`public/data/latest.json` starts empty. A refresh only writes a new dataset after the collector obtains usable API data. The application does not bundle hard-coded market values.

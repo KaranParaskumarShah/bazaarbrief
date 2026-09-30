@@ -1,45 +1,34 @@
 # Provider contracts
 
-## Free / no-key providers
+BazaarBrief uses a shared scheduled dataset. The browser does not call financial providers directly.
 
-### FinAPI IPO
+## NSE India — market + IPO primary source
 
-`https://finapi.upvaly.com/api/ipo`
+- NSE public market/index endpoints for NIFTY 50, BANK NIFTY and NIFTY 50 constituents.
+- NSE public FII/FPI + DII report/API for institutional flow.
+- NSE public IPO issue list for current/forthcoming issues.
+- NSE public Issue Information per IPO for the detailed issue record.
+- NSE public offer-document links when exposed by Issue Information.
 
-Used for basic IPO issue data. The provider currently advertises this endpoint as available in its free tier without signup/API key.
+The IPO collector fetches the issue list first, then requests each IPO's NSE Issue Information using its symbol and board series (`EQ` or `SME`). It preserves a complete `details` object so new NSE fields can be displayed without changing the core schema.
 
-### GMP Today
+## BSE India
 
-`https://gmptoday.in/api/gmp.json`
+- Public BSE index feed for SENSEX.
+- Public historical index feed for final SENSEX close.
 
-Used for unofficial GMP, ranges, subscription and confidence fields where supplied.
+## TradingView public scanner
 
-GMP is not exchange data and must remain labelled unofficial.
+Used only as a free public fallback/indicator for GIFT Nifty and selected energy/index quotes. It is not an exchange-licensed real-time feed.
 
-### NSE / BSE public feeds
+## OroPocket public India metals feed
 
-Used for Indian indices, NIFTY 50 constituent quotes, and final EOD closes.
+Used for India gold/silver buy quotes in INR per gram. The dashboard does not manufacture an Indian metal rate by multiplying a USD spot quote by FX.
 
-Public exchange web endpoints can reject automated/cloud requests. The collector treats optional enrichment as optional and does not manufacture data when a request is blocked.
+## GMP
 
-### Yahoo public chart feed
-
-Used for global indices and USD/INR. This is a public/undocumented feed and may be delayed or unavailable.
-
-### OroPocket
-
-`https://api.oropocket.com/public/prices`
-
-No API key is required. The public endpoint returns gold and silver buy/sell quotes in INR per gram, GST component and 24-hour change. BazaarBrief displays the buy rate and labels it as an India buy quote rather than a spot/MCX/LBMA benchmark. The collector calls it once per shared refresh, not once per visitor.
-
-### TradingView public scanner
-
-Used for GIFT Nifty and as a fallback for NIFTY 50, BANK NIFTY and SENSEX when the primary NSE/BSE public exchange endpoints do not return a usable quote. Brent, WTI and Natural Gas also use the scanner. These values are labelled as public-scanner/provider quotes and are not claimed to be licensed exchange-grade real-time redistribution.
-
-### Google News RSS
-
-Used only for headlines and source links.
+GMP is intentionally **not part of the current IPO refresh dependency**. A separate GMP provider will be integrated later.
 
 ## Commercial / redistribution note
 
-Free public feeds can have their own rate limits, delays, terms and redistribution conditions. Verify the provider terms before commercial redistribution. BazaarBrief should show source/timestamp context rather than implying exchange-grade tick-by-tick licensing where none exists.
+These public endpoints can change, throttle, block automated traffic, or impose their own usage/redistribution conditions. BazaarBrief should treat the dataset as delayed/indicative unless the underlying provider explicitly supplies a real-time or redistribution-compatible feed.

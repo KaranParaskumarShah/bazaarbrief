@@ -10,8 +10,9 @@ import path from 'node:path';
  * - GIFT Nifty: TradingView public scanner, NSE International Exchange symbol.
  * - Global indices/FX: Yahoo public chart feed; energy: TradingView public scanner.
  * - Gold/Silver: OroPocket public India buy/sell rate feed, INR per gram, no API key.
- * - IPO details: FinAPI free no-key IPO endpoint, with optional NSE public enrichment.
- * - GMP/subscription: GMP Today public dataset/API.
+ * - IPO details: NSE public IPO issue list + per-issue NSE Issue Information.
+ * - IPO documents: NSE public offer-document links when exposed by the issue information feed.
+ * - GMP/subscription: intentionally deferred; IPO data must not depend on GMP providers.
  * - News: Google News RSS.
  *
  * Only the providers listed above are used by this collector.
@@ -22,8 +23,6 @@ const NOW = new Date().toISOString();
 const TIMEOUT = 15000;
 const NSE_BASE = 'https://www.nseindia.com';
 const NSE_IPO_PAGE = `${NSE_BASE}/market-data/all-upcoming-issues-ipo`;
-const FINAPI_IPO_URL = 'https://finapi.upvaly.com/api/ipo';
-const GMP_TODAY_URL = 'https://gmptoday.in/api/gmp.json';
 const NEWS_URL = 'https://news.google.com/rss/search?q=Indian%20stock%20market%20Nifty%20Sensex%20IPO&hl=en-IN&gl=IN&ceid=IN:en';
 const TROY_OZ_GRAMS = 31.1034768;
 
@@ -368,17 +367,70 @@ async function fetchBseEodSensex() {
 
 async function fetchFiiDii(cookie) {
   if (!cookie) throw new Error('NSE session unavailable for FII/DII');
-  const rows = unwrapRows(await nseGet('/api/fiidiiTradeReact', cookie));
-  const fii = rows.find(row => /FII|FPI/i.test(String(row.category || row.clientType || row.type || '')));
-  const dii = rows.find(row => /DII/i.test(String(row.category || row.clientType || row.type || '')));
-  const readNet = row => num(first(row?.netValue, row?.net, row?.netValueInCr, row?.netValueCr));
-  if (!fii && !dii) throw new Error('NSE FII/DII response did not contain recognised categories');
+
+  const readRows = payload => unwrapRows(payload).flatMap(row => {
+    if (Array.isArray(row)) return row;
+    return [row];
+  });
+
+  const normalize = rows => {
+    const result = { fii: null, dii: null, fiiBuy: null, fiiSell: null, diiBuy: null, diiSell: null, date: null };
+    for (const row of rows) {
+      const category = String(first(row?.category, row?.Category, row?.clientType, row?.type, row?.participant, row?.PARTICIPANT_TYPE) || '').toUpperCase();
+      const buy = num(first(row?.buyValue, row?.BuyValue, row?.buy, row?.BUY_VALUE, row?.buyValueCr));
+      const sell = num(first(row?.sellValue, row?.SellValue, row?.sell, row?.SELL_VALUE, row?.sellValueCr));
+      const net = num(first(row?.netValue, row?.NetValue, row?.net, row?.NET_VALUE, row?.netValueInCr, row?.netValueCr));
+      const date = toISODate(first(row?.date, row?.Date, row?.tradeDate, row?.TRADE_DATE));
+      if (date && !result.date) result.date = date;
+      if (/FII|FPI/.test(category)) {
+        result.fii = net ?? (buy != null && sell != null ? buy - sell : null);
+        result.fiiBuy = buy;
+        result.fiiSell = sell;
+      } else if (/DII/.test(category)) {
+        result.dii = net ?? (buy != null && sell != null ? buy - sell : null);
+        result.diiBuy = buy;
+        result.diiSell = sell;
+      }
+    }
+    return result;
+  };
+
+  // NSE's current public JSON endpoint is the primary source.
+  try {
+    const payload = await nseGet('/api/fiidiiTradeReact', cookie);
+    const result = normalize(readRows(payload));
+    if (result.fii != null || result.dii != null) {
+      return {
+        ...result,
+        date: result.date || indiaNow().date,
+        source: 'NSE India public FII/FPI & DII endpoint',
+        asOf: NOW,
+        provisional: true
+      };
+    }
+  } catch (error) {
+    // Continue to the public report-page parser below.
+  }
+
+  // NSE also exposes the same activity on its public FII/DII report page.
+  // This fallback is useful when the JSON endpoint is temporarily unavailable.
+  const html = await fetchText(`${NSE_BASE}/reports/fii-dii`, { headers: nseHeaders(cookie) });
+  const rows = [];
+  const trMatches = [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+  for (const match of trMatches) {
+    const cells = [...match[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m => text(m[1]));
+    if (cells.length >= 5) {
+      rows.push({ category: cells[0], date: cells[1], buyValue: cells[2], sellValue: cells[3], netValue: cells[4] });
+    }
+  }
+  const result = normalize(rows);
+  if (result.fii == null && result.dii == null) throw new Error('NSE FII/DII report returned no recognised FII/FPI and DII rows');
   return {
-    fii: readNet(fii),
-    dii: readNet(dii),
-    date: first(fii?.date, dii?.date, indiaNow().date),
-    source: 'NSE India public FII/DII endpoint',
-    asOf: NOW
+    ...result,
+    date: result.date || indiaNow().date,
+    source: 'NSE India FII/FPI & DII public report',
+    asOf: NOW,
+    provisional: true
   };
 }
 
@@ -548,14 +600,14 @@ function parseBand(value) {
 }
 
 function explicitBoard(raw) {
-  const source = String(first(raw.type, raw.issueType, raw.issue_type, raw.board, raw.segment, raw.category, raw.exchange, raw.sub_type) || '').toLowerCase();
-  return source.includes('sme') || raw.isSme === true || raw.is_sme === true ? 'SME' : 'Mainboard';
+  const source = String(first(raw.type, raw.issueType, raw.issue_type, raw.board, raw.segment, raw.category, raw.exchange, raw.sub_type, raw.securityType) || '').toLowerCase();
+  return source.includes('sme') || raw.isSme === true || raw.is_sme === true || String(raw.series || '').toUpperCase() === 'SME' ? 'SME' : 'Mainboard';
 }
 
 function ipoStatus(openDate, closeDate, status) {
   const normalized = String(status || '').toLowerCase();
-  if (normalized.includes('open') || normalized.includes('live')) return 'Open';
-  if (normalized.includes('upcoming')) return 'Upcoming';
+  if (normalized.includes('open') || normalized.includes('active') || normalized.includes('live')) return 'Open';
+  if (normalized.includes('forthcoming') || normalized.includes('upcoming')) return 'Upcoming';
   if (normalized.includes('closed')) return 'Closed';
   if (normalized.includes('listed')) return 'Listed';
   const today = indiaNow().date;
@@ -565,13 +617,13 @@ function ipoStatus(openDate, closeDate, status) {
 }
 
 function extractRows(payload, depth = 0, rows = []) {
-  if (payload == null || depth > 5) return rows;
+  if (payload == null || depth > 7) return rows;
   if (Array.isArray(payload)) {
     payload.forEach(item => extractRows(item, depth + 1, rows));
     return rows;
   }
   if (typeof payload !== 'object') return rows;
-  const looksLikeIpo = ['name', 'company', 'companyName', 'ipoName', 'title', 'symbol'].some(key => payload[key] != null);
+  const looksLikeIpo = ['name', 'company', 'companyName', 'ipoName', 'title', 'symbol', 'Symbol', 'Company Name'].some(key => payload[key] != null);
   if (looksLikeIpo) rows.push(payload);
   Object.entries(payload).forEach(([key, value]) => {
     if (['meta', 'config', 'disclaimer', 'pagination'].includes(key)) return;
@@ -580,80 +632,150 @@ function extractRows(payload, depth = 0, rows = []) {
   return rows;
 }
 
-function extractNumber(value) {
-  return num(value);
+function flattenNseDetails(payload, out = {}, path = '', depth = 0) {
+  if (payload == null || depth > 8) return out;
+  if (Array.isArray(payload)) {
+    payload.forEach((value, index) => flattenNseDetails(value, out, path ? `${path}.${index}` : String(index), depth + 1));
+    return out;
+  }
+  if (typeof payload !== 'object') {
+    if (path) out[path] = text(payload);
+    return out;
+  }
+
+  const label = first(payload.label, payload.Label, payload.name, payload.Name, payload.key, payload.Key, payload.field, payload.Field, payload.title, payload.Title);
+  const value = first(payload.value, payload.Value, payload.displayValue, payload.DisplayValue, payload.data, payload.Data, payload.text, payload.Text);
+  if (label && value != null && typeof value !== 'object') out[text(label)] = text(value);
+
+  for (const [key, child] of Object.entries(payload)) {
+    const next = path ? `${path}.${key}` : key;
+    if (child && typeof child === 'object') flattenNseDetails(child, out, next, depth + 1);
+    else if (child != null && child !== '') out[key] = text(child);
+  }
+  return out;
+}
+
+function detailValue(details, aliases) {
+  const entries = Object.entries(details || {});
+  const wanted = aliases.map(alias => alias.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  for (const [key, value] of entries) {
+    const normalized = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (wanted.some(alias => normalized === alias || normalized.includes(alias))) return value;
+  }
+  return null;
+}
+
+function normalizeNseIssue(raw, details, source = 'NSE official IPO Issue Information') {
+  const merged = { ...(raw || {}) };
+  const aliases = {
+    symbol: ['symbol', 'nse symbol'],
+    name: ['company name', 'companyname', 'issuer name', 'name'],
+    issuePeriod: ['issue period', 'issueperiod'],
+    issueSize: ['issue size', 'issuesize'],
+    issueType: ['issue type', 'issuetype'],
+    priceRange: ['price range', 'pricerange', 'price band', 'priceband'],
+    discount: ['discount'],
+    faceValue: ['face value', 'facevalue'],
+    tickSize: ['tick size', 'ticksize'],
+    lotSize: ['bid lot', 'lot size', 'lotsize', 'market lot'],
+    minimumOrderQuantity: ['minimum order quantity', 'minimumorderquantity'],
+    retailMax: ['maximum subscription amount for retail investor', 'maximumsubscriptionamountforretailinvestor'],
+    qibMax: ['maximum bid quantity for qib investors', 'maximumbidquantityforqibinvestors'],
+    niiMax: ['maximum bid quantity for nib investors', 'maximumbidquantityfornibinvestors'],
+    timings: ['ipo market timings', 'ipomarkettimings'],
+    leadManagers: ['book running lead managers', 'bookrunningleadmanagers'],
+    sponsorBank: ['sponsor bank', 'sponsorbank'],
+    categories: ['categories'],
+    upiCategories: ['sub-categories applicable for upi', 'subcategoriesapplicableforupi'],
+    registrar: ['name of the registrar', 'nameoftheregistrar'],
+    registrarAddress: ['address of the registrar', 'addressoftheregistrar'],
+    registrarContact: ['contact person name number and email id', 'contactpersonnamenumberandemailid'],
+    eform: ['e-form link', 'eformlink'],
+    rhp: ['red herring prospectus', 'redherringprospectus'],
+    basis: ['ratios / basis of issue price', 'ratios/basisofissueprice'],
+    biddingCenters: ['bidding centers', 'biddingcenters'],
+    sampleForms: ['sample application forms', 'sampleapplicationforms'],
+    securityParameters: ['security parameters (pre anchor)', 'securityparameterspreanchor'],
+    remark: ['remark']
+  };
+  for (const [field, list] of Object.entries(aliases)) {
+    const v = detailValue(details, list);
+    if (v != null) merged[field] = v;
+  }
+
+  const period = String(merged.issuePeriod || '');
+  const dates = [...period.matchAll(/(\d{1,2}[-\/]\w{3}[-\/]\d{4}|\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/gi)].map(m => toISODate(m[1])).filter(Boolean);
+  if (dates[0]) merged.issueStartDate = dates[0];
+  if (dates[1]) merged.issueEndDate = dates[1];
+  merged.details = Object.fromEntries(Object.entries(details || {}).filter(([k, v]) => v != null && String(v).trim() !== ''));
+  return normalizeIpo(merged, source);
 }
 
 function normalizeIpo(raw, source) {
-  const name = text(first(raw.name, raw.companyName, raw.company, raw.ipoName, raw.title, raw.symbol));
-  if (!name) return null;
-
+  const name = text(first(raw.name, raw.companyName, raw.company, raw.ipoName, raw.title, raw.symbol, raw['Company Name'], raw['Name'])) || 'Unnamed IPO';
   const board = explicitBoard(raw);
-  const band = parseBand(first(
-    raw.priceRange, raw.price_range, raw.priceBand, raw.price_band,
-    raw.issuePrice, raw.issue_price, raw.price,
-    `${first(raw.minimum_price, raw.minPrice, '')}-${first(raw.maximum_price, raw.maxPrice, '')}`
-  ));
-  const lot = extractNumber(first(raw.lotSize, raw.lot_size, raw.marketLot, raw.market_lot, raw.minBidQuantity, raw.min_bid_quantity, raw.lot));
-  const openDate = toISODate(first(raw.biddingStartDate, raw.bidding_start_date, raw.issueStartDate, raw.openDate, raw.open_date, raw.startDate));
-  const closeDate = toISODate(first(raw.biddingEndDate, raw.bidding_end_date, raw.issueEndDate, raw.closeDate, raw.close_date, raw.endDate));
-  const issueSizeCr = extractNumber(first(raw.issueSizeCr, raw.issue_size_cr, raw.issueSize, raw.issue_size));
-  const minInvestment = extractNumber(first(raw.minInvestment, raw.minimumInvestment, raw.min_investment, raw.minimum_investment));
-
-  const subscription = raw.subscription && typeof raw.subscription === 'object' ? raw.subscription : {};
-  const gmp = raw.gmp && typeof raw.gmp === 'object' ? raw.gmp : {};
-  const totalSubscription = extractNumber(first(
-    subscription.total, raw.subscriptionTotal, raw.subscription_total,
-    raw.totalSubscription, raw.total_subscription, raw.overallSubscription,
-    raw.overall_subscription, raw.subscriptionMultiple, raw.subscription_multiple,
-    raw.subs, raw.subscribed, raw.subscription
-  ));
-
-  const qib = extractNumber(first(subscription.qib, subscription.QIB, raw.qib, raw.QIB));
-  const nii = extractNumber(first(subscription.nii, subscription.hni, subscription.NII, raw.nii, raw.hni));
-  const retail = extractNumber(first(subscription.retail, subscription.Retail, raw.retail, raw.Retail));
-
-  const gmpValue = extractNumber(first(
-    gmp.median, gmp.price, gmp.value, gmp.gmp,
-    raw.gmpMedian, raw.gmp_median, raw.gmpPrice, raw.gmp_price, raw.gmp
-  ));
-  const gmpPercent = extractNumber(first(
-    gmp.percent, gmp.percentage, gmp.gmpPercent,
-    raw.gmpPercent, raw.gmp_percentage, raw.gmp_pct, raw.estimatedGainPct
-  ));
-  const gmpRange = text(first(gmp.range, raw.gmpRange, raw.gmp_range, raw.range));
-  const gmpUpdated = first(gmp.updatedAt, gmp.updated_at, raw.gmpUpdated, raw.gmp_updated_at, raw.gmpLastUpdated);
-
-  const upperPrice = band.max;
-  const min = minInvestment ?? (upperPrice != null && lot != null ? upperPrice * lot : null);
-  const issue = issueSizeCr != null ? `₹${issueSizeCr.toLocaleString('en-IN')} Cr` : text(first(raw.issueSizeText, raw.issue_size_text, raw.issueSize)) || '—';
+  const band = parseBand(first(raw.priceRange, raw.price_range, raw.priceBand, raw.price_band, raw.issuePrice, raw.issue_price, raw.price, `${first(raw.minimum_price, raw.minPrice, '')}-${first(raw.maximum_price, raw.maxPrice, '')}`));
+  const lot = num(first(raw.lotSize, raw.lot_size, raw.marketLot, raw.market_lot, raw.minBidQuantity, raw.min_bid_quantity, raw.lot, raw['Bid Lot'], raw['Lot Size']));
+  const issuePeriod = text(first(raw.issuePeriod, raw.issue_period));
+  const periodDates = issuePeriod ? [...issuePeriod.matchAll(/(\d{1,2}[-\/]\w{3}[-\/]\d{4}|\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/gi)].map(m => toISODate(m[1])).filter(Boolean) : [];
+  const openDate = toISODate(first(raw.biddingStartDate, raw.bidding_start_date, raw.issueStartDate, raw.openDate, raw.open_date, raw.startDate)) || periodDates[0] || null;
+  const closeDate = toISODate(first(raw.biddingEndDate, raw.bidding_end_date, raw.issueEndDate, raw.closeDate, raw.close_date, raw.endDate)) || periodDates[1] || null;
+  const issueSizeCr = num(first(raw.issueSizeCr, raw.issue_size_cr));
+  const minInvestment = num(first(raw.minInvestment, raw.minimumInvestment, raw.min_investment, raw.minimum_investment)) ?? (band.max != null && lot != null ? band.max * lot : null);
+  const subscription = num(first(raw.subscription, raw.subscriptionTotal, raw.subscription_total, raw.totalSubscription, raw.total_subscription, raw.overallSubscription, raw.overall_subscription, raw['No. of times issue is subscribed'], raw['No of times issue is subscribed']));
+  const qib = num(first(raw.qib, raw.QIB));
+  const nii = num(first(raw.nii, raw.hni, raw.NII));
+  const retail = num(first(raw.retail, raw.Retail));
+  const issueText = text(first(raw.issueSizeText, raw.issue_size_text, raw.issueSize, raw.issue_size, raw['Issue Size'])) || '—';
+  const details = raw.details || {};
 
   return {
     slug: slugify(name),
-    symbol: text(first(raw.symbol, raw.scrip, raw.code)),
+    symbol: text(first(raw.symbol, raw.scrip, raw.code, raw.Symbol)),
     name,
     type: board,
-    status: ipoStatus(openDate, closeDate, first(raw.status, raw.state)),
-    exchange: text(first(raw.exchange, raw.exchangeName, raw.listingOn, raw.listing_on)) || (board === 'SME' ? 'NSE/BSE SME' : 'NSE/BSE'),
+    status: ipoStatus(openDate, closeDate, first(raw.status, raw.state, raw.Status)),
+    exchange: text(first(raw.exchange, raw.exchangeName, raw.listingOn, raw.listing_on)) || (board === 'SME' ? 'NSE SME' : 'NSE'),
     band: band.min != null ? `₹${band.min.toLocaleString('en-IN')} – ₹${band.max.toLocaleString('en-IN')}` : '—',
     priceBand: band,
+    issueType: text(first(raw.issueType, raw.IssueType, raw['Issue Type'])),
     lot: lot ?? null,
     lotSize: lot ?? null,
-    min,
-    issue,
+    min: minInvestment,
+    issue: issueText,
     issueSizeCr,
     openDate,
     closeDate,
     open: openDate || '—',
     close: closeDate || '—',
+    issuePeriod: issuePeriod || (openDate && closeDate ? `${openDate} → ${closeDate}` : '—'),
     allotment: toISODate(first(raw.allotmentDate, raw.allotment_date)),
     refund: toISODate(first(raw.refundDate, raw.refund_date)),
     credit: toISODate(first(raw.creditDate, raw.credit_date, raw.dematCreditDate)),
     listing: toISODate(first(raw.listingDate, raw.listing_date)),
-    listingPrice: extractNumber(first(raw.listingPrice, raw.listing_price)),
-    faceValue: text(first(raw.faceValue, raw.face_value)),
+    listingPrice: num(first(raw.listingPrice, raw.listing_price)),
+    faceValue: text(first(raw.faceValue, raw.face_value, raw['Face Value'])),
+    discount: text(first(raw.discount, raw.Discount)),
+    tickSize: text(first(raw.tickSize, raw['Tick Size'])),
+    minimumOrderQuantity: text(first(raw.minimumOrderQuantity, raw['Minimum Order Quantity'])),
+    retailMax: text(raw.retailMax),
+    qibMax: text(raw.qibMax),
+    niiMax: text(raw.niiMax),
+    marketTimings: text(raw.timings),
     registrar: text(first(raw.registrar, raw.registrarName, raw.registrar_name)),
+    registrarAddress: text(raw.registrarAddress),
+    registrarContact: text(raw.registrarContact),
     leadManagers: text(first(raw.leadManagers, raw.lead_managers)),
+    sponsorBank: text(raw.sponsorBank),
+    categories: text(raw.categories),
+    upiCategories: text(raw.upiCategories),
+    eform: text(raw.eform),
+    rhp: text(raw.rhp),
+    basis: text(raw.basis),
+    biddingCenters: text(raw.biddingCenters),
+    sampleForms: text(raw.sampleForms),
+    securityParameters: text(raw.securityParameters),
+    remark: text(raw.remark),
     fresh: text(first(raw.freshIssue, raw.fresh_issue, raw.fresh)),
     ofs: text(first(raw.ofs, raw.offerForSale, raw.offer_for_sale)),
     sector: text(first(raw.sector, raw.industry)) || '—',
@@ -662,21 +784,22 @@ function normalizeIpo(raw, source) {
     profit: text(first(raw.profit, raw.pat)),
     debt: text(first(raw.debt, raw.borrowings)),
     promoters: text(raw.promoters),
-    subscription: totalSubscription,
+    subscription,
     qib,
     nii,
     retail,
-    subscriptionUpdated: text(first(subscription.updatedAt, subscription.updated_at, raw.subscriptionUpdated, raw.subscription_updated_at)),
-    gmp: gmpValue,
-    gmpPct: gmpPercent ?? (gmpValue != null && upperPrice ? (gmpValue / upperPrice) * 100 : null),
-    gmpUpdated: text(gmpUpdated),
-    gmpRange,
-    gmpConfidence: text(first(gmp.confidence, raw.confidence)),
-    gmpSources: extractNumber(first(gmp.sources, raw.sources)),
-    gmpSource: gmpValue != null ? 'GMP Today median · unofficial' : null,
+    subscriptionUpdated: text(first(raw.subscriptionUpdated, raw.subscription_updated_at)),
+    gmp: null,
+    gmpPct: null,
+    gmpUpdated: null,
+    gmpRange: null,
+    gmpConfidence: null,
+    gmpSources: null,
+    gmpSource: null,
     source,
     sourceDate: indiaNow().date,
-    asOf: text(first(gmpUpdated, subscription.updatedAt, subscription.updated_at, raw.updatedAt, raw.updated_at)) || NOW
+    asOf: NOW,
+    details
   };
 }
 
@@ -685,42 +808,16 @@ function mergeIpos(...groups) {
   for (const group of groups) {
     for (const record of group || []) {
       if (!record?.name) continue;
-      const key = ipoKey(record.name);
+      const key = ipoKey(record.symbol || record.name);
       const current = byKey.get(key);
-      if (!current) {
-        byKey.set(key, record);
-        continue;
-      }
-
+      if (!current) { byKey.set(key, record); continue; }
       const merged = { ...current };
       for (const [field, value] of Object.entries(record)) {
         const empty = value === null || value === undefined || value === '' || value === '—';
         if (!empty) merged[field] = value;
       }
-
-      // Preserve exchange fields from the official/NSE record, while preserving
-      // GMP/subscription fields from GMP Today.
-      const currentOfficial = current.source?.includes('NSE') ? current : null;
-      const newOfficial = record.source?.includes('NSE') ? record : null;
-      const official = currentOfficial || newOfficial;
-      const gmpRecord = record.source?.includes('GMP Today') ? record : current.source?.includes('GMP Today') ? current : null;
-
-      if (official) {
-        for (const field of ['name', 'symbol', 'type', 'exchange', 'band', 'priceBand', 'lot', 'lotSize', 'min', 'issue', 'issueSizeCr', 'openDate', 'closeDate', 'open', 'close', 'allotment', 'refund', 'credit', 'listing', 'listingPrice', 'faceValue', 'registrar', 'leadManagers', 'fresh', 'ofs', 'sector', 'objects']) {
-          if (official[field] !== null && official[field] !== undefined && official[field] !== '' && official[field] !== '—') merged[field] = official[field];
-        }
-      }
-      if (gmpRecord) {
-        for (const field of ['gmp', 'gmpPct', 'gmpUpdated', 'gmpRange', 'gmpConfidence', 'gmpSources', 'gmpSource', 'subscription', 'qib', 'nii', 'retail', 'subscriptionUpdated']) {
-          if (gmpRecord[field] !== null && gmpRecord[field] !== undefined && gmpRecord[field] !== '' && gmpRecord[field] !== '—') merged[field] = gmpRecord[field];
-        }
-      }
-
-      merged.source = official && gmpRecord
-        ? 'NSE official IPO data + GMP Today public dataset'
-        : official
-          ? official.source
-          : gmpRecord?.source || merged.source;
+      merged.details = { ...(current.details || {}), ...(record.details || {}) };
+      merged.source = 'NSE official IPO issue list + NSE Issue Information';
       merged.sourceDate = indiaNow().date;
       byKey.set(key, merged);
     }
@@ -736,31 +833,71 @@ function extractIpoRows(payload) {
   return extractRows(payload);
 }
 
-async function fetchFinApiIpos() {
-  const payload = await retryJson(FINAPI_IPO_URL, { headers: { Accept: 'application/json' } }, 2);
-  const records = extractIpoRows(payload).map(row => normalizeIpo(row, 'FinAPI free IPO feed')).filter(Boolean);
-  if (!records.length) throw new Error('FinAPI returned no IPO records');
-  return records;
+function parseNseIssueInformationHtml(html) {
+  const details = {};
+  const links = {};
+  const trMatches = [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+  for (const match of trMatches) {
+    const cells = [...match[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m => m[1]);
+    if (cells.length < 2) continue;
+    const label = text(cells[0]);
+    const value = text(cells[1]);
+    if (label && value) details[label] = value;
+    const href = cells[1].match(/href=["']([^"']+)["']/i)?.[1];
+    if (label && href) links[label] = href.startsWith('http') ? href : `${NSE_BASE}${href.startsWith('/') ? '' : '/'}${href}`;
+  }
+  return { ...details, ...Object.fromEntries(Object.entries(links).map(([k, v]) => [`${k} Link`, v])) };
 }
 
-async function fetchGmpToday() {
-  const payload = await retryJson(GMP_TODAY_URL, { headers: { Accept: 'application/json' } }, 2);
-  const records = extractIpoRows(payload).map(row => normalizeIpo(row, 'GMP Today public dataset')).filter(Boolean);
-  if (!records.length) throw new Error('GMP Today returned no IPO records');
-  return records;
+async function fetchNseIssueInformation(cookie, series, symbol, statusType) {
+  const apiPath = `/api/issue-information?series=${encodeURIComponent(series)}&symbol=${encodeURIComponent(symbol)}&type=${encodeURIComponent(statusType)}`;
+  try {
+    const payload = await nseGet(apiPath, cookie, 2);
+    const details = flattenNseDetails(payload);
+    if (Object.keys(details).length) return { payload, details, source: 'NSE official IPO Issue Information API' };
+  } catch {
+    // Fall through to the public issue-information page.
+  }
+
+  const pageUrl = `${NSE_BASE}/market-data/issue-information?series=${encodeURIComponent(series)}&symbol=${encodeURIComponent(symbol)}&type=${encodeURIComponent(statusType)}`;
+  const html = await fetchText(pageUrl, { headers: nseHeaders(cookie) });
+  const details = parseNseIssueInformationHtml(html);
+  if (!Object.keys(details).length) throw new Error(`NSE issue-information returned no fields for ${symbol}`);
+  return { payload: {}, details, source: 'NSE official IPO Issue Information page' };
 }
 
 async function fetchNseIpos(cookie) {
-  if (!cookie) throw new Error('NSE session unavailable for IPO enrichment');
+  if (!cookie) throw new Error('NSE session unavailable for IPO data');
   const [currentPayload, upcomingPayload] = await Promise.all([
     nseGet('/api/ipo-current-issue', cookie),
     nseGet('/api/all-upcoming-issues?category=ipo', cookie)
   ]);
-  return [...unwrapRows(currentPayload), ...unwrapRows(upcomingPayload)]
-    .map(row => normalizeIpo(row, 'NSE official IPO data'))
-    .filter(Boolean);
-}
+  const listRows = [...unwrapRows(currentPayload), ...unwrapRows(upcomingPayload)];
+  const base = listRows.map(row => normalizeIpo(row, 'NSE official IPO issue list')).filter(Boolean);
 
+  const unique = new Map();
+  for (const record of base) {
+    const key = ipoKey(record.symbol || record.name);
+    if (!unique.has(key)) unique.set(key, record);
+  }
+
+  const detailed = [];
+  for (const record of unique.values()) {
+    if (!record.symbol) { detailed.push(record); continue; }
+    const series = record.type === 'SME' ? 'SME' : 'EQ';
+    const statusType = record.status === 'Upcoming' ? 'Forthcoming' : 'Active';
+    try {
+      const info = await fetchNseIssueInformation(cookie, series, record.symbol, statusType);
+      detailed.push(normalizeNseIssue({ ...record, ...(info.payload?.data && typeof info.payload.data === 'object' ? info.payload.data : {}) }, info.details));
+    } catch (error) {
+      // Some already-closed/upcoming issues may not expose an issue-information payload.
+      // Keep the official issue-list record instead of dropping the IPO.
+      detailed.push({ ...record, detailFetchError: error.message });
+    }
+    await sleep(150);
+  }
+  return detailed;
+}
 async function fetchNews() {
   const xml = await fetchText(NEWS_URL);
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0, 10);
@@ -785,16 +922,16 @@ async function writeDataset(dataset) {
 function emptyDataset(errors, status = 'failed') {
   return {
     updatedAt: NOW,
-    refreshWindow: '10 minutes',
+    refreshWindow: 'market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours',
     timezone: 'Asia/Kolkata',
     source: 'API-only shared feed — free public/exchange sources',
-    refresh: { status, updatedAt: NOW, cadence: '10 minutes', partial: true, errors },
+    refresh: { status, updatedAt: NOW, cadence: 'market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours', partial: true, errors },
     dataPolicy: {
       primary: 'API-only',
       noSnapshotFallback: true,
       noPerVisitorProviderCalls: true,
       noPaidApiKeysRequired: true,
-      refreshCadence: '10 minutes'
+      refreshCadence: 'market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours'
     },
     market: { indices: [], global: [], commodities: [], stocks: [] },
     fiiDii: {},
@@ -806,7 +943,7 @@ function emptyDataset(errors, status = 'failed') {
 const errors = [];
 
 try {
-  const [nseMarket, bseSensex, yahoo, giftNifty, tv, metals, news, finIpo, gmpToday] = await Promise.allSettled([
+  const [nseMarket, bseSensex, yahoo, giftNifty, tv, metals, news] = await Promise.allSettled([
     fetchNseMarket(),
     fetchBseSensex(),
     fetchYahooSet([
@@ -826,9 +963,7 @@ try {
       { name: 'SENSEX TV', ticker: 'BSE:SENSEX', kind: 'index', priceType: 'index_quote' }
     ]),
     fetchMetals(),
-    fetchNews(),
-    fetchFinApiIpos(),
-    fetchGmpToday()
+    fetchNews()
   ]);
 
   const nse = nseMarket.status === 'fulfilled' ? nseMarket.value : null;
@@ -963,21 +1098,15 @@ try {
     errors.push(`FII/DII: ${error.message}`);
   }
 
-  const finRecords = finIpo.status === 'fulfilled' ? finIpo.value : [];
-  if (finIpo.status === 'rejected') errors.push(`FinAPI IPO: ${finIpo.reason?.message || finIpo.reason}`);
-  const gmpRecords = gmpToday.status === 'fulfilled' ? gmpToday.value : [];
-  if (gmpToday.status === 'rejected') errors.push(`GMP Today: ${gmpToday.reason?.message || gmpToday.reason}`);
-
   let nseIpoRecords = [];
   try {
     const cookie = nse?.cookie || await createNseSession();
     nseIpoRecords = await fetchNseIpos(cookie);
   } catch (error) {
-    // Optional enrichment only. IPO publishing does not depend on NSE web automation.
-    errors.push(`NSE IPO enrichment: ${error.message}`);
+    errors.push(`NSE IPO data: ${error.message}`);
   }
 
-  const mergedIpos = mergeIpos(finRecords, nseIpoRecords, gmpRecords);
+  const mergedIpos = mergeIpos(nseIpoRecords);
   const sortIpos = list => [...list].sort((a, b) => {
     const statusWeight = item => item === 'Open' ? 0 : 1;
     const statusDiff = statusWeight(a.status) - statusWeight(b.status);
@@ -997,13 +1126,12 @@ try {
     tradingView: tv.status,
     metals: metals.status,
     news: news.status,
-    finapiIpo: finIpo.status,
-    gmpToday: gmpToday.status
+    nseIpo: nseIpoRecords.length ? 'fulfilled' : 'rejected'
   };
 
   const dataset = {
     updatedAt: NOW,
-    refreshWindow: '10 minutes',
+    refreshWindow: 'market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours',
     timezone: 'Asia/Kolkata',
     marketSession: {
       indiaDate: session.date,
@@ -1014,7 +1142,7 @@ try {
     refresh: {
       status: 'ok',
       updatedAt: NOW,
-      cadence: '10 minutes',
+      cadence: 'market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours',
       partial: errors.length > 0,
       errors,
       providerStatus
@@ -1025,9 +1153,9 @@ try {
       noPerVisitorProviderCalls: true,
       replaceOldDataOnSuccessfulRefresh: true,
       noPaidApiKeysRequired: true,
-      refreshCadence: '10 minutes',
+      refreshCadence: 'market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours',
       indianEquities: 'NSE/BSE public exchange feeds only',
-      ipo: 'FinAPI free no-key + GMP Today public dataset + optional NSE enrichment',
+      ipo: 'NSE official public IPO issue list + per-issue NSE Issue Information; GMP deferred',
       metals: 'OroPocket India gold/silver buy quotes in INR per gram; no synthetic USD-to-INR conversion',
       energy: 'TradingView public scanner for ICE Brent, NYMEX WTI and NYMEX Henry Hub futures'
     },
