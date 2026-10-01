@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-01T11:03:51.809Z",
+  "updatedAt": "2026-10-01T13:18:30.819Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
@@ -10,7 +10,7 @@
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-01T11:03:51.809Z",
+    "updatedAt": "2026-10-01T13:18:30.819Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
@@ -51,7 +51,7 @@
         "change": -198.5,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -65,7 +65,7 @@
         "change": -182.3000000000029,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -79,7 +79,7 @@
         "change": -570.5899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -88,12 +88,12 @@
       },
       {
         "name": "GIFT NIFTY",
-        "value": 22546,
-        "pct": -0.5008936649087579,
-        "change": -113.5,
+        "value": 22624.5,
+        "pct": -0.1544606015137139,
+        "change": -35,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -128,68 +128,12 @@
       {
         "name": "FTSE 100",
         "kind": "index",
-        "value": 10489.52,
-        "change": -116.47999999999956,
-        "pct": -1.0982462756929998,
-        "asOf": "2026-10-01T10:48:50.000Z",
+        "value": 10512.96,
+        "change": -93.04000000000087,
+        "pct": -0.8772392985102854,
+        "asOf": "2026-10-01T13:03:29.000Z",
         "currency": "GBP",
         "series": [
-          {
-            "t": "2026-10-01T07:00:00.000Z",
-            "v": 10479.669921875
-          },
-          {
-            "t": "2026-10-01T07:05:00.000Z",
-            "v": 10496.009765625
-          },
-          {
-            "t": "2026-10-01T07:10:00.000Z",
-            "v": 10461.3603515625
-          },
-          {
-            "t": "2026-10-01T07:15:00.000Z",
-            "v": 10437.0595703125
-          },
-          {
-            "t": "2026-10-01T07:20:00.000Z",
-            "v": 10440.2099609375
-          },
-          {
-            "t": "2026-10-01T07:25:00.000Z",
-            "v": 10428
-          },
-          {
-            "t": "2026-10-01T07:30:00.000Z",
-            "v": 10437.2099609375
-          },
-          {
-            "t": "2026-10-01T07:35:00.000Z",
-            "v": 10423.6796875
-          },
-          {
-            "t": "2026-10-01T07:40:00.000Z",
-            "v": 10426.9404296875
-          },
-          {
-            "t": "2026-10-01T07:45:00.000Z",
-            "v": 10419.2900390625
-          },
-          {
-            "t": "2026-10-01T07:50:00.000Z",
-            "v": 10431.2998046875
-          },
-          {
-            "t": "2026-10-01T07:55:00.000Z",
-            "v": 10417.580078125
-          },
-          {
-            "t": "2026-10-01T08:00:00.000Z",
-            "v": 10426.2001953125
-          },
-          {
-            "t": "2026-10-01T08:05:00.000Z",
-            "v": 10401.7802734375
-          },
           {
             "t": "2026-10-01T08:10:00.000Z",
             "v": 10400.419921875
@@ -316,11 +260,119 @@
           },
           {
             "t": "2026-10-01T10:45:00.000Z",
-            "v": 10491.349609375
+            "v": 10486.009765625
           },
           {
-            "t": "2026-10-01T10:48:50.000Z",
-            "v": 10489.51953125
+            "t": "2026-10-01T10:50:00.000Z",
+            "v": 10489.75
+          },
+          {
+            "t": "2026-10-01T10:55:00.000Z",
+            "v": 10483.919921875
+          },
+          {
+            "t": "2026-10-01T11:00:00.000Z",
+            "v": 10486.4599609375
+          },
+          {
+            "t": "2026-10-01T11:05:00.000Z",
+            "v": 10479.2802734375
+          },
+          {
+            "t": "2026-10-01T11:10:00.000Z",
+            "v": 10481.330078125
+          },
+          {
+            "t": "2026-10-01T11:15:00.000Z",
+            "v": 10480.8603515625
+          },
+          {
+            "t": "2026-10-01T11:20:00.000Z",
+            "v": 10471.0400390625
+          },
+          {
+            "t": "2026-10-01T11:25:00.000Z",
+            "v": 10479
+          },
+          {
+            "t": "2026-10-01T11:30:00.000Z",
+            "v": 10486.5302734375
+          },
+          {
+            "t": "2026-10-01T11:35:00.000Z",
+            "v": 10488.1298828125
+          },
+          {
+            "t": "2026-10-01T11:40:00.000Z",
+            "v": 10491.75
+          },
+          {
+            "t": "2026-10-01T11:45:00.000Z",
+            "v": 10496.9404296875
+          },
+          {
+            "t": "2026-10-01T11:50:00.000Z",
+            "v": 10502.509765625
+          },
+          {
+            "t": "2026-10-01T11:55:00.000Z",
+            "v": 10505.8798828125
+          },
+          {
+            "t": "2026-10-01T12:00:00.000Z",
+            "v": 10515.400390625
+          },
+          {
+            "t": "2026-10-01T12:05:00.000Z",
+            "v": 10511.7900390625
+          },
+          {
+            "t": "2026-10-01T12:10:00.000Z",
+            "v": 10513.0498046875
+          },
+          {
+            "t": "2026-10-01T12:15:00.000Z",
+            "v": 10521.26953125
+          },
+          {
+            "t": "2026-10-01T12:20:00.000Z",
+            "v": 10518.900390625
+          },
+          {
+            "t": "2026-10-01T12:25:00.000Z",
+            "v": 10522.7197265625
+          },
+          {
+            "t": "2026-10-01T12:30:00.000Z",
+            "v": 10535.16015625
+          },
+          {
+            "t": "2026-10-01T12:35:00.000Z",
+            "v": 10536.7099609375
+          },
+          {
+            "t": "2026-10-01T12:40:00.000Z",
+            "v": 10527.7001953125
+          },
+          {
+            "t": "2026-10-01T12:45:00.000Z",
+            "v": 10525.3603515625
+          },
+          {
+            "t": "2026-10-01T12:50:00.000Z",
+            "v": 10523.1201171875
+          },
+          {
+            "t": "2026-10-01T12:55:00.000Z",
+            "v": 10514.3603515625
+          },
+          {
+            "t": "2026-10-01T13:00:00.000Z",
+            "v": 10511.830078125
+          },
+          {
+            "t": "2026-10-01T13:03:29.000Z",
+            "v": 10512.9599609375
           }
         ],
         "providerSymbol": "^FTSE",
@@ -837,13 +889,13 @@
       },
       {
         "name": "GOLD",
-        "value": 154276.5,
-        "inrPer10g": 154276.5,
-        "inrPerGram": 15427.65,
-        "gstPerGram": 462.83,
-        "sellPerGram": 14967.83,
-        "pct": 0.64,
-        "asOf": "2026-10-01T11:00:00.211Z",
+        "value": 154197.4,
+        "inrPer10g": 154197.4,
+        "inrPerGram": 15419.74,
+        "gstPerGram": 462.59,
+        "sellPerGram": 14960.15,
+        "pct": 0.59,
+        "asOf": "2026-10-01T13:17:32.938Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -853,13 +905,13 @@
       },
       {
         "name": "SILVER",
-        "value": 232590,
-        "inrPerKg": 232590,
-        "inrPerGram": 232.59,
+        "value": 232530,
+        "inrPerKg": 232530,
+        "inrPerGram": 232.53,
         "gstPerGram": 6.98,
-        "sellPerGram": 219.98,
-        "pct": 0.8,
-        "asOf": "2026-10-01T11:00:00.211Z",
+        "sellPerGram": 219.92,
+        "pct": 0.78,
+        "asOf": "2026-10-01T13:17:32.938Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -869,12 +921,12 @@
       },
       {
         "name": "BRENT",
-        "value": 99.66,
-        "pct": 1.66275629909211,
-        "change": 1.6299999999999955,
+        "value": 99.71,
+        "pct": 1.7137610935427854,
+        "change": 1.6799999999999926,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -884,12 +936,12 @@
       },
       {
         "name": "WTI",
-        "value": 91.31,
-        "pct": 0.9842955098429557,
-        "change": 0.8900000000000006,
+        "value": 90.87,
+        "pct": 0.4976775049767782,
+        "change": 0.45000000000000284,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -899,12 +951,12 @@
       },
       {
         "name": "NATURAL GAS",
-        "value": 2.95,
-        "pct": -2.5115664243225257,
-        "change": -0.07599999999999962,
+        "value": 3.001,
+        "pct": -0.8261731658955688,
+        "change": -0.02499999999999991,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -916,15 +968,15 @@
     "stocks": []
   },
   "fiiDii": {
-    "fii": -10148.41,
-    "dii": 11271.73,
-    "fiiBuy": 14967.82,
-    "fiiSell": 25116.23,
-    "diiBuy": 24413.76,
-    "diiSell": 13142.03,
-    "date": "2026-09-30",
+    "fii": -9484.22,
+    "dii": 10041.84,
+    "fiiBuy": 12260.26,
+    "fiiSell": 21744.48,
+    "diiBuy": 25420.04,
+    "diiSell": 15378.2,
+    "date": "2026-10-01",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-01T11:03:51.809Z",
+    "asOf": "2026-10-01T13:18:30.819Z",
     "provisional": true
   },
   "ipo": {
@@ -1001,7 +1053,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1081,7 +1133,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1161,7 +1213,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1243,7 +1295,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1323,7 +1375,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1403,7 +1455,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1483,7 +1535,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-01",
-        "asOf": "2026-10-01T11:03:51.809Z",
+        "asOf": "2026-10-01T13:18:30.819Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1503,20 +1555,6 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Shah Investor's Home IPO allotment today; check status on BSE, NSE and registrar - Moneycontrol.com",
-      "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 05:01:23 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPYzIyUlZGYmhrMGdmMVdJVHVlZ0hmV0hvWklMWXpiZGpGMlRDOFJLcnJfY3VuMW92MlNwRDVJOE1IVXhaVDhVQ0Y3eUF2MmtFZG9RWUYwUE1sVFJfWnF5UjBmM0NwejdKZFprcEs4bk1PNW1XRkdVdUhIYUViWXEwQklhc1dpQ3VmZWpGZUdOaGZLMHk2QjVPNGhiTnE3czVKRmpUZE8yTl9XeGJSSEt0dHRfRTlUQnJVc1doZEpiZFhLaFVBRzFHdWFTamFGVlZlTXBXMjdn0gHbAUFVX3lxTFBaQVFzbnNZSThfeEl5eTVQMTVfSWJYa2pTXzZGWllSUF9UUHdpRUNNYnlhTEdLVS1tWVRPV21CNWg3NExFcW5EU3ZFOWNTN0dmT1RGNXpiTnlFeWJzUEtld0JuYWtwR1g0REZfZUdYRVo0dEQwUE9tX1dTcEY0S3VBaVRUWU1VQlc2SjFIZW9EaHFmX2FOS05pWVMwMnNJQzZvSWdZTm45eUNRX0tsX0NnOXlCRlFrZjZKRjR5VU9nZG9TWlNMdmFwWWYzNDh1aVVUWEItVnFReDZ4UQ?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Moneyview IPO Listing: Shares Debut At ₹55 On NSE And BSE Against ₹34 Issue Price - HDFC Sky",
-      "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 05:03:48 GMT",
-      "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNdHFjcno4UktKWUxFM19MLTNrRHhnRlZIV19fUEI0TXM2YjhIX1RMRlVtYnBjN01KcEZaWXcxc0E5OUJrX3ZSSnAwN3FnSjVONXY3TXN2RW9QSFhNaFVuRTZ4bXdfSlBHX3hWSzMtbDlKcFRBLTBSTzVtSjJtM2xpeUt0ZHN0SFFuOGFmOWw3bHRsM19lU2p2VXNYa3JnU2prbVBid3ViTFdMbjA?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
       "title": "SRIT India IPO allotment: How to check status online on KFin Technologies, NSE, BSE; listing date, time revealed - Upstox",
       "source": "Google News RSS",
       "age": "Thu, 01 Oct 2026 02:46:02 GMT",
@@ -1531,10 +1569,31 @@
     },
     {
       "tag": "MARKET NEWS",
+      "title": "NSE shares fall below IPO price amid broader market crash; here's how you should trade - Moneycontrol.com",
+      "source": "Google News RSS",
+      "age": "Mon, 28 Sep 2026 04:34:47 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxQSloyUGc1YUtMV0NidmhpdHFPMUpSTVZEZUdZelRhQUxBNUcyalVNUEJDa280RGNxRWR1dVVDSVZxSlJPWWpNTHpxM3YxblNHTlgzUmMtTm0tWF9vd1NNR2xycFZucEk4aTdva3ItbWdjLXZIWDhyNjFTWkRnTkhsSWNCQUJwSjhLSmhXQXI5WFp1LVdud05yZmxiME5WTElKcFlxTDlhejNuZ3psY3pGaGVlWHZ4OG4tZmVXbXFpeFNIbndQQkhGTGctR3YtQ3BEUktlTkFoWFNCaTdGNlVhZHpjSjbSAeoBQVVfeXFMUFR1bGtTN0xCNnVWRGowWXliNHI5TVVJUGw1T1BzaThYZ1RyOTR6eGhzMUJWV1U2VzdKRC1OMVY4NWV2czhrMjRpLXlHdDFremp5bE94WDFKSTFWcGE4UTJnX19IM2pwQXB4TExGVnE4ZDhyR2xwazhTbk8wZUZQdGMteVFIcERGaHMxeHlYYUwxeGIzWWZ3eTF1OUVMRlFqbWtqaUo2a0NaRGdhUEZIVWlnTkZIU3ZsNHNVTWhfNEExV0Fpd0s4YmRwdExZMnVaU1pUWGJkc2toQzFkMnFyYmZsNzdudnNjTEtn?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
       "title": "SRIT India IPO allotment status: Check application BSE, NSE, Kfin; latest GMP, listing date & more - Business Today",
       "source": "Google News RSS",
       "age": "Thu, 01 Oct 2026 03:16:16 GMT",
       "url": "https://news.google.com/rss/articles/CBMi9gFBVV95cUxOWmh0SlBWZ01oUTg3UGlRX19kUlFXcWhBQWtPRlE3bGFwWUg5X0hNSnY3SzlVWUNoR0Jma3c5TzBHTFczb1dFTWlxZnU2NUpZalE0SGJ2TDZGLWxreURwTkVqTllMaDFwVWwxaW53YlpZd2ZIcTVISHFybnRhWERKUC1kczF5eXNhSS1OWHNyMW90eWQ5eDE0TmIyOFVpV2VaU3BqdmtCTHdXT1JjZmkycEhOXzNUMzN6akVUSXUzeFJDWkpkTVRsLW1tY2Z5VE9kcFRIb0tiZkk1RDBjZWpvWDF2UDFfck5aeG15NXE2RjJVUDViYXfSAfsBQVVfeXFMTWVyZ2FTTS1pRzBDQlYxTXMyOC1FMFdvZTZSelAwLW1oVWw2a05pR01iOVJ5cHN4c3dTNmpvMS10WDNSR1lXV3NEbkpGcUlzMmZkOFRuS0R0Q2FoaUtCZkw4UUtPMHVCMXR1ajBmRjlhOFFvSFVfaUtKd09vQzVVRzZvU1ZNTl8zQ05tNzVJMHVjczJuNExwTHJRNXVNcndKZFA0TGVhRjd4ZTAwSnlQVEpHRDgwOXczbjhDWUFwNGJNcjFvZ0dET29nelhXN1lPb0NIZ1dYOWNHaExaT0JKN3Q3LVhUbWFVVEg4Wkprc3g1ZGFBY2dFTnF5ekk?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Stock markets close flat after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
+      "source": "Google News RSS",
+      "age": "Thu, 17 Sep 2026 07:00:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOXzhzbFRkeE1KZk55bWlkckFrbExLcTFWanJSYkp4dERYbXY0Ti0zOE4tN2p2bE82NmR4NXdKSGtNYUdUbUxUMzE1eEJSdTU1eWw4aFNhS2FQQjZHYTFzdDBUZGp5RTVZQ3BtcFRaa3FOWGFrZ2laUDl6bnM1ZVNGWDdjV1h2SU1ySHZFZWl5bHdjMGZ1bmM3dkQwWjFDdXI2M0k5NjV5dVhQdFlsVWcyWTRWamVNUXdTOVdNb1pPbWE4TEF20gHLAUFVX3lxTE8walloR2lkQUNqSjJJZXBXZzBPU0g3NVE5M1Q0MTVMN1NsVFRaNmw2Ni0ySVBON3Q5QU1iWThOLXdvZXMwSnYzeUg2WDRBMHd1S250RGZieTFFMWJKMUxqZWNOeXRLV1hVMW1xQkpJODB1MHQ5WXo1bTJubkE3M3paQVh1V3lSajJmTkpxVzZoSzcxYmFpeU95clFFSWVrVVZmRkc4UnRfMjZnaUFVc1FFd0E3MUQ5M21ZTnp6c2lUcjZvX1NlZ2RQYm1r?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Why is market crashing today? Sensex slumps 800 points, Nifty below 22,400. 5 key factors behind Rs 8 lakh - The Economic Times",
+      "source": "Google News RSS",
+      "age": "Thu, 01 Oct 2026 07:34:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMinwJBVV95cUxQem1qR1NTWTlpVVJJTzAzSnlHeGxuZDJJSGVIUHROb2ttTndJUlYzUTExZUlJZnBUNTlqaERQemk3dXRNRXQ0SkxOSzJGZW5NdW1ja0w1NzFkZE9iSldhRVZrU1lEMS12MGJybmloVi0xUGdMcGxJclA0bXRoRWhnQ3dLaXpUS1JHQVFzamJjNzJ0ZndfLUR5LXNTc1d1bzNqNEFXaGljNFpvbDdXVDBQN2RwZnZKbW5WMzlsdDdQdEJkSkdOTnAxRHIxRFlvRUlUOHJKQk1XclBsZGs2aXVwS1o1Sk1MRl9YVEdVUU0zaE5lekM4dC11VUF2ZXpzYlpjOXdaVFNfemV4ZGZyaC0tQ1pTby1LcURwdklBdjlOZ9IBnwJBVV95cUxQem1qR1NTWTlpVVJJTzAzSnlHeGxuZDJJSGVIUHROb2ttTndJUlYzUTExZUlJZnBUNTlqaERQemk3dXRNRXQ0SkxOSzJGZW5NdW1ja0w1NzFkZE9iSldhRVZrU1lEMS12MGJybmloVi0xUGdMcGxJclA0bXRoRWhnQ3dLaXpUS1JHQVFzamJjNzJ0ZndfLUR5LXNTc1d1bzNqNEFXaGljNFpvbDdXVDBQN2RwZnZKbW5WMzlsdDdQdEJkSkdOTnAxRHIxRFlvRUlUOHJKQk1XclBsZGs2aXVwS1o1Sk1MRl9YVEdVUU0zaE5lekM4dC11VUF2ZXpzYlpjOXdaVFNfemV4ZGZyaC0tQ1pTby1LcURwdklBdjlOZw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1545,10 +1604,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "NSE shares fall below IPO price amid broader market crash; here's how you should trade - Moneycontrol.com",
+      "title": "Moneyview IPO Listing Today: Bumper Listing Expected? Check Latest GMP, Expected Price - NDTV Profit",
       "source": "Google News RSS",
-      "age": "Mon, 28 Sep 2026 04:34:47 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxQSloyUGc1YUtMV0NidmhpdHFPMUpSTVZEZUdZelRhQUxBNUcyalVNUEJDa280RGNxRWR1dVVDSVZxSlJPWWpNTHpxM3YxblNHTlgzUmMtTm0tWF9vd1NNR2xycFZucEk4aTdva3ItbWdjLXZIWDhyNjFTWkRnTkhsSWNCQUJwSjhLSmhXQXI5WFp1LVdud05yZmxiME5WTElKcFlxTDlhejNuZ3psY3pGaGVlWHZ4OG4tZmVXbXFpeFNIbndQQkhGTGctR3YtQ3BEUktlTkFoWFNCaTdGNlVhZHpjSjbSAeoBQVVfeXFMUFR1bGtTN0xCNnVWRGowWXliNHI5TVVJUGw1T1BzaThYZ1RyOTR6eGhzMUJWV1U2VzdKRC1OMVY4NWV2czhrMjRpLXlHdDFremp5bE94WDFKSTFWcGE4UTJnX19IM2pwQXB4TExGVnE4ZDhyR2xwazhTbk8wZUZQdGMteVFIcERGaHMxeHlYYUwxeGIzWWZ3eTF1OUVMRlFqbWtqaUo2a0NaRGdhUEZIVWlnTkZIU3ZsNHNVTWhfNEExV0Fpd0s4YmRwdExZMnVaU1pUWGJkc2toQzFkMnFyYmZsNzdudnNjTEtn?oc=5"
+      "age": "Thu, 01 Oct 2026 03:00:32 GMT",
+      "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPQWJnMF9KRHIxc3QtSU5BbFlmY3FGSGFCcWxmSE0xNEhISUMtOWxkQmlVVE5iNjJPaW1jUzFVMEF3R1JiOVRKbVc1SGNyMHh6SzBURjRMRnBNekdlU2xXY0w3YWF1c2tId05mWFBibUtOeVhmanlWc3JfbUcxZ1RRM2ZIZk1MS1hFb3NPcG9FdDVjVDRRNjd1VS1DbGt6RVVGNThncm85N1VUVjhBczZFeC1qLVNOSHY4WF9MUEQ2aTRXY0lwUEHSAc4BQVVfeXFMUGNaTGtQN2tKdVVRUkJLaWNsQjhTa0hERzRudzhRYWkxZHRnMmZpRlh6VFNWT19CTkxueWFVX0Y1c1ZrdnFkY0hxM1FKZC1ZemJLb2R2TGNNUWJKcGp4MUlUWFh2OHowcWNHal9idlBxODZjR1lHblhyR2ZUbFFVNGNfNzJCMnNmY0dlVnREbE9GYlJ5cjNtYXZVU2duVnZNMUNmNjVRMXAxQV9nMVhDWGN5eG5Zb0U5X3NUU0JLTXBnaEhxN0NqaVFDQzBUV2c?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1556,13 +1615,6 @@
       "source": "Google News RSS",
       "age": "Tue, 29 Sep 2026 07:21:53 GMT",
       "url": "https://news.google.com/rss/articles/CBMi8AFBVV95cUxPYjNEaEpQZklaM2ZZTy05SW5ZS1AyUVpjRlZ2Yk9NdHJWbzctRUNfcjlHRGt6Y0VVbjNZcXpveUZXOWtPRXBucUE5U0NUdEpaSWF0Q18wem8yMWFoT25PWW95ZXVzdTdnZF9KN0RfM3R5bVNyd0F3bEVBTGhXUGZrT0ZCV0ZEU3dhSVB6RGVDWERNdHo5N3hjcVlJRlBxUXIyMEc4Z1dJaE8tWVJuZkxGQUp2TUk2M2Zwd01PaEE3amZHX1pFV0lTbWFWSlFBUzdfSnE2NlhVUFpNZXBvMkpfX25PTy15ZnBrZl9sOVJQVUs?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Sensex Today | Stock Market Live: Sensex rises 150 pts, Nifty eyes 23,100; realty gains, IT slips - IndiaIPO",
-      "source": "Google News RSS",
-      "age": "Fri, 25 Sep 2026 07:19:32 GMT",
-      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxNNGZNa1lkSGVudThjR01EUWh3cTNHTVVPQ0NNcGRHZ1JmSndlS25UZTZXRWs2TjBqSnE1RzZxbTRfWWJMWEtSTUsyLWFoMUVvODMzdVVVSzl3WGRNeHZQYnFfazBWT1BJbmdjcFRVb09xTFh2Qkk2eEx4RFc4MzVFX2tzQXE2ODJvUTVkeXBqWGZScVlXaGRpZkJBaUNGZU82QUlzWVZRaVkza2dDa0dZbE4zcHB0S2FyYUVxZU9mQVZZVUdk?oc=5"
     }
   ]
 }
