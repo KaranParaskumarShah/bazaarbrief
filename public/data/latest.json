@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-03T11:41:28.612Z",
+  "updatedAt": "2026-10-03T16:18:55.489Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
@@ -10,7 +10,7 @@
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-03T11:41:28.612Z",
+    "updatedAt": "2026-10-03T16:18:55.489Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
@@ -51,7 +51,7 @@
         "change": -198.5,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -65,7 +65,7 @@
         "change": -182.3000000000029,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -79,7 +79,7 @@
         "change": -570.5899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -93,7 +93,7 @@
         "change": -168.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -1195,13 +1195,13 @@
       },
       {
         "name": "GOLD",
-        "value": 154115.6,
-        "inrPer10g": 154115.6,
-        "inrPerGram": 15411.56,
-        "gstPerGram": 462.35,
+        "value": 153965,
+        "inrPer10g": 153965,
+        "inrPerGram": 15396.5,
+        "gstPerGram": 461.9,
         "sellPerGram": 14917.84,
         "pct": -0.57,
-        "asOf": "2026-10-03T11:41:00.108Z",
+        "asOf": "2026-10-03T16:15:23.369Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1211,13 +1211,13 @@
       },
       {
         "name": "SILVER",
-        "value": 232120,
-        "inrPerKg": 232120,
-        "inrPerGram": 232.12,
+        "value": 232000,
+        "inrPerKg": 232000,
+        "inrPerGram": 232,
         "gstPerGram": 6.96,
         "sellPerGram": 219.22,
         "pct": -0.5,
-        "asOf": "2026-10-03T11:41:00.108Z",
+        "asOf": "2026-10-03T16:15:23.369Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1232,7 +1232,7 @@
         "change": -0.060000000000002274,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1247,7 +1247,7 @@
         "change": -1.7600000000000051,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1262,7 +1262,7 @@
         "change": 0.06800000000000006,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1282,7 +1282,7 @@
     "diiSell": 15378.2,
     "date": "2026-10-01",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-03T11:41:28.612Z",
+    "asOf": "2026-10-03T16:18:55.489Z",
     "provisional": true
   },
   "ipo": {
@@ -1359,7 +1359,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-03",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1439,7 +1439,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-03",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1519,7 +1519,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-03",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1601,7 +1601,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-03",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1681,7 +1681,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-03",
-        "asOf": "2026-10-03T11:41:28.612Z",
+        "asOf": "2026-10-03T16:18:55.489Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1692,6 +1692,13 @@
     ]
   },
   "news": [
+    {
+      "tag": "MARKET NEWS",
+      "title": "NSE - National Stock Exchange of India Ltd: Live Share/Stock Market News & Updates, Quotes- Nseindia.com - NSE India",
+      "source": "Google News RSS",
+      "age": "Sat, 03 Oct 2026 14:02:13 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiPkFVX3lxTE15aFBDQy1lOHpHNnVLU3dRM1lsWmNDMVRQNWJPcXBDSklxT1VIUnVxVDMwRHJsRTJtdmNLcEd3?oc=5"
+    },
     {
       "tag": "MARKET NEWS",
       "title": "Share Market Live, Share Market Today: Latest Share Market News, Share Market Live Updates on The Economic Times - The Economic Times",
@@ -1715,7 +1722,7 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Stock market holiday: BSE, NSE closed today for Gandhi Jayanti - Business Standard",
+      "title": "Stock market holiday: BSE, NSE closed today for Gandhi Jayanti - business-standard.com",
       "source": "Google News RSS",
       "age": "Fri, 02 Oct 2026 01:50:17 GMT",
       "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOeW1pUlBTcVhWck1QcC1Zdk1EcWxiSnhORDBwT291RzZCb2JaYlVvT0dxMGVuWWp3b0ctam5raFFWT3ExOWpncmVKVUVHcDVIZVlLOHN2OFJfVF9hWWxzTEtXakhEX1k3cTBUT2l0YmlBcjJkcUhkQUtBLURqR2thRjNrdU5XSzdBTE55M1RlMVBOaXAybnF6SGRrVVAwX3JFQWNvRFBlTWJhemtuak53ZVNyQVJDeHV0ZnB0NFNUTnM3VkxBYUHSAcsBQVVfeXFMTnJ2X3ZPNzAyUlNYdlplOTVNRGVwZmI0LWRmVkhkSmNLVUFCYU1MX05ESUlaWnBadWs5RnNsSVdrZklDbmFzVTFvdDF4dDRpZFhaZ2IwdGZicVROU2ZKb2dQSDlObGNxd0pFeGppUFZFeUIzNUZ6M2U2d0dDbTdqNXpialhFV0syWG02T0RtaWNMZFlkY1FraEJ6dXZ2QzNkaHkzQmFsaFFSejNlRTAySC1XYWtqNVV3SkEwcDVLY0lMZk9sYko5ZG1qV3M?oc=5"
@@ -1736,17 +1743,17 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "September fundraising highest for any month this year amid Nifty's big fall - Business Standard",
+      "title": "Adroit Industries shares list 75% above IPO price on NSE; here's how Swastika Infra, Elevate Campuses, ArMee Infotech debuted - Upstox",
       "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 14:33:43 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxQdVRXQjdVN2lUQmZzZURZMzVmSDRmeDZwRjlpSHJtY184RXVfT1lURDhObkd0UzhhT1h0Mkl3a0RZSDVvZlRzZGpqbjVibWRmMFF0NXFqUFZnUXo1SUNaNzJvNWJ2Y0U0eWN2NFBTdUQ3d05rUl9PSkJVbk1VQnR5RHlyN0ZDa3g4THdyN2Rlc183cmRDUUJHeV9nRk41cmFPU09vWlVqbnBIS3U5Mlc1S3l2T3BYaUJRQkZrZ0QtRVpDWTFOUTMzcXM2dDd6WUtNRGFMSmt4eVAyUdIB3wFBVV95cUxNVlVpTWxwNDZKaDRzZTU4SXNEWjRoaE9lUElJMjhoaVR5TzZOMWcxVDNDREVnTlk2VWR5RDBrNUhOUDYxUm9sTkRYdmEwTEY0aklQeGVjZ0dBT1lRUDhGTGZOdEx1UzdoNUVGaHNiSEV6VW1BV056LVg1aERNQlZpd1A2bTRUNVVvdnVqT01MdER5ci1QUHVpTEhUbGxIbEZOREV3RGJVWVl2QVUycFNJQlN5WEdQQ0t1Q2p1ZzZ3UUVPTUJXdUxqMFNSUEJySFByTk9ZOXdIdUtlUHBHbVk4?oc=5"
+      "age": "Wed, 30 Sep 2026 04:17:47 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiigJBVV95cUxQWm41eEhCdGFMTHloMG1fVXMyODB3Y1RXUHpqUTZHamNUc3Jvcy1SVU1fRXlJTVJUdFpYQW11MVhROEt5alhtaVBfbXZCVzRkalFfMnhPOXhfZ2VKbDdwSzNFWG51SW85TmRQY2lIWGp2TUxpeTZVbkhRdk9wUkVGdWZMTlh1WkkxaUdNRk5hNzBGWUtieDFocWMtaXZXTzQxazZtS0d3R1Rndk5qdkhLQjFNSkxjTnJoczRBVlRVdjJod2tYdWRMV1RsRXlzOUNDazQyV1pJcVI3eTNUR0JzWFl2ZFZWVDZ0VWlEQ0ZpanhoMzZrZGY5X1BuaGZhY3RDUnZOR2VDeWFudw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Moneyview IPO allotment finalised: How to check status online on NSE, BSE, MUFG Intime India; listing date, time revealed - Upstox",
+      "title": "September fundraising highest for any month this year amid Nifty's big fall - business-standard.com",
       "source": "Google News RSS",
-      "age": "Tue, 29 Sep 2026 03:06:23 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi9AFBVV95cUxNMGlqV1YzNmJHcThVSENwSkJGRnZNQ1hJZ2ZHWmZ1RDRsQ192TjB1ZkYySWNPRldidEpDX3c4ZHZPWnc3S2hldktMcDJpR0tqWnQxN2R3VlNqLWNUYnd6RG14T2huNXRnSG9LdlhhRVU4MGxueWx2RjA5TTU3R0FLZUl6dGhseVhFeEpxdElKZjgtRmt5R1JDMGZJLVlCZXJlTTkySzFUZWMtd2hoNjdPaUhkSGtrRUVpRVpWZkx3aTEydmN0aFNGazdscHRRNXZXaXNGem9yeWhtRnZmVlFSRE4wWHdFSlBxc1NKU2NXUkZ0NFFT?oc=5"
+      "age": "Thu, 01 Oct 2026 14:33:43 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxQdVRXQjdVN2lUQmZzZURZMzVmSDRmeDZwRjlpSHJtY184RXVfT1lURDhObkd0UzhhT1h0Mkl3a0RZSDVvZlRzZGpqbjVibWRmMFF0NXFqUFZnUXo1SUNaNzJvNWJ2Y0U0eWN2NFBTdUQ3d05rUl9PSkJVbk1VQnR5RHlyN0ZDa3g4THdyN2Rlc183cmRDUUJHeV9nRk41cmFPU09vWlVqbnBIS3U5Mlc1S3l2T3BYaUJRQkZrZ0QtRVpDWTFOUTMzcXM2dDd6WUtNRGFMSmt4eVAyUdIB3wFBVV95cUxNVlVpTWxwNDZKaDRzZTU4SXNEWjRoaE9lUElJMjhoaVR5TzZOMWcxVDNDREVnTlk2VWR5RDBrNUhOUDYxUm9sTkRYdmEwTEY0aklQeGVjZ0dBT1lRUDhGTGZOdEx1UzdoNUVGaHNiSEV6VW1BV056LVg1aERNQlZpd1A2bTRUNVVvdnVqT01MdER5ci1QUHVpTEhUbGxIbEZOREV3RGJVWVl2QVUycFNJQlN5WEdQQ0t1Q2p1ZzZ3UUVPTUJXdUxqMFNSUEJySFByTk9ZOXdIdUtlUHBHbVk4?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1754,13 +1761,6 @@
       "source": "Google News RSS",
       "age": "Thu, 01 Oct 2026 05:01:23 GMT",
       "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxPYzIyUlZGYmhrMGdmMVdJVHVlZ0hmV0hvWklMWXpiZGpGMlRDOFJLcnJfY3VuMW92MlNwRDVJOE1IVXhaVDhVQ0Y3eUF2MmtFZG9RWUYwUE1sVFJfWnF5UjBmM0NwejdKZFprcEs4bk1PNW1XRkdVdUhIYUViWXEwQklhc1dpQ3VmZWpGZUdOaGZLMHk2QjVPNGhiTnE3czVKRmpUZE8yTl9XeGJSSEt0dHRfRTlUQnJVc1doZEpiZFhLaFVBRzFHdWFTamFGVlZlTXBXMjdn0gHbAUFVX3lxTFBaQVFzbnNZSThfeEl5eTVQMTVfSWJYa2pTXzZGWllSUF9UUHdpRUNNYnlhTEdLVS1tWVRPV21CNWg3NExFcW5EU3ZFOWNTN0dmT1RGNXpiTnlFeWJzUEtld0JuYWtwR1g0REZfZUdYRVo0dEQwUE9tX1dTcEY0S3VBaVRUWU1VQlc2SjFIZW9EaHFmX2FOS05pWVMwMnNJQzZvSWdZTm45eUNRX0tsX0NnOXlCRlFrZjZKRjR5VU9nZG9TWlNMdmFwWWYzNDh1aVVUWEItVnFReDZ4UQ?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "India's domestic funds push IPO valuations lower amid market strain - Business Standard",
-      "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 06:22:29 GMT",
-      "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxPbnJsM3ZQLWRKWERCaENDNFdQYWlNLXhsSzNETGVNanBxQTJzVDBXTXRITUtjT0FocWY2ZmE0S2c0bFJGeDVVWkFwcEd0Rkx4SmNBSGx5aGNkOEtQdFgyMTJHM0s5WTBjbjFIYTIzWkkxV2cwOU82OVZIS016X0FPUmNwM1ROWl9waTFXZ3BJYWJKZDk5MmNFWWYwUWFwNG15MVNwTjR1SzE3TERyRVpFa2cyUUUzaEdJbFl0VTdlUzkzUnN5dDhfLVd6c0VvUdIB0wFBVV95cUxNNk00LWR0U1ZOSTZNc3ljT0ZRVXpQSy1DcVZhWTV2WWNaVG1VM1BzQ3l1cEJ0WHFUb0dEYjZxUWhmaEttUU5aczZ6UWVpVWZSa2ZvMjVqekV0aFB1WW1MV0ZLTjFJdlBFZG1WVDQ0UVJsa01VbEJlSTJmUEZJVm51X2Y2eUlidTlRcENTeUEyOUtER2lPbU1YNlp3RVhnNXNDTlYtYnc3RGhBMy1lUzRHMnFqYkYyQVFIdXlseVhUbUxqWjFpRmlfNzdEbkl5TXY0ckhn?oc=5"
     }
   ]
 }
