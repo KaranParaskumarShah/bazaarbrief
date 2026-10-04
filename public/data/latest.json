@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-03T21:17:32.454Z",
+  "updatedAt": "2026-10-04T00:39:12.315Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
@@ -10,7 +10,7 @@
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-03T21:17:32.454Z",
+    "updatedAt": "2026-10-04T00:39:12.315Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
@@ -49,7 +49,7 @@
         "change": -198.5,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -63,7 +63,7 @@
         "change": -182.3000000000029,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -77,7 +77,7 @@
         "change": -570.5899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -91,7 +91,7 @@
         "change": -168.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -1193,13 +1193,13 @@
       },
       {
         "name": "GOLD",
-        "value": 153930.9,
-        "inrPer10g": 153930.9,
-        "inrPerGram": 15393.09,
-        "gstPerGram": 461.79,
+        "value": 154035.9,
+        "inrPer10g": 154035.9,
+        "inrPerGram": 15403.59,
+        "gstPerGram": 462.11,
         "sellPerGram": 14917.84,
-        "pct": -0.57,
-        "asOf": "2026-10-03T21:15:00.127Z",
+        "pct": -0.14,
+        "asOf": "2026-10-04T00:35:19.387Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1209,13 +1209,13 @@
       },
       {
         "name": "SILVER",
-        "value": 231870,
-        "inrPerKg": 231870,
-        "inrPerGram": 231.87,
+        "value": 232140,
+        "inrPerKg": 232140,
+        "inrPerGram": 232.14,
         "gstPerGram": 6.96,
         "sellPerGram": 219.22,
-        "pct": -0.5,
-        "asOf": "2026-10-03T21:15:00.127Z",
+        "pct": -0.2,
+        "asOf": "2026-10-04T00:35:19.387Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1230,7 +1230,7 @@
         "change": -0.060000000000002274,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1245,7 +1245,7 @@
         "change": -1.7600000000000051,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1260,7 +1260,7 @@
         "change": 0.06800000000000006,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1280,7 +1280,7 @@
     "diiSell": 15378.2,
     "date": "2026-10-01",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-03T21:17:32.454Z",
+    "asOf": "2026-10-04T00:39:12.315Z",
     "provisional": true
   },
   "ipo": {
@@ -1357,7 +1357,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-04",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1437,7 +1437,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-04",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1517,7 +1517,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-04",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1599,7 +1599,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-04",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1679,7 +1679,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-04",
-        "asOf": "2026-10-03T21:17:32.454Z",
+        "asOf": "2026-10-04T00:39:12.315Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1699,17 +1699,17 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "SRIT India IPO allotment: How to check status online on KFin Technologies, NSE, BSE; listing date, time revealed - Upstox",
-      "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 02:46:02 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi9wFBVV95cUxPNFZVSk43alhkZWhzWWRlTTNqRFRySGFPN01uRWp0Rl94SGVXeWEzM1FVM2F4c3FKa0otYW1IN0hpb0VpdURXNVdZM1NWVm1pQ3pWZkxIRXU1QjhjOTR0czYyNHJqdHhnaW5MMUhnT0VCVHZpRE11a2pzZWRXenpLVU9XR3FSOEIwdFQzUndWUFVnM0pYeEtYQ2U5alh1NlNnMTBJcTRtb2ZZd3NQbjdqTEF0TDRrOTRnOS1nT0ZoUkFkTXB3TVpWTE53T2hDU2h3dHZScjkzWlNCQ0RhNEFySFNkd3V5VTB1WmJSTmR1c0lmNFVNcS1j?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
       "title": "Stock market holiday: BSE, NSE closed today for Gandhi Jayanti - Business Standard",
       "source": "Google News RSS",
       "age": "Fri, 02 Oct 2026 01:50:17 GMT",
       "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOeW1pUlBTcVhWck1QcC1Zdk1EcWxiSnhORDBwT291RzZCb2JaYlVvT0dxMGVuWWp3b0ctam5raFFWT3ExOWpncmVKVUVHcDVIZVlLOHN2OFJfVF9hWWxzTEtXakhEX1k3cTBUT2l0YmlBcjJkcUhkQUtBLURqR2thRjNrdU5XSzdBTE55M1RlMVBOaXAybnF6SGRrVVAwX3JFQWNvRFBlTWJhemtuak53ZVNyQVJDeHV0ZnB0NFNUTnM3VkxBYUHSAcsBQVVfeXFMTnJ2X3ZPNzAyUlNYdlplOTVNRGVwZmI0LWRmVkhkSmNLVUFCYU1MX05ESUlaWnBadWs5RnNsSVdrZklDbmFzVTFvdDF4dDRpZFhaZ2IwdGZicVROU2ZKb2dQSDlObGNxd0pFeGppUFZFeUIzNUZ6M2U2d0dDbTdqNXpialhFV0syWG02T0RtaWNMZFlkY1FraEJ6dXZ2QzNkaHkzQmFsaFFSejNlRTAySC1XYWtqNVV3SkEwcDVLY0lMZk9sYko5ZG1qV3M?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Adroit Industries shares list 75% above IPO price on NSE; here's how Swastika Infra, Elevate Campuses, ArMee Infotech debuted - Upstox",
+      "source": "Google News RSS",
+      "age": "Wed, 30 Sep 2026 04:17:47 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiigJBVV95cUxQWm41eEhCdGFMTHloMG1fVXMyODB3Y1RXUHpqUTZHamNUc3Jvcy1SVU1fRXlJTVJUdFpYQW11MVhROEt5alhtaVBfbXZCVzRkalFfMnhPOXhfZ2VKbDdwSzNFWG51SW85TmRQY2lIWGp2TUxpeTZVbkhRdk9wUkVGdWZMTlh1WkkxaUdNRk5hNzBGWUtieDFocWMtaXZXTzQxazZtS0d3R1Rndk5qdkhLQjFNSkxjTnJoczRBVlRVdjJod2tYdWRMV1RsRXlzOUNDazQyV1pJcVI3eTNUR0JzWFl2ZFZWVDZ0VWlEQ0ZpanhoMzZrZGY5X1BuaGZhY3RDUnZOR2VDeWFudw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1720,17 +1720,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Stock markets trade marginally higher after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
+      "title": "Stock markets trade marginally higher after U.S. Fed rate hike; NSE IPO in focus - thehindu.com",
       "source": "Google News RSS",
       "age": "Thu, 17 Sep 2026 07:00:00 GMT",
       "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNVmtnWUg5WktRbm1KOEpsQVA5YzVMclhaaWMzekVjSFNNaG5lczlBQk9NTE9CMWFMaE80MFA2VzhmVFZKTHdPLTBGMkxnM1d0bnVKSzJjdkVSSlRKN2tWZlcwUHdHT2R5cFBnS3dnVTZwdkZZRjNsSWdRSmU1bmUwWUdPVmFmMVlfMzB6TWhrS3pTcUg1RDBJMGJETGNNaHhaZFFMNlZNVWdGTFpyVE85b3J4dFhwQlozUFZSaU5xaHR4Tnl1dXRtVU4xRzZaVVRFN1lHVkFn0gHcAUFVX3lxTE9IY2c2WDd6QnowLWdlalNLRW9lV2FPUVR2Y0cxSUNBZ2R1NHFOMzNlaEpGMVN6cjgyRktZOVN3Y0ZUVGpVVWtmSm9BYzNaTnpvZ3NObURBRnhva2JHenhtdTJyYjZsYUtVcFRHUl9WTEsxMGZfVHE3aDF3ZERTb2s2amRRZFVQbFVOZ1FTLTI0M25Ub0xKY2NoMmJYMUtrTUJpTHNGN1J1ZS03SVozd205cU1TWnluUEJiSFhXUkJYWXIyLWg1T2lQZHRzYm43MVEtMzFiYzlralhMTlE?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Adroit Industries shares list 75% above IPO price on NSE; here's how Swastika Infra, Elevate Campuses, ArMee Infotech debuted - Upstox",
-      "source": "Google News RSS",
-      "age": "Wed, 30 Sep 2026 04:17:47 GMT",
-      "url": "https://news.google.com/rss/articles/CBMiigJBVV95cUxQWm41eEhCdGFMTHloMG1fVXMyODB3Y1RXUHpqUTZHamNUc3Jvcy1SVU1fRXlJTVJUdFpYQW11MVhROEt5alhtaVBfbXZCVzRkalFfMnhPOXhfZ2VKbDdwSzNFWG51SW85TmRQY2lIWGp2TUxpeTZVbkhRdk9wUkVGdWZMTlh1WkkxaUdNRk5hNzBGWUtieDFocWMtaXZXTzQxazZtS0d3R1Rndk5qdkhLQjFNSkxjTnJoczRBVlRVdjJod2tYdWRMV1RsRXlzOUNDazQyV1pJcVI3eTNUR0JzWFl2ZFZWVDZ0VWlEQ0ZpanhoMzZrZGY5X1BuaGZhY3RDUnZOR2VDeWFudw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1748,7 +1741,14 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Stock markets close flat after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
+      "title": "Moneyview IPO allotment finalised: How to check status online on NSE, BSE, MUFG Intime India; listing date, time revealed - Upstox",
+      "source": "Google News RSS",
+      "age": "Tue, 29 Sep 2026 03:06:23 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi9AFBVV95cUxNMGlqV1YzNmJHcThVSENwSkJGRnZNQ1hJZ2ZHWmZ1RDRsQ192TjB1ZkYySWNPRldidEpDX3c4ZHZPWnc3S2hldktMcDJpR0tqWnQxN2R3VlNqLWNUYnd6RG14T2huNXRnSG9LdlhhRVU4MGxueWx2RjA5TTU3R0FLZUl6dGhseVhFeEpxdElKZjgtRmt5R1JDMGZJLVlCZXJlTTkySzFUZWMtd2hoNjdPaUhkSGtrRUVpRVpWZkx3aTEydmN0aFNGazdscHRRNXZXaXNGem9yeWhtRnZmVlFSRE4wWHdFSlBxc1NKU2NXUkZ0NFFT?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Stock markets close flat after U.S. Fed rate hike; NSE IPO in focus - thehindu.com",
       "source": "Google News RSS",
       "age": "Thu, 17 Sep 2026 07:00:00 GMT",
       "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOXzhzbFRkeE1KZk55bWlkckFrbExLcTFWanJSYkp4dERYbXY0Ti0zOE4tN2p2bE82NmR4NXdKSGtNYUdUbUxUMzE1eEJSdTU1eWw4aFNhS2FQQjZHYTFzdDBUZGp5RTVZQ3BtcFRaa3FOWGFrZ2laUDl6bnM1ZVNGWDdjV1h2SU1ySHZFZWl5bHdjMGZ1bmM3dkQwWjFDdXI2M0k5NjV5dVhQdFlsVWcyWTRWamVNUXdTOVdNb1pPbWE4TEF20gHLAUFVX3lxTE8walloR2lkQUNqSjJJZXBXZzBPU0g3NVE5M1Q0MTVMN1NsVFRaNmw2Ni0ySVBON3Q5QU1iWThOLXdvZXMwSnYzeUg2WDRBMHd1S250RGZieTFFMWJKMUxqZWNOeXRLV1hVMW1xQkpJODB1MHQ5WXo1bTJubkE3M3paQVh1V3lSajJmTkpxVzZoSzcxYmFpeU95clFFSWVrVVZmRkc4UnRfMjZnaUFVc1FFd0E3MUQ5M21ZTnp6c2lUcjZvX1NlZ2RQYm1r?oc=5"
