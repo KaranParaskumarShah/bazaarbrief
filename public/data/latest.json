@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-07T17:26:01.753Z",
+  "updatedAt": "2026-10-07T17:52:00.443Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
@@ -10,7 +10,7 @@
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-07T17:26:01.753Z",
+    "updatedAt": "2026-10-07T17:52:00.443Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
@@ -51,7 +51,7 @@
         "change": -173.04999999999927,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -65,7 +65,7 @@
         "change": -72.84999999999854,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -79,7 +79,7 @@
         "change": -429.1100000000006,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -88,12 +88,12 @@
       },
       {
         "name": "GIFT NIFTY",
-        "value": 22560,
-        "pct": -0.9396680425046106,
-        "change": -214,
+        "value": 22554.5,
+        "pct": -0.9638183893914113,
+        "change": -219.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -104,10 +104,10 @@
       {
         "name": "S&P 500",
         "kind": "index",
-        "value": 7803.81,
-        "change": -15.11999999999989,
-        "pct": -0.1933768431230346,
-        "asOf": "2026-10-07T17:26:01.000Z",
+        "value": 7801.25,
+        "change": -17.68000000000029,
+        "pct": -0.22611789592694,
+        "asOf": "2026-10-07T17:52:00.000Z",
         "currency": "USD",
         "series": [
           {
@@ -300,11 +300,31 @@
           },
           {
             "t": "2026-10-07T17:25:00.000Z",
-            "v": 7803.75
+            "v": 7801.2099609375
           },
           {
-            "t": "2026-10-07T17:26:01.000Z",
-            "v": 7803.81005859375
+            "t": "2026-10-07T17:30:00.000Z",
+            "v": 7803.1201171875
+          },
+          {
+            "t": "2026-10-07T17:35:00.000Z",
+            "v": 7801.02978515625
+          },
+          {
+            "t": "2026-10-07T17:40:00.000Z",
+            "v": 7802.3798828125
+          },
+          {
+            "t": "2026-10-07T17:45:00.000Z",
+            "v": 7802.97998046875
+          },
+          {
+            "t": "2026-10-07T17:50:00.000Z",
+            "v": 7801.2099609375
+          },
+          {
+            "t": "2026-10-07T17:52:00.000Z",
+            "v": 7801.25
           }
         ],
         "providerSymbol": "^GSPC",
@@ -313,10 +333,10 @@
       {
         "name": "NASDAQ 100",
         "kind": "index",
-        "value": 31132.465,
-        "change": -92.22100000000137,
-        "pct": -0.29534644479691924,
-        "asOf": "2026-10-07T17:25:59.000Z",
+        "value": 31113.215,
+        "change": -111.47100000000137,
+        "pct": -0.3569963842070385,
+        "asOf": "2026-10-07T17:51:58.000Z",
         "currency": "USD",
         "series": [
           {
@@ -508,8 +528,32 @@
             "v": 31132.8046875
           },
           {
-            "t": "2026-10-07T17:25:59.000Z",
-            "v": 31132.46484375
+            "t": "2026-10-07T17:25:00.000Z",
+            "v": 31116.474609375
+          },
+          {
+            "t": "2026-10-07T17:30:00.000Z",
+            "v": 31129.521484375
+          },
+          {
+            "t": "2026-10-07T17:35:00.000Z",
+            "v": 31120.84765625
+          },
+          {
+            "t": "2026-10-07T17:40:00.000Z",
+            "v": 31128.94921875
+          },
+          {
+            "t": "2026-10-07T17:45:00.000Z",
+            "v": 31125.060546875
+          },
+          {
+            "t": "2026-10-07T17:50:00.000Z",
+            "v": 31118.90234375
+          },
+          {
+            "t": "2026-10-07T17:51:58.000Z",
+            "v": 31113.21484375
           }
         ],
         "providerSymbol": "^NDX",
@@ -1279,13 +1323,13 @@
       },
       {
         "name": "GOLD",
-        "value": 153195.30000000002,
-        "inrPer10g": 153195.30000000002,
-        "inrPerGram": 15319.53,
-        "gstPerGram": 459.59,
-        "sellPerGram": 14787.68,
-        "pct": -0.71,
-        "asOf": "2026-10-07T17:25:00.108Z",
+        "value": 153071.8,
+        "inrPer10g": 153071.8,
+        "inrPerGram": 15307.18,
+        "gstPerGram": 459.22,
+        "sellPerGram": 14775.74,
+        "pct": -0.79,
+        "asOf": "2026-10-07T17:50:00.176Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1295,13 +1339,13 @@
       },
       {
         "name": "SILVER",
-        "value": 229230,
-        "inrPerKg": 229230,
-        "inrPerGram": 229.23,
-        "gstPerGram": 6.88,
-        "sellPerGram": 216.66,
-        "pct": -2.38,
-        "asOf": "2026-10-07T17:25:00.108Z",
+        "value": 228880,
+        "inrPerKg": 228880,
+        "inrPerGram": 228.88,
+        "gstPerGram": 6.87,
+        "sellPerGram": 216.33,
+        "pct": -2.53,
+        "asOf": "2026-10-07T17:50:00.176Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1311,12 +1355,12 @@
       },
       {
         "name": "BRENT",
-        "value": 100.43,
-        "pct": -0.1491350169019601,
-        "change": -0.14999999999999147,
+        "value": 99.88,
+        "pct": -0.6959634122091896,
+        "change": -0.7000000000000028,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1326,12 +1370,12 @@
       },
       {
         "name": "WTI",
-        "value": 88.6,
-        "pct": -0.9391771019678036,
-        "change": -0.8400000000000034,
+        "value": 88.15,
+        "pct": -1.4423076923076834,
+        "change": -1.289999999999992,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1341,12 +1385,12 @@
       },
       {
         "name": "NATURAL GAS",
-        "value": 3.205,
-        "pct": 2.9222864482980153,
-        "change": 0.09100000000000019,
+        "value": 3.194,
+        "pct": 2.5690430314707795,
+        "change": 0.08000000000000007,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1366,7 +1410,7 @@
     "diiSell": 14110.46,
     "date": "2026-10-07",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-07T17:26:01.753Z",
+    "asOf": "2026-10-07T17:52:00.443Z",
     "provisional": true
   },
   "ipo": {
@@ -1443,7 +1487,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-07",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1523,7 +1567,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-07",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1605,7 +1649,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-07",
-        "asOf": "2026-10-07T17:26:01.753Z",
+        "asOf": "2026-10-07T17:52:00.443Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
