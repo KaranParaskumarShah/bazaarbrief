@@ -1,21 +1,23 @@
 {
-  "updatedAt": "2026-10-09T09:06:51.915Z",
+  "updatedAt": "2026-10-09T11:25:12.758Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
     "indiaDate": "2026-10-09",
-    "cashMarketClosed": false,
-    "closeFinalization": "Intraday exchange quote"
+    "cashMarketClosed": true,
+    "closeFinalization": "Exchange EOD close attempted"
   },
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-09T09:06:51.915Z",
+    "updatedAt": "2026-10-09T11:25:12.758Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
       "NSE market: NSE returned no usable market records (equity-stockIndices: /api/equity-stockIndices?index=NIFTY%2050 -> HTTP 404)",
-      "BSE SENSEX: 403 Forbidden: https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w"
+      "BSE SENSEX: 403 Forbidden: https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w",
+      "NSE EOD close: Unexpected token '<', \"\n<!DOCTYPE \"... is not valid JSON",
+      "BSE EOD close: 403 Forbidden: https://api.bseindia.com/BseIndiaAPI/api/IndexArchDailyAll/w?fmdt=02-10-2026&todt=09-10-2026&index=All&period=D"
     ],
     "providerStatus": {
       "nseMarket": "rejected",
@@ -44,12 +46,12 @@
     "indices": [
       {
         "name": "NIFTY 50",
-        "value": 22569.2,
-        "pct": 1.5176458946194258,
-        "change": 337.40000000000146,
+        "value": 22520.45,
+        "pct": 1.2983654045106625,
+        "change": 288.65000000000146,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -58,12 +60,12 @@
       },
       {
         "name": "BANK NIFTY",
-        "value": 55370.2,
-        "pct": 1.5686493913148647,
-        "change": 855.1499999999942,
+        "value": 55256.65,
+        "pct": 1.3603582863814645,
+        "change": 741.5999999999985,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -72,12 +74,12 @@
       },
       {
         "name": "SENSEX",
-        "value": 72625.11,
-        "pct": 1.441295295477611,
-        "change": 1031.8699999999953,
+        "value": 72472.33,
+        "pct": 1.2278952593848196,
+        "change": 879.0899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -86,12 +88,12 @@
       },
       {
         "name": "GIFT NIFTY",
-        "value": 22619,
-        "pct": 1.635587508425073,
-        "change": 364,
+        "value": 22583.5,
+        "pct": 1.4760727926308694,
+        "change": 328.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -126,10 +128,10 @@
       {
         "name": "FTSE 100",
         "kind": "index",
-        "value": 10526.48,
-        "change": 84.8799999999992,
-        "pct": 0.8129022372050184,
-        "asOf": "2026-10-09T08:51:51.000Z",
+        "value": 10538.68,
+        "change": 97.07999999999993,
+        "pct": 0.9297425681887825,
+        "asOf": "2026-10-09T11:10:11.000Z",
         "currency": "GBP",
         "series": [
           {
@@ -222,11 +224,119 @@
           },
           {
             "t": "2026-10-09T08:50:00.000Z",
-            "v": 10523.9296875
+            "v": 10528.5302734375
           },
           {
-            "t": "2026-10-09T08:51:51.000Z",
-            "v": 10526.48046875
+            "t": "2026-10-09T08:55:00.000Z",
+            "v": 10524.1904296875
+          },
+          {
+            "t": "2026-10-09T09:00:00.000Z",
+            "v": 10523.490234375
+          },
+          {
+            "t": "2026-10-09T09:05:00.000Z",
+            "v": 10522.009765625
+          },
+          {
+            "t": "2026-10-09T09:10:00.000Z",
+            "v": 10528.5
+          },
+          {
+            "t": "2026-10-09T09:15:00.000Z",
+            "v": 10529.900390625
+          },
+          {
+            "t": "2026-10-09T09:20:00.000Z",
+            "v": 10530.2900390625
+          },
+          {
+            "t": "2026-10-09T09:25:00.000Z",
+            "v": 10537.1796875
+          },
+          {
+            "t": "2026-10-09T09:30:00.000Z",
+            "v": 10535.650390625
+          },
+          {
+            "t": "2026-10-09T09:35:00.000Z",
+            "v": 10535.83984375
+          },
+          {
+            "t": "2026-10-09T09:40:00.000Z",
+            "v": 10531.8701171875
+          },
+          {
+            "t": "2026-10-09T09:45:00.000Z",
+            "v": 10537.1201171875
+          },
+          {
+            "t": "2026-10-09T09:50:00.000Z",
+            "v": 10537.150390625
+          },
+          {
+            "t": "2026-10-09T09:55:00.000Z",
+            "v": 10534.4296875
+          },
+          {
+            "t": "2026-10-09T10:00:00.000Z",
+            "v": 10534.8701171875
+          },
+          {
+            "t": "2026-10-09T10:05:00.000Z",
+            "v": 10538.2802734375
+          },
+          {
+            "t": "2026-10-09T10:10:00.000Z",
+            "v": 10535.6201171875
+          },
+          {
+            "t": "2026-10-09T10:15:00.000Z",
+            "v": 10535.8095703125
+          },
+          {
+            "t": "2026-10-09T10:20:00.000Z",
+            "v": 10533.150390625
+          },
+          {
+            "t": "2026-10-09T10:25:00.000Z",
+            "v": 10528.6796875
+          },
+          {
+            "t": "2026-10-09T10:30:00.000Z",
+            "v": 10523.91015625
+          },
+          {
+            "t": "2026-10-09T10:35:00.000Z",
+            "v": 10525.7197265625
+          },
+          {
+            "t": "2026-10-09T10:40:00.000Z",
+            "v": 10516.150390625
+          },
+          {
+            "t": "2026-10-09T10:45:00.000Z",
+            "v": 10515.5
+          },
+          {
+            "t": "2026-10-09T10:50:00.000Z",
+            "v": 10523.7802734375
+          },
+          {
+            "t": "2026-10-09T10:55:00.000Z",
+            "v": 10529.76953125
+          },
+          {
+            "t": "2026-10-09T11:00:00.000Z",
+            "v": 10538.990234375
+          },
+          {
+            "t": "2026-10-09T11:05:00.000Z",
+            "v": 10538.98046875
+          },
+          {
+            "t": "2026-10-09T11:10:11.000Z",
+            "v": 10538.6796875
           }
         ],
         "providerSymbol": "^FTSE",
@@ -490,56 +600,12 @@
       {
         "name": "USD/INR",
         "kind": "fx",
-        "value": 96.7625,
-        "change": -0.017499999999998295,
-        "pct": -0.018082248398427665,
-        "asOf": "2026-10-09T09:06:49.000Z",
+        "value": 96.73,
+        "change": -0.04999999999999716,
+        "pct": -0.05166356685265257,
+        "asOf": "2026-10-09T10:02:05.000Z",
         "currency": "INR",
         "series": [
-          {
-            "t": "2026-10-09T04:15:00.000Z",
-            "v": 96.7300033569336
-          },
-          {
-            "t": "2026-10-09T04:20:00.000Z",
-            "v": 96.73500061035156
-          },
-          {
-            "t": "2026-10-09T04:25:00.000Z",
-            "v": 96.73750305175781
-          },
-          {
-            "t": "2026-10-09T04:30:00.000Z",
-            "v": 96.72250366210938
-          },
-          {
-            "t": "2026-10-09T04:35:00.000Z",
-            "v": 96.68250274658203
-          },
-          {
-            "t": "2026-10-09T04:40:00.000Z",
-            "v": 96.67749786376953
-          },
-          {
-            "t": "2026-10-09T04:45:00.000Z",
-            "v": 96.69249725341797
-          },
-          {
-            "t": "2026-10-09T04:50:00.000Z",
-            "v": 96.63749694824219
-          },
-          {
-            "t": "2026-10-09T04:55:00.000Z",
-            "v": 96.54750061035156
-          },
-          {
-            "t": "2026-10-09T05:00:00.000Z",
-            "v": 96.5625
-          },
-          {
-            "t": "2026-10-09T05:05:00.000Z",
-            "v": 96.58999633789062
-          },
           {
             "t": "2026-10-09T05:10:00.000Z",
             "v": 96.56500244140625
@@ -730,11 +796,55 @@
           },
           {
             "t": "2026-10-09T09:05:00.000Z",
-            "v": 96.76249694824219
+            "v": 96.75749969482422
           },
           {
-            "t": "2026-10-09T09:06:49.000Z",
-            "v": 96.76249694824219
+            "t": "2026-10-09T09:10:00.000Z",
+            "v": 96.75
+          },
+          {
+            "t": "2026-10-09T09:15:00.000Z",
+            "v": 96.7074966430664
+          },
+          {
+            "t": "2026-10-09T09:20:00.000Z",
+            "v": 96.71499633789062
+          },
+          {
+            "t": "2026-10-09T09:25:00.000Z",
+            "v": 96.69999694824219
+          },
+          {
+            "t": "2026-10-09T09:30:00.000Z",
+            "v": 96.7125015258789
+          },
+          {
+            "t": "2026-10-09T09:35:00.000Z",
+            "v": 96.72000122070312
+          },
+          {
+            "t": "2026-10-09T09:40:00.000Z",
+            "v": 96.72750091552734
+          },
+          {
+            "t": "2026-10-09T09:45:00.000Z",
+            "v": 96.7125015258789
+          },
+          {
+            "t": "2026-10-09T09:50:00.000Z",
+            "v": 96.70999908447266
+          },
+          {
+            "t": "2026-10-09T09:55:00.000Z",
+            "v": 96.7300033569336
+          },
+          {
+            "t": "2026-10-09T10:00:00.000Z",
+            "v": 96.7300033569336
+          },
+          {
+            "t": "2026-10-09T10:02:05.000Z",
+            "v": 96.7300033569336
           }
         ],
         "providerSymbol": "INR=X",
@@ -743,13 +853,13 @@
       },
       {
         "name": "GOLD",
-        "value": 155290.5,
-        "inrPer10g": 155290.5,
-        "inrPerGram": 15529.05,
-        "gstPerGram": 465.87,
-        "sellPerGram": 15065.02,
-        "pct": 1.01,
-        "asOf": "2026-10-09T09:05:00.165Z",
+        "value": 155225.2,
+        "inrPer10g": 155225.2,
+        "inrPerGram": 15522.52,
+        "gstPerGram": 465.68,
+        "sellPerGram": 14983.75,
+        "pct": 0.97,
+        "asOf": "2026-10-09T11:25:00.160Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -759,13 +869,13 @@
       },
       {
         "name": "SILVER",
-        "value": 230180,
-        "inrPerKg": 230180,
-        "inrPerGram": 230.18,
-        "gstPerGram": 6.91,
-        "sellPerGram": 217.57,
-        "pct": 1.35,
-        "asOf": "2026-10-09T09:05:00.165Z",
+        "value": 229990,
+        "inrPerKg": 229990,
+        "inrPerGram": 229.99,
+        "gstPerGram": 6.9,
+        "sellPerGram": 217.38,
+        "pct": 1.26,
+        "asOf": "2026-10-09T11:25:00.160Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -775,12 +885,12 @@
       },
       {
         "name": "BRENT",
-        "value": 102.51,
-        "pct": -1.6973532796317568,
-        "change": -1.769999999999996,
+        "value": 102.97,
+        "pct": -1.256233218258537,
+        "change": -1.3100000000000023,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -790,12 +900,12 @@
       },
       {
         "name": "WTI",
-        "value": 90.17,
-        "pct": -1.442780631763027,
-        "change": -1.3199999999999932,
+        "value": 90.77,
+        "pct": -0.7869712536889265,
+        "change": -0.7199999999999989,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -805,12 +915,12 @@
       },
       {
         "name": "NATURAL GAS",
-        "value": 3.129,
-        "pct": -1.2310606060606104,
-        "change": -0.039000000000000146,
+        "value": 3.134,
+        "pct": -1.073232323232331,
+        "change": -0.03400000000000025,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -830,7 +940,7 @@
     "diiSell": 12284.86,
     "date": "2026-10-08",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-09T09:06:51.915Z",
+    "asOf": "2026-10-09T11:25:12.758Z",
     "provisional": true
   },
   "ipo": {
@@ -907,7 +1017,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -987,7 +1097,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1069,7 +1179,87 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T09:06:51.915Z",
+        "asOf": "2026-10-09T11:25:12.758Z",
+        "details": {
+          "PRODUCTS": "Today",
+          "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
+          "Price": "No. of Bids",
+          "Retail": "Non-Retail"
+        }
+      },
+      {
+        "slug": "vaibhav-vyapaar-limited",
+        "symbol": "LOANFRONT",
+        "name": "Vaibhav Vyapaar Limited",
+        "type": "SME",
+        "status": "Upcoming",
+        "exchange": "NSE SME",
+        "band": "—",
+        "priceBand": {
+          "min": null,
+          "max": null
+        },
+        "issueType": null,
+        "lot": 2000,
+        "lotSize": 2000,
+        "min": null,
+        "issue": "—",
+        "issueSizeCr": null,
+        "openDate": "2026-10-13",
+        "closeDate": "2026-10-15",
+        "open": "2026-10-13",
+        "close": "2026-10-15",
+        "issuePeriod": "2026-10-13 → 2026-10-15",
+        "allotment": null,
+        "refund": null,
+        "credit": null,
+        "listing": null,
+        "listingPrice": null,
+        "faceValue": null,
+        "discount": null,
+        "tickSize": null,
+        "minimumOrderQuantity": null,
+        "retailMax": null,
+        "qibMax": null,
+        "niiMax": null,
+        "marketTimings": null,
+        "registrar": null,
+        "registrarAddress": null,
+        "registrarContact": null,
+        "leadManagers": null,
+        "sponsorBank": null,
+        "categories": null,
+        "upiCategories": null,
+        "eform": null,
+        "rhp": null,
+        "basis": null,
+        "biddingCenters": null,
+        "sampleForms": null,
+        "securityParameters": null,
+        "remark": null,
+        "fresh": null,
+        "ofs": null,
+        "sector": "—",
+        "objects": null,
+        "revenue": null,
+        "profit": null,
+        "debt": null,
+        "promoters": null,
+        "subscription": null,
+        "qib": null,
+        "nii": null,
+        "retail": null,
+        "subscriptionUpdated": null,
+        "gmp": null,
+        "gmpPct": null,
+        "gmpUpdated": null,
+        "gmpRange": null,
+        "gmpConfidence": null,
+        "gmpSources": null,
+        "gmpSource": null,
+        "source": "NSE official IPO Issue Information",
+        "sourceDate": "2026-10-09",
+        "asOf": "2026-10-09T11:25:12.758Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1103,6 +1293,13 @@
     },
     {
       "tag": "MARKET NEWS",
+      "title": "Indian firms defy stock market slump with record $25 billion half-year equity fundraise - Reuters",
+      "source": "Google News RSS",
+      "age": "Thu, 01 Oct 2026 07:00:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPVnZXMEtCQ2VsTnJuekwxaU9nbFhTN1prekljby1EMHNqc052QVRVM3Q5SWEzZzgxaEpjdmtSUlY0dXRRd0xXQXdQb3hYeXRYbm9MUURDR0dsclZVMmNwUG1RWm5tT21FU0tsdnl0OGM4TVZwdy1QSDc5cXl5aUkxbjhmR1lyV0pnU2tVZXh1cU1xREVYZVNfbXBNRHdCOUY4d1FlVVlCaFdmeVlzMmkxSUZZS05lbHkxYkIwdTBTajJVZw?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
       "title": "Stock market crash today: Sensex falls 1,045 points, Nifty down 371; 5 reasons behind market rout - Firstpost",
       "source": "Google News RSS",
       "age": "Thu, 08 Oct 2026 14:05:08 GMT",
@@ -1110,24 +1307,17 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Indian firms defy stock market slump with record $25 billion half-year equity fundraise - Reuters",
-      "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 14:09:53 GMT",
-      "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPVnZXMEtCQ2VsTnJuekwxaU9nbFhTN1prekljby1EMHNqc052QVRVM3Q5SWEzZzgxaEpjdmtSUlY0dXRRd0xXQXdQb3hYeXRYbm9MUURDR0dsclZVMmNwUG1RWm5tT21FU0tsdnl0OGM4TVZwdy1QSDc5cXl5aUkxbjhmR1lyV0pnU2tVZXh1cU1xREVYZVNfbXBNRHdCOUY4d1FlVVlCaFdmeVlzMmkxSUZZS05lbHkxYkIwdTBTajJVZw?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Nityas Gems and Jewellery IPO allotment: How to check status online on NSE, BSE, Bigshare Services - Upstox",
-      "source": "Google News RSS",
-      "age": "Tue, 06 Oct 2026 06:50:37 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNRU1LRE0tQ25nLVdhWWdPUEExYWc5SkNqMWVndkxGeGNwbHJtY0ExYjZJNUlNLWFrTVNqR2U1d1Rvci1jUlRVTTVDR3lIUnpCTTRRdjR1TXlRbnJkdXlVVC11a2hNUExPY2dPeTl1X0I2QVJfSDhlaDc5NEljMllPX1VpMi1hOGZoUTRfRk43NmxTQUF5Tk9VeUZnOWdPTmVhdUVHTi1BWDlWcUZXNVpEQVY5RzRzYWVsa0V6clNuNENiazl5XzFsX1FzNEpYU0ZQTEdXYi1sTVlZczM4R0tZSkxUVGNvZw?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
       "title": "Stock markets trade marginally higher after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
       "source": "Google News RSS",
       "age": "Thu, 17 Sep 2026 07:00:00 GMT",
       "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNVmtnWUg5WktRbm1KOEpsQVA5YzVMclhaaWMzekVjSFNNaG5lczlBQk9NTE9CMWFMaE80MFA2VzhmVFZKTHdPLTBGMkxnM1d0bnVKSzJjdkVSSlRKN2tWZlcwUHdHT2R5cFBnS3dnVTZwdkZZRjNsSWdRSmU1bmUwWUdPVmFmMVlfMzB6TWhrS3pTcUg1RDBJMGJETGNNaHhaZFFMNlZNVWdGTFpyVE85b3J4dFhwQlozUFZSaU5xaHR4Tnl1dXRtVU4xRzZaVVRFN1lHVkFn0gHcAUFVX3lxTE9IY2c2WDd6QnowLWdlalNLRW9lV2FPUVR2Y0cxSUNBZ2R1NHFOMzNlaEpGMVN6cjgyRktZOVN3Y0ZUVGpVVWtmSm9BYzNaTnpvZ3NObURBRnhva2JHenhtdTJyYjZsYUtVcFRHUl9WTEsxMGZfVHE3aDF3ZERTb2s2amRRZFVQbFVOZ1FTLTI0M25Ub0xKY2NoMmJYMUtrTUJpTHNGN1J1ZS03SVozd205cU1TWnluUEJiSFhXUkJYWXIyLWg1T2lQZHRzYm43MVEtMzFiYzlralhMTlE?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Vishal Nirmiti IPO allotment: How to check status online on NSE, BSE, MUFG Intime India - Upstox",
+      "source": "Google News RSS",
+      "age": "Tue, 06 Oct 2026 05:49:21 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNcThIZmZhSW5jak1MWW56WHhLMG1kRkJMSGlKZElaa05sb3BVZ1lhM1hMT1pRZ0x3MXBuakdUV2ROQ2NXS3V2TktmWkM2MEVzT2w3dnVlOG9oVDF0RHB5ZG9WNHBzSW9FZHM0VDF4eVp1TmktSlU4eG9aMnRrMWlmSGhpal83RkhnTV9SeHE2U0NXLTE1YjdELTlNMEtzNnJpQ1ZmU0lCWjdJTkpjcUt6XzNROUdOTnMyc1lEd0lVYV9Cd0hZbTFIOG04RFItbUZsQl9fY3Q2VQ?oc=5"
     },
     {
       "tag": "MARKET NEWS",
