@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-09T17:00:28.787Z",
+  "updatedAt": "2026-10-09T17:29:00.977Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
@@ -10,7 +10,7 @@
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-09T17:00:28.787Z",
+    "updatedAt": "2026-10-09T17:29:00.977Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
@@ -51,7 +51,7 @@
         "change": 288.65000000000146,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -65,7 +65,7 @@
         "change": 741.5999999999985,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -79,7 +79,7 @@
         "change": 879.0899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -88,12 +88,12 @@
       },
       {
         "name": "GIFT NIFTY",
-        "value": 22562.5,
-        "pct": 1.3817119748371152,
-        "change": 307.5,
+        "value": 22559.5,
+        "pct": 1.3682318580094361,
+        "change": 304.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -104,10 +104,10 @@
       {
         "name": "S&P 500",
         "kind": "index",
-        "value": 7809.2,
-        "change": 43.840000000000146,
-        "pct": 0.564558500829326,
-        "asOf": "2026-10-09T17:00:27.000Z",
+        "value": 7806.91,
+        "change": 41.55000000000018,
+        "pct": 0.5350685608909334,
+        "asOf": "2026-10-09T17:28:59.000Z",
         "currency": "USD",
         "series": [
           {
@@ -279,8 +279,32 @@
             "v": 7808.6298828125
           },
           {
-            "t": "2026-10-09T17:00:27.000Z",
-            "v": 7809.2001953125
+            "t": "2026-10-09T17:00:00.000Z",
+            "v": 7810.25
+          },
+          {
+            "t": "2026-10-09T17:05:00.000Z",
+            "v": 7807.06982421875
+          },
+          {
+            "t": "2026-10-09T17:10:00.000Z",
+            "v": 7806.31982421875
+          },
+          {
+            "t": "2026-10-09T17:15:00.000Z",
+            "v": 7804.77001953125
+          },
+          {
+            "t": "2026-10-09T17:20:00.000Z",
+            "v": 7805.5
+          },
+          {
+            "t": "2026-10-09T17:25:00.000Z",
+            "v": 7806.91015625
+          },
+          {
+            "t": "2026-10-09T17:28:59.000Z",
+            "v": 7806.91015625
           }
         ],
         "providerSymbol": "^GSPC",
@@ -289,10 +313,10 @@
       {
         "name": "NASDAQ 100",
         "kind": "index",
-        "value": 30858.438,
-        "change": 132.62899999999718,
-        "pct": 0.4316534025190262,
-        "asOf": "2026-10-09T17:00:25.000Z",
+        "value": 30862.998,
+        "change": 137.1889999999985,
+        "pct": 0.4464943461700178,
+        "asOf": "2026-10-09T17:28:59.000Z",
         "currency": "USD",
         "series": [
           {
@@ -464,8 +488,32 @@
             "v": 30857.01953125
           },
           {
-            "t": "2026-10-09T17:00:25.000Z",
-            "v": 30858.4375
+            "t": "2026-10-09T17:00:00.000Z",
+            "v": 30863.544921875
+          },
+          {
+            "t": "2026-10-09T17:05:00.000Z",
+            "v": 30848.6171875
+          },
+          {
+            "t": "2026-10-09T17:10:00.000Z",
+            "v": 30848.515625
+          },
+          {
+            "t": "2026-10-09T17:15:00.000Z",
+            "v": 30843.48828125
+          },
+          {
+            "t": "2026-10-09T17:20:00.000Z",
+            "v": 30848.896484375
+          },
+          {
+            "t": "2026-10-09T17:25:00.000Z",
+            "v": 30862.3828125
+          },
+          {
+            "t": "2026-10-09T17:28:59.000Z",
+            "v": 30862.998046875
           }
         ],
         "providerSymbol": "^NDX",
@@ -1235,13 +1283,13 @@
       },
       {
         "name": "GOLD",
-        "value": 155544.69999999998,
-        "inrPer10g": 155544.69999999998,
-        "inrPerGram": 15554.47,
+        "value": 155541.7,
+        "inrPer10g": 155541.7,
+        "inrPerGram": 15554.17,
         "gstPerGram": 466.63,
-        "sellPerGram": 15014.63,
+        "sellPerGram": 15014.33,
         "pct": 1.18,
-        "asOf": "2026-10-09T17:00:00.202Z",
+        "asOf": "2026-10-09T17:27:12.950Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1251,13 +1299,13 @@
       },
       {
         "name": "SILVER",
-        "value": 231310,
-        "inrPerKg": 231310,
-        "inrPerGram": 231.31,
+        "value": 231200,
+        "inrPerKg": 231200,
+        "inrPerGram": 231.2,
         "gstPerGram": 6.94,
-        "sellPerGram": 218.63,
-        "pct": 1.84,
-        "asOf": "2026-10-09T17:00:00.202Z",
+        "sellPerGram": 218.54,
+        "pct": 1.8,
+        "asOf": "2026-10-09T17:27:12.950Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1267,12 +1315,12 @@
       },
       {
         "name": "BRENT",
-        "value": 103.93,
-        "pct": -0.3356348293057099,
-        "change": -0.3499999999999943,
+        "value": 104.04,
+        "pct": -0.23014959723819994,
+        "change": -0.23999999999999488,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1282,12 +1330,12 @@
       },
       {
         "name": "WTI",
-        "value": 91.24,
-        "pct": -0.2732539075308777,
-        "change": -0.25,
+        "value": 91.36,
+        "pct": -0.14209203191605144,
+        "change": -0.12999999999999545,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1297,12 +1345,12 @@
       },
       {
         "name": "NATURAL GAS",
-        "value": 3.22,
-        "pct": 1.641414141414143,
-        "change": 0.052000000000000046,
+        "value": 3.222,
+        "pct": 1.7045454545454488,
+        "change": 0.053999999999999826,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1322,7 +1370,7 @@
     "diiSell": 10883.27,
     "date": "2026-10-09",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-09T17:00:28.787Z",
+    "asOf": "2026-10-09T17:29:00.977Z",
     "provisional": true
   },
   "ipo": {
@@ -1399,7 +1447,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1479,7 +1527,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1561,7 +1609,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1641,7 +1689,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-09",
-        "asOf": "2026-10-09T17:00:28.787Z",
+        "asOf": "2026-10-09T17:29:00.977Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1689,10 +1737,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Stock markets trade marginally higher after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
+      "title": "Stock markets close flat after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
       "source": "Google News RSS",
       "age": "Thu, 17 Sep 2026 07:00:00 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNVmtnWUg5WktRbm1KOEpsQVA5YzVMclhaaWMzekVjSFNNaG5lczlBQk9NTE9CMWFMaE80MFA2VzhmVFZKTHdPLTBGMkxnM1d0bnVKSzJjdkVSSlRKN2tWZlcwUHdHT2R5cFBnS3dnVTZwdkZZRjNsSWdRSmU1bmUwWUdPVmFmMVlfMzB6TWhrS3pTcUg1RDBJMGJETGNNaHhaZFFMNlZNVWdGTFpyVE85b3J4dFhwQlozUFZSaU5xaHR4Tnl1dXRtVU4xRzZaVVRFN1lHVkFn0gHcAUFVX3lxTE9IY2c2WDd6QnowLWdlalNLRW9lV2FPUVR2Y0cxSUNBZ2R1NHFOMzNlaEpGMVN6cjgyRktZOVN3Y0ZUVGpVVWtmSm9BYzNaTnpvZ3NObURBRnhva2JHenhtdTJyYjZsYUtVcFRHUl9WTEsxMGZfVHE3aDF3ZERTb2s2amRRZFVQbFVOZ1FTLTI0M25Ub0xKY2NoMmJYMUtrTUJpTHNGN1J1ZS03SVozd205cU1TWnluUEJiSFhXUkJYWXIyLWg1T2lQZHRzYm43MVEtMzFiYzlralhMTlE?oc=5"
+      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOXzhzbFRkeE1KZk55bWlkckFrbExLcTFWanJSYkp4dERYbXY0Ti0zOE4tN2p2bE82NmR4NXdKSGtNYUdUbUxUMzE1eEJSdTU1eWw4aFNhS2FQQjZHYTFzdDBUZGp5RTVZQ3BtcFRaa3FOWGFrZ2laUDl6bnM1ZVNGWDdjV1h2SU1ySHZFZWl5bHdjMGZ1bmM3dkQwWjFDdXI2M0k5NjV5dVhQdFlsVWcyWTRWamVNUXdTOVdNb1pPbWE4TEF20gHLAUFVX3lxTE8walloR2lkQUNqSjJJZXBXZzBPU0g3NVE5M1Q0MTVMN1NsVFRaNmw2Ni0ySVBON3Q5QU1iWThOLXdvZXMwSnYzeUg2WDRBMHd1S250RGZieTFFMWJKMUxqZWNOeXRLV1hVMW1xQkpJODB1MHQ5WXo1bTJubkE3M3paQVh1V3lSajJmTkpxVzZoSzcxYmFpeU95clFFSWVrVVZmRkc4UnRfMjZnaUFVc1FFd0E3MUQ5M21ZTnp6c2lUcjZvX1NlZ2RQYm1r?oc=5"
     },
     {
       "tag": "MARKET NEWS",
