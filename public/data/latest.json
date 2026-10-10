@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-10T18:37:30.262Z",
+  "updatedAt": "2026-10-10T23:34:41.576Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
@@ -10,7 +10,7 @@
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-10T18:37:30.262Z",
+    "updatedAt": "2026-10-10T23:34:41.576Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
@@ -49,7 +49,7 @@
         "change": 288.65000000000146,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -63,7 +63,7 @@
         "change": 741.5999999999985,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -77,7 +77,7 @@
         "change": 879.0899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -91,7 +91,7 @@
         "change": 347.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -1369,13 +1369,13 @@
       },
       {
         "name": "GOLD",
-        "value": 155999,
-        "inrPer10g": 155999,
-        "inrPerGram": 15599.9,
-        "gstPerGram": 468,
+        "value": 155790.40000000002,
+        "inrPer10g": 155790.40000000002,
+        "inrPerGram": 15579.04,
+        "gstPerGram": 467.37,
         "sellPerGram": 15023.85,
         "pct": 0.01,
-        "asOf": "2026-10-10T18:35:00.164Z",
+        "asOf": "2026-10-10T23:32:24.966Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1385,13 +1385,13 @@
       },
       {
         "name": "SILVER",
-        "value": 231990,
-        "inrPerKg": 231990,
-        "inrPerGram": 231.99,
+        "value": 232160,
+        "inrPerKg": 232160,
+        "inrPerGram": 232.16,
         "gstPerGram": 6.96,
         "sellPerGram": 219.03,
         "pct": 0.13,
-        "asOf": "2026-10-10T18:35:00.164Z",
+        "asOf": "2026-10-10T23:32:24.966Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1406,7 +1406,7 @@
         "change": 0.4399999999999977,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1421,7 +1421,7 @@
         "change": 0.35999999999999943,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1436,7 +1436,7 @@
         "change": 0.052000000000000046,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1456,7 +1456,7 @@
     "diiSell": 10883.27,
     "date": "2026-10-09",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-10T18:37:30.262Z",
+    "asOf": "2026-10-10T23:34:41.576Z",
     "provisional": true
   },
   "ipo": {
@@ -1533,7 +1533,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-11",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1615,7 +1615,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-11",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1695,7 +1695,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-11",
-        "asOf": "2026-10-10T18:37:30.262Z",
+        "asOf": "2026-10-10T23:34:41.576Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1708,10 +1708,10 @@
   "news": [
     {
       "tag": "MARKET NEWS",
-      "title": "Stock market prediction for tomorrow: Sensex, Nifty outlook for Thursday | Kospi, Taiwan cues to watch | 8 Oct 2026 - IndiaIPO",
+      "title": "Stock market prediction for tomorrow: Sensex, Nifty outlook for Tuesday | Kospi, Taiwan cues to watch | 6 Oct 2026 - IndiaIPO",
       "source": "Google News RSS",
-      "age": "Wed, 07 Oct 2026 10:35:20 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxQblJEOThGOTVFQ3ZBOU53S2VWeEExenBDX2xGbU5wdFo5UWF6MHIwSEJoelNKT19xZEs3c0U0X0dsbER4Rkg1c3o2WHFTc2o4aWEzQUZydkEyQmdvNzNmM0JpLWJmYVN6d0FQbDlKdFJTM1BkMGQxUm9MQzhDYzBHUXJsd3MzbkJLOWptQm5JNnVITjFlUGZnRlRYRHA5aWYxemRqeFJfWlRKcmtWR0RGb1Y1VmxQc3BXVG9ackVoMzU1VGxzWjhBMlpnSlZiT25OYV8zblhhN1VDaDB2?oc=5"
+      "age": "Mon, 05 Oct 2026 10:35:02 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi2wFBVV95cUxQOFpDNEM5UVhTUUtseU55Yk96cTZVNGJCVHhjWUJ3eUliS21Wcm85aFpiZ1hHSVRaUEIxM2FOcXZER01zMThyczBDc0ZJVnd3TGVKV1EyYWF2MEU0SjRRM1BKckZrd1BPVmsxaFJLT1pUUnZmUncxNzl1TktfRDlpLWZNXzNmMXowdkpXdTRGQVY3UTBpY1dQelJvWXpPZ1lWX05WUU1sMEQ1ckQ4U3V1cXFOVGVENDFqMXZjRnhsQzF5X3BKS0l4X1pwMUF6WjF2OUNOWDBxT2tBZzg?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1757,17 +1757,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Vishal Nirmiti IPO allotment: How to check status online on NSE, BSE, MUFG Intime India - Upstox",
+      "title": "Stock market today: Sensex, Nifty see positive start; NSE IPO receives 6x subscription on final day | Business News - Hindustan Times",
       "source": "Google News RSS",
-      "age": "Tue, 06 Oct 2026 05:49:21 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNcThIZmZhSW5jak1MWW56WHhLMG1kRkJMSGlKZElaa05sb3BVZ1lhM1hMT1pRZ0x3MXBuakdUV2ROQ2NXS3V2TktmWkM2MEVzT2w3dnVlOG9oVDF0RHB5ZG9WNHBzSW9FZHM0VDF4eVp1TmktSlU4eG9aMnRrMWlmSGhpal83RkhnTV9SeHE2U0NXLTE1YjdELTlNMEtzNnJpQ1ZmU0lCWjdJTkpjcUt6XzNROUdOTnMyc1lEd0lVYV9Cd0hZbTFIOG04RFItbUZsQl9fY3Q2VQ?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Sensex drops 1100+ points after Iran's fiery UN speech, Indian Ocean warning; NSE IPO debuts | Business News - Hindustan Times",
-      "source": "Google News RSS",
-      "age": "Thu, 24 Sep 2026 07:00:00 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxQeFZrYlhlYTJkTlc3U3hadjE4WVEtcHg1VEZNQ19ialJtQlc0WUxtWmlianlLUHpwZm5sUmxjeHozbkoxT0ltVEVndzNYWFkxeWhBMmpVRGFyTG5QSW1PWkpkWklOV2Z0OERYYjNMMlA0a0l1ZUF5TUR2N2c3djdhOHd4OWJBb3NBNEpBZml1V1RpZzJFNE94Z0NVbEk1WENGdXEyU3I4cTcxbDdqZnRsS0dGZ1hHN0FEaDlEcUlhLU5oS1pUUDM0LWdFRG9EZVRyejVxTTh6S3RxZExBdWlhY1dsbG9aZXFfRklHdHl6YmtvUGNhZ3pqd202SFZqQdIBgwJBVV95cUxNMnRfTDhjRHdIWDNiZ1Z0ZU1DdERsOHVSU3V1Z1BKbGJuRXd0ZWJib3Z6T1FVa2R6b3NrU2hPTFVIRWR1MzQ4cWtjQk5CZl9oLXZzLU1sSlFRMkVrV00yNVV0QVZsXzl4WG5NVXVranRfNTBiYnhsbF96eGJaUUU0X21sdS1WSXRUZ2VyU2dUREpjLTRTRkMtbThXNVR2MklFZDlPV083WHZ5YWxjeEM4Ulo0ZkgyQmhVOFhRZ1dFY1ZxT1Z5LUI5QTUxclk3aldJcHhxdjlkN0I3WTBKSzJ6dExyZWpqaTFoeHZKUHlVOXBBdHNTQmhUUTdRY0JnUi04aW8w?oc=5"
+      "age": "Tue, 22 Sep 2026 07:00:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi2wFBVV95cUxQTkFFZlczeUxrZGxNZXpkWDdpYVhxdDdXNy1Yems4cTdtV3pkQUEtX1pQWFRKWUh0cUJFSVUwMDFTVjZiaEotVzdxV0Q4MUFIZkRJd0FKT3VodVJlazVIbXNnRnZaVkR1d2xzLUVNVlNaM0x2ODNaNjlEaDlDNjFFT1dCR0FUV0pZcDZkR3V2cmhLT0VHelZ5aEFoT0p0UGkxLS0zdXJZYlFhZFFLWmhfV25jTjNFUUlLMjBsWWhkbi16ZmVpcVpfUTVQWlhrR1gwMGx6bEp5bnhqM1HSAeABQVVfeXFMT1M5bV93ZEdtOUtUbks4OEtBSEdkaWJxWlp0TDNsQUlqblVkUGFyQ2hHM0pwb0Q4U0lhcVM5dFlYYlJUMU5QeUFvbV9EOGx0cGVsR2xfdFZ0THNXMVBkY21wYklLRVZUcVIwbldIaVFsSXlpdDJtbXlVa0lMNzQyVzdjVUVITXZ3cVdPUnByeFN5REpBcVlNM0FoUjZ5V2gxRUE2UFQ0RjF4UmtLcEJOSkZaT0FaekQ0SGFDZFhmRnZNdWNVeXZiekhHWGJ1SjkwdVBkdjl2VlBvSzVvMnowN3Q?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1775,6 +1768,13 @@
       "source": "Google News RSS",
       "age": "Thu, 24 Sep 2026 07:00:00 GMT",
       "url": "https://news.google.com/rss/articles/CBMiigJBVV95cUxOZVNWbllpNEVHdHE2dXRPdjh5bzA0bVZOMEdtNW9BWVI5YWIxaGh3OXRLeGNpNzZrZUxScS0ySnFrZ05QYllvTW9oSldXemNVcDh2YU1WWWo2VGtUN1VSUUJwWXlSUW9malYzRDdqdEtfcFE1NEl5R3hlM3NUZXlfSjR3bktlYTdVWi1SMFdfSlRIeEU5aGh5elQ2b0o4VF9ZUHlaVmtNdEEzWDdxc2E0TlhNQ292U0hGa2lFd19XeWk5dWx5OUFjSW5Ra2xNZUN2NUE4Y1lxQkJoWTlaUk5fSTcwT0tDUlIyekV3dkNTUXlSWG9rc2dTV0dHZFlpRXJQWjRCUk5sajdBUdIBjwJBVV95cUxPeHRiR1RzZndfMF85RXN6RWp1bVJmZjdWeG9qZFNNM05DZHFNTTZfY2FvMEdCbTItTFIzM1g3eWZYeWxMOWxuOXVFOXBGZi05U09QRWVDTGk2bFFqNEs3dUxaTzlHS2xNWDlQUldXLV8tYmJ3STRQaDJuM212VWR3MjdtdFZrYktMSzlCR1J6dW9rNFdJSThYSE94UXdRUTlwYzNCZ3BWN05aeE5oNHp1Y0FGTV9idFJYcm5LOVpBV1dUYXNLNFhJN2ZiSm9XbnhPV09aSWhXcVlNYXV1bWJhczBGR2Ztak1JNjA4WmpBckJlbktuN042SHdEcUNGZkRVT1ZmV0xwcXo1c3FkNDVV?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Stock market prediction for tomorrow: Sensex, Nifty outlook for Thursday | Kospi, Taiwan cues to watch | 8 Oct 2026 - IndiaIPO",
+      "source": "Google News RSS",
+      "age": "Wed, 07 Oct 2026 10:35:20 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxQblJEOThGOTVFQ3ZBOU53S2VWeEExenBDX2xGbU5wdFo5UWF6MHIwSEJoelNKT19xZEs3c0U0X0dsbER4Rkg1c3o2WHFTc2o4aWEzQUZydkEyQmdvNzNmM0JpLWJmYVN6d0FQbDlKdFJTM1BkMGQxUm9MQzhDYzBHUXJsd3MzbkJLOWptQm5JNnVITjFlUGZnRlRYRHA5aWYxemRqeFJfWlRKcmtWR0RGb1Y1VmxQc3BXVG9ackVoMzU1VGxzWjhBMlpnSlZiT25OYV8zblhhN1VDaDB2?oc=5"
     }
   ]
 }
