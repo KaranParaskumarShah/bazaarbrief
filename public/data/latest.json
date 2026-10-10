@@ -1,21 +1,23 @@
 {
-  "updatedAt": "2026-10-10T05:54:53.061Z",
+  "updatedAt": "2026-10-10T12:34:15.036Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
     "indiaDate": "2026-10-10",
-    "cashMarketClosed": false,
-    "closeFinalization": "Intraday exchange quote"
+    "cashMarketClosed": true,
+    "closeFinalization": "Exchange EOD close attempted"
   },
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-10T05:54:53.061Z",
+    "updatedAt": "2026-10-10T12:34:15.036Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
       "NSE market: NSE returned no usable market records (equity-stockIndices: /api/equity-stockIndices?index=NIFTY%2050 -> HTTP 404)",
-      "BSE SENSEX: 403 Forbidden: https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w"
+      "BSE SENSEX: 403 Forbidden: https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w",
+      "NSE EOD close: Unexpected token '<', \"\n<!DOCTYPE \"... is not valid JSON",
+      "BSE EOD close: 403 Forbidden: https://api.bseindia.com/BseIndiaAPI/api/IndexArchDailyAll/w?fmdt=03-10-2026&todt=10-10-2026&index=All&period=D"
     ],
     "providerStatus": {
       "nseMarket": "rejected",
@@ -49,7 +51,7 @@
         "change": 288.65000000000146,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -63,7 +65,7 @@
         "change": 741.5999999999985,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -77,7 +79,7 @@
         "change": 879.0899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -91,7 +93,7 @@
         "change": 347.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -1369,13 +1371,13 @@
       },
       {
         "name": "GOLD",
-        "value": 156022.4,
-        "inrPer10g": 156022.4,
-        "inrPerGram": 15602.24,
-        "gstPerGram": 468.07,
+        "value": 155940,
+        "inrPer10g": 155940,
+        "inrPerGram": 15594,
+        "gstPerGram": 467.82,
         "sellPerGram": 15023.85,
         "pct": 0.01,
-        "asOf": "2026-10-10T05:51:49.484Z",
+        "asOf": "2026-10-10T12:30:00.236Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1385,13 +1387,13 @@
       },
       {
         "name": "SILVER",
-        "value": 232200,
-        "inrPerKg": 232200,
-        "inrPerGram": 232.2,
-        "gstPerGram": 6.97,
+        "value": 232040,
+        "inrPerKg": 232040,
+        "inrPerGram": 232.04,
+        "gstPerGram": 6.96,
         "sellPerGram": 219.03,
         "pct": 0.13,
-        "asOf": "2026-10-10T05:51:49.484Z",
+        "asOf": "2026-10-10T12:30:00.236Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1406,7 +1408,7 @@
         "change": 0.4399999999999977,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1421,7 +1423,7 @@
         "change": 0.35999999999999943,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1436,7 +1438,7 @@
         "change": 0.052000000000000046,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1456,7 +1458,7 @@
     "diiSell": 10883.27,
     "date": "2026-10-09",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-10T05:54:53.061Z",
+    "asOf": "2026-10-10T12:34:15.036Z",
     "provisional": true
   },
   "ipo": {
@@ -1533,7 +1535,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-10",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1615,7 +1617,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-10",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1695,7 +1697,7 @@
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
         "sourceDate": "2026-10-10",
-        "asOf": "2026-10-10T05:54:53.061Z",
+        "asOf": "2026-10-10T12:34:15.036Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1715,13 +1717,6 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Vishal Nirmiti shares list at 2% discount over IPO price on NSE, BSE - The Economic Times",
-      "source": "Google News RSS",
-      "age": "Thu, 08 Oct 2026 03:48:59 GMT",
-      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxPcEpFMkg5YnJTVFFVMG44TUJIOURkVEF3N2duMEN5SDl6X1ZfaXlmb016WGtKZmhDa0Fod3hZRGo4Y0N6cDhNbUtOc2VtNkxIdW1hcXAtQnlqbzBCWnpMU0tzd1RuSjZZWUcwOWV1Nmo1Ykx6WVAwcGp4eWo0Smtzc3RTLWdhbGZjcHJKQnZvR1dVaFhCYlhkT2NNUl82MG1lNnBqdktHT21aV01MY1ZjS0ZRMlRsV016VGRRS2h5LU1NYl9uWE5fVk5RRzE1MnfSAdQBQVVfeXFMTmM3bF9POTF1RUc1b1hnTFhtVXg0WHRVWFFSamh6SmxMN0hnVHFUSlVyTFhwSHlYeUlGeElqZl9URmhpNzY2aGs3eHNHS1A2dk00Q0QybnYwZGhTM1JaRXBXY2w0dEU3VFVYUUFCN01HYktXQ3RDSEpQQ1p2bnRsdnFpcUsxY3Y5djNVYU1pNHhHZlhFT011b2dCTDJqV3FjTi1FOFlrLVE0RkF1QmNQR2JkOFVJbUNEOVItZGFxWjNlLTRwaUhseEIybU82dFU0VGMxakM?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
       "title": "Indian firms defy stock market slump with record $25 billion half-year equity fundraise - Reuters",
       "source": "Google News RSS",
       "age": "Thu, 01 Oct 2026 07:00:00 GMT",
@@ -1729,10 +1724,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "NSDL hits new low, down 8% vs IPO; CDSL up 748%; analysts decode divergence - Business Standard",
+      "title": "Vishal Nirmiti shares list at 2% discount over IPO price on NSE, BSE - The Economic Times",
       "source": "Google News RSS",
-      "age": "Fri, 09 Oct 2026 06:47:39 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxPOHh1S0tQclZqOElxWXpxcy15d3FkVTBWdE5vRHpWZGFpNktVMzJiSTFKYXViRTF4cnY0RWpKejRvNlBCX0xxbHF6V2xMVnhPQlV4NjVoWVZfVWQ3MmFOVEo2NFhnYm55R2hWelI5RHJhWkhZWm5zSVFDMFFLM1p4VmlHblJUNmZnbnRnQXpnV0hkMkJuMzAtemFINHFQTDhjQllZN05XRlliVURqVU0yQnJvQTVZVEZPLUEwaC1CYjBVaENDWk9idU9iZkxTZ3pwQTk00gHYAUFVX3lxTFBUaFU2NlEtUzJFLUV3cGl5R3NwdXplNTA1RzZrbHZ5dVk4bl9fSTh6U25xdlRuUzYzSnRxUGxsc2NDbWM4cXBmM3hFNmItLUtUVUFnSHdMN2hMRHp3cWFwWEl5RVEtU2xqODNHTS12R0NnbTZWTGt6c2lOa3lYQ0ZZeVVuSHZ0azJtNUkwTlJYbVYtaS01Q0xLaU1aaVdKeU5tY2Z3V1R6V2JmRWZkVjdLYmN5cjJVU3U0OC1QRmFqenczZ3pvZW5LMFdjOWJyY2RPUER4MmNlXw?oc=5"
+      "age": "Thu, 08 Oct 2026 03:48:59 GMT",
+      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxPcEpFMkg5YnJTVFFVMG44TUJIOURkVEF3N2duMEN5SDl6X1ZfaXlmb016WGtKZmhDa0Fod3hZRGo4Y0N6cDhNbUtOc2VtNkxIdW1hcXAtQnlqbzBCWnpMU0tzd1RuSjZZWUcwOWV1Nmo1Ykx6WVAwcGp4eWo0Smtzc3RTLWdhbGZjcHJKQnZvR1dVaFhCYlhkT2NNUl82MG1lNnBqdktHT21aV01MY1ZjS0ZRMlRsV016VGRRS2h5LU1NYl9uWE5fVk5RRzE1MnfSAdQBQVVfeXFMTmM3bF9POTF1RUc1b1hnTFhtVXg0WHRVWFFSamh6SmxMN0hnVHFUSlVyTFhwSHlYeUlGeElqZl9URmhpNzY2aGs3eHNHS1A2dk00Q0QybnYwZGhTM1JaRXBXY2w0dEU3VFVYUUFCN01HYktXQ3RDSEpQQ1p2bnRsdnFpcUsxY3Y5djNVYU1pNHhHZlhFT011b2dCTDJqV3FjTi1FOFlrLVE0RkF1QmNQR2JkOFVJbUNEOVItZGFxWjNlLTRwaUhseEIybU82dFU0VGMxakM?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1743,10 +1738,17 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Stock markets trade marginally higher after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
+      "title": "Stock markets close flat after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
       "source": "Google News RSS",
       "age": "Thu, 17 Sep 2026 07:00:00 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNVmtnWUg5WktRbm1KOEpsQVA5YzVMclhaaWMzekVjSFNNaG5lczlBQk9NTE9CMWFMaE80MFA2VzhmVFZKTHdPLTBGMkxnM1d0bnVKSzJjdkVSSlRKN2tWZlcwUHdHT2R5cFBnS3dnVTZwdkZZRjNsSWdRSmU1bmUwWUdPVmFmMVlfMzB6TWhrS3pTcUg1RDBJMGJETGNNaHhaZFFMNlZNVWdGTFpyVE85b3J4dFhwQlozUFZSaU5xaHR4Tnl1dXRtVU4xRzZaVVRFN1lHVkFn0gHcAUFVX3lxTE9IY2c2WDd6QnowLWdlalNLRW9lV2FPUVR2Y0cxSUNBZ2R1NHFOMzNlaEpGMVN6cjgyRktZOVN3Y0ZUVGpVVWtmSm9BYzNaTnpvZ3NObURBRnhva2JHenhtdTJyYjZsYUtVcFRHUl9WTEsxMGZfVHE3aDF3ZERTb2s2amRRZFVQbFVOZ1FTLTI0M25Ub0xKY2NoMmJYMUtrTUJpTHNGN1J1ZS03SVozd205cU1TWnluUEJiSFhXUkJYWXIyLWg1T2lQZHRzYm43MVEtMzFiYzlralhMTlE?oc=5"
+      "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOXzhzbFRkeE1KZk55bWlkckFrbExLcTFWanJSYkp4dERYbXY0Ti0zOE4tN2p2bE82NmR4NXdKSGtNYUdUbUxUMzE1eEJSdTU1eWw4aFNhS2FQQjZHYTFzdDBUZGp5RTVZQ3BtcFRaa3FOWGFrZ2laUDl6bnM1ZVNGWDdjV1h2SU1ySHZFZWl5bHdjMGZ1bmM3dkQwWjFDdXI2M0k5NjV5dVhQdFlsVWcyWTRWamVNUXdTOVdNb1pPbWE4TEF20gHLAUFVX3lxTE8walloR2lkQUNqSjJJZXBXZzBPU0g3NVE5M1Q0MTVMN1NsVFRaNmw2Ni0ySVBON3Q5QU1iWThOLXdvZXMwSnYzeUg2WDRBMHd1S250RGZieTFFMWJKMUxqZWNOeXRLV1hVMW1xQkpJODB1MHQ5WXo1bTJubkE3M3paQVh1V3lSajJmTkpxVzZoSzcxYmFpeU95clFFSWVrVVZmRkc4UnRfMjZnaUFVc1FFd0E3MUQ5M21ZTnp6c2lUcjZvX1NlZ2RQYm1r?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "NSDL hits new low, down 8% vs IPO; CDSL up 748%; analysts decode divergence - Business Standard",
+      "source": "Google News RSS",
+      "age": "Fri, 09 Oct 2026 06:47:39 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxPOHh1S0tQclZqOElxWXpxcy15d3FkVTBWdE5vRHpWZGFpNktVMzJiSTFKYXViRTF4cnY0RWpKejRvNlBCX0xxbHF6V2xMVnhPQlV4NjVoWVZfVWQ3MmFOVEo2NFhnYm55R2hWelI5RHJhWkhZWm5zSVFDMFFLM1p4VmlHblJUNmZnbnRnQXpnV0hkMkJuMzAtemFINHFQTDhjQllZN05XRlliVURqVU0yQnJvQTVZVEZPLUEwaC1CYjBVaENDWk9idU9iZkxTZ3pwQTk00gHYAUFVX3lxTFBUaFU2NlEtUzJFLUV3cGl5R3NwdXplNTA1RzZrbHZ5dVk4bl9fSTh6U25xdlRuUzYzSnRxUGxsc2NDbWM4cXBmM3hFNmItLUtUVUFnSHdMN2hMRHp3cWFwWEl5RVEtU2xqODNHTS12R0NnbTZWTGt6c2lOa3lYQ0ZZeVVuSHZ0azJtNUkwTlJYbVYtaS01Q0xLaU1aaVdKeU5tY2Z3V1R6V2JmRWZkVjdLYmN5cjJVU3U0OC1QRmFqenczZ3pvZW5LMFdjOWJyY2RPUER4MmNlXw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
