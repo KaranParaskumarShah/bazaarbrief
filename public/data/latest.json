@@ -1,23 +1,21 @@
 {
-  "updatedAt": "2026-10-11T12:52:38.641Z",
+  "updatedAt": "2026-10-11T18:56:32.519Z",
   "refreshWindow": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
   "timezone": "Asia/Kolkata",
   "marketSession": {
-    "indiaDate": "2026-10-11",
-    "cashMarketClosed": true,
-    "closeFinalization": "Exchange EOD close attempted"
+    "indiaDate": "2026-10-12",
+    "cashMarketClosed": false,
+    "closeFinalization": "Intraday exchange quote"
   },
   "source": "API-only shared feed — free public/exchange sources",
   "refresh": {
     "status": "ok",
-    "updatedAt": "2026-10-11T12:52:38.641Z",
+    "updatedAt": "2026-10-11T18:56:32.519Z",
     "cadence": "market hourly 10:00-17:00 IST Mon-Fri; IPO/FII-DII every 2 hours",
     "partial": true,
     "errors": [
       "NSE market: NSE returned no usable market records (equity-stockIndices: /api/equity-stockIndices?index=NIFTY%2050 -> HTTP 404)",
-      "BSE SENSEX: 403 Forbidden: https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w",
-      "NSE EOD close: Unexpected token '<', \"\n<!DOCTYPE \"... is not valid JSON",
-      "BSE EOD close: 403 Forbidden: https://api.bseindia.com/BseIndiaAPI/api/IndexArchDailyAll/w?fmdt=04-10-2026&todt=11-10-2026&index=All&period=D"
+      "BSE SENSEX: 403 Forbidden: https://api.bseindia.com/RealTimeBseIndiaAPI/api/GetSensexData/w"
     ],
     "providerStatus": {
       "nseMarket": "rejected",
@@ -51,7 +49,7 @@
         "change": 288.65000000000146,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "providerSymbol": "NSE:NIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -65,7 +63,7 @@
         "change": 741.5999999999985,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "providerSymbol": "NSE:BANKNIFTY",
         "source": "TradingView public scanner · NSE index fallback",
         "priceType": "index_quote",
@@ -79,7 +77,7 @@
         "change": 879.0899999999965,
         "currency": "USD",
         "kind": "index",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "providerSymbol": "BSE:SENSEX",
         "source": "TradingView public scanner · BSE index fallback",
         "priceType": "index_quote",
@@ -93,7 +91,7 @@
         "change": 347.5,
         "currency": "USD",
         "kind": "futures",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "source": "TradingView public scanner · NSE International Exchange",
         "priceType": "futures_indicator",
         "finalized": false,
@@ -358,8 +356,8 @@
         "name": "NASDAQ 100",
         "kind": "index",
         "value": 30883.148,
-        "change": 157.33899999999994,
-        "pct": 0.5120743932242758,
+        "change": 157.34800000000178,
+        "pct": 0.5121038345624908,
         "asOf": "2026-10-09T21:15:59.000Z",
         "currency": "USD",
         "series": [
@@ -864,8 +862,8 @@
         "name": "HANG SENG",
         "kind": "index",
         "value": 24211.35,
-        "change": 425.5599999999977,
-        "pct": 1.789135445995267,
+        "change": 425.5499999999993,
+        "pct": 1.7890926519183683,
         "asOf": "2026-10-09T08:08:32.000Z",
         "currency": "HKD",
         "series": [
@@ -1118,10 +1116,10 @@
       {
         "name": "USD/INR",
         "kind": "fx",
-        "value": 96.73,
-        "change": -0.04999999999999716,
-        "pct": -0.05166356685265257,
-        "asOf": "2026-10-11T03:30:05.000Z",
+        "value": 96.78,
+        "change": 0,
+        "pct": 0,
+        "asOf": "2026-10-11T14:08:48.000Z",
         "currency": "INR",
         "series": [
           {
@@ -1371,13 +1369,13 @@
       },
       {
         "name": "GOLD",
-        "value": 155909.1,
-        "inrPer10g": 155909.1,
-        "inrPerGram": 15590.91,
-        "gstPerGram": 467.73,
+        "value": 155865.1,
+        "inrPer10g": 155865.1,
+        "inrPerGram": 15586.51,
+        "gstPerGram": 467.6,
         "sellPerGram": 15098.97,
         "pct": -0.2,
-        "asOf": "2026-10-11T12:50:00.132Z",
+        "asOf": "2026-10-11T18:55:00.111Z",
         "unit": "₹/10g",
         "displayUnit": "₹/10g",
         "source": "OroPocket India gold buy rate",
@@ -1387,13 +1385,13 @@
       },
       {
         "name": "SILVER",
-        "value": 232180,
-        "inrPerKg": 232180,
-        "inrPerGram": 232.18,
-        "gstPerGram": 6.97,
+        "value": 231920,
+        "inrPerKg": 231920,
+        "inrPerGram": 231.92,
+        "gstPerGram": 6.96,
         "sellPerGram": 219.03,
         "pct": -0.1,
-        "asOf": "2026-10-11T12:50:00.132Z",
+        "asOf": "2026-10-11T18:55:00.111Z",
         "unit": "₹/kg",
         "displayUnit": "₹/kg",
         "source": "OroPocket India silver buy rate",
@@ -1408,7 +1406,7 @@
         "change": -0.8499999999999943,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "providerSymbol": "ICEEUR:BRN1!",
         "source": "TradingView public scanner · ICE Brent futures",
         "priceType": "futures_quote",
@@ -1423,7 +1421,7 @@
         "change": 0.35999999999999943,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "providerSymbol": "NYMEX:CL1!",
         "source": "TradingView public scanner · NYMEX WTI futures",
         "priceType": "futures_quote",
@@ -1438,7 +1436,7 @@
         "change": 0.052000000000000046,
         "currency": "USD",
         "kind": "commodity",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "providerSymbol": "NYMEX:NG1!",
         "source": "TradingView public scanner · NYMEX Henry Hub futures",
         "priceType": "futures_quote",
@@ -1458,7 +1456,7 @@
     "diiSell": 10883.27,
     "date": "2026-10-09",
     "source": "NSE India public FII/FPI & DII endpoint",
-    "asOf": "2026-10-11T12:52:38.641Z",
+    "asOf": "2026-10-11T18:56:32.519Z",
     "provisional": true
   },
   "ipo": {
@@ -1534,8 +1532,8 @@
         "gmpSources": null,
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
-        "sourceDate": "2026-10-11",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "sourceDate": "2026-10-12",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1616,8 +1614,8 @@
         "gmpSources": null,
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
-        "sourceDate": "2026-10-11",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "sourceDate": "2026-10-12",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1696,8 +1694,8 @@
         "gmpSources": null,
         "gmpSource": null,
         "source": "NSE official IPO Issue Information",
-        "sourceDate": "2026-10-11",
-        "asOf": "2026-10-11T12:52:38.641Z",
+        "sourceDate": "2026-10-12",
+        "asOf": "2026-10-11T18:56:32.519Z",
         "details": {
           "PRODUCTS": "Today",
           "VOLUME (Shares/Contracts)": "VALUE* (₹ Crores)",
@@ -1710,20 +1708,6 @@
   "news": [
     {
       "tag": "MARKET NEWS",
-      "title": "Share Market Live, Share Market Today: Latest Share Market News, Share Market Live Updates on The Economic Times - The Economic Times",
-      "source": "Google News RSS",
-      "age": "Fri, 09 Oct 2026 10:15:00 GMT",
-      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTFBvU1A3YXdwdkdEeEhvQ1lLLVhhUk9sWUdXUFdDb1F4NjUxRDlnVDFkOUNjdFVjbTBBc09kNmNkRl9UbzkyOFVvbjIxYjFoMVQ3MUNJNGFmOA?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "Indian firms defy stock market slump with record $25 billion half-year equity fundraise - Reuters",
-      "source": "Google News RSS",
-      "age": "Thu, 01 Oct 2026 07:00:00 GMT",
-      "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPVnZXMEtCQ2VsTnJuekwxaU9nbFhTN1prekljby1EMHNqc052QVRVM3Q5SWEzZzgxaEpjdmtSUlY0dXRRd0xXQXdQb3hYeXRYbm9MUURDR0dsclZVMmNwUG1RWm5tT21FU0tsdnl0OGM4TVZwdy1QSDc5cXl5aUkxbjhmR1lyV0pnU2tVZXh1cU1xREVYZVNfbXBNRHdCOUY4d1FlVVlCaFdmeVlzMmkxSUZZS05lbHkxYkIwdTBTajJVZw?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
       "title": "Stock market prediction for tomorrow: Sensex, Nifty outlook for Thursday | Kospi, Taiwan cues to watch | 8 Oct 2026 - IndiaIPO",
       "source": "Google News RSS",
       "age": "Wed, 07 Oct 2026 10:35:20 GMT",
@@ -1731,17 +1715,10 @@
     },
     {
       "tag": "MARKET NEWS",
-      "title": "Vishal Nirmiti shares list at 2% discount over IPO price on NSE, BSE - The Economic Times",
+      "title": "Indian firms defy stock market slump with record $25 billion half-year equity fundraise - Reuters",
       "source": "Google News RSS",
-      "age": "Thu, 08 Oct 2026 03:48:59 GMT",
-      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxPcEpFMkg5YnJTVFFVMG44TUJIOURkVEF3N2duMEN5SDl6X1ZfaXlmb016WGtKZmhDa0Fod3hZRGo4Y0N6cDhNbUtOc2VtNkxIdW1hcXAtQnlqbzBCWnpMU0tzd1RuSjZZWUcwOWV1Nmo1Ykx6WVAwcGp4eWo0Smtzc3RTLWdhbGZjcHJKQnZvR1dVaFhCYlhkT2NNUl82MG1lNnBqdktHT21aV01MY1ZjS0ZRMlRsV016VGRRS2h5LU1NYl9uWE5fVk5RRzE1MnfSAdQBQVVfeXFMTmM3bF9POTF1RUc1b1hnTFhtVXg0WHRVWFFSamh6SmxMN0hnVHFUSlVyTFhwSHlYeUlGeElqZl9URmhpNzY2aGs3eHNHS1A2dk00Q0QybnYwZGhTM1JaRXBXY2w0dEU3VFVYUUFCN01HYktXQ3RDSEpQQ1p2bnRsdnFpcUsxY3Y5djNVYU1pNHhHZlhFT011b2dCTDJqV3FjTi1FOFlrLVE0RkF1QmNQR2JkOFVJbUNEOVItZGFxWjNlLTRwaUhseEIybU82dFU0VGMxakM?oc=5"
-    },
-    {
-      "tag": "MARKET NEWS",
-      "title": "NSDL hits new low, down 8% vs IPO; CDSL up 748%; analysts decode divergence - Business Standard",
-      "source": "Google News RSS",
-      "age": "Fri, 09 Oct 2026 06:47:39 GMT",
-      "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxPOHh1S0tQclZqOElxWXpxcy15d3FkVTBWdE5vRHpWZGFpNktVMzJiSTFKYXViRTF4cnY0RWpKejRvNlBCX0xxbHF6V2xMVnhPQlV4NjVoWVZfVWQ3MmFOVEo2NFhnYm55R2hWelI5RHJhWkhZWm5zSVFDMFFLM1p4VmlHblJUNmZnbnRnQXpnV0hkMkJuMzAtemFINHFQTDhjQllZN05XRlliVURqVU0yQnJvQTVZVEZPLUEwaC1CYjBVaENDWk9idU9iZkxTZ3pwQTk00gHYAUFVX3lxTFBUaFU2NlEtUzJFLUV3cGl5R3NwdXplNTA1RzZrbHZ5dVk4bl9fSTh6U25xdlRuUzYzSnRxUGxsc2NDbWM4cXBmM3hFNmItLUtUVUFnSHdMN2hMRHp3cWFwWEl5RVEtU2xqODNHTS12R0NnbTZWTGt6c2lOa3lYQ0ZZeVVuSHZ0azJtNUkwTlJYbVYtaS01Q0xLaU1aaVdKeU5tY2Z3V1R6V2JmRWZkVjdLYmN5cjJVU3U0OC1QRmFqenczZ3pvZW5LMFdjOWJyY2RPUER4MmNlXw?oc=5"
+      "age": "Thu, 01 Oct 2026 07:00:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPVnZXMEtCQ2VsTnJuekwxaU9nbFhTN1prekljby1EMHNqc052QVRVM3Q5SWEzZzgxaEpjdmtSUlY0dXRRd0xXQXdQb3hYeXRYbm9MUURDR0dsclZVMmNwUG1RWm5tT21FU0tsdnl0OGM4TVZwdy1QSDc5cXl5aUkxbjhmR1lyV0pnU2tVZXh1cU1xREVYZVNfbXBNRHdCOUY4d1FlVVlCaFdmeVlzMmkxSUZZS05lbHkxYkIwdTBTajJVZw?oc=5"
     },
     {
       "tag": "MARKET NEWS",
@@ -1759,6 +1736,13 @@
     },
     {
       "tag": "MARKET NEWS",
+      "title": "NSDL hits new low, down 8% vs IPO; CDSL up 748%; analysts decode divergence - Business Standard",
+      "source": "Google News RSS",
+      "age": "Fri, 09 Oct 2026 06:47:39 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxPOHh1S0tQclZqOElxWXpxcy15d3FkVTBWdE5vRHpWZGFpNktVMzJiSTFKYXViRTF4cnY0RWpKejRvNlBCX0xxbHF6V2xMVnhPQlV4NjVoWVZfVWQ3MmFOVEo2NFhnYm55R2hWelI5RHJhWkhZWm5zSVFDMFFLM1p4VmlHblJUNmZnbnRnQXpnV0hkMkJuMzAtemFINHFQTDhjQllZN05XRlliVURqVU0yQnJvQTVZVEZPLUEwaC1CYjBVaENDWk9idU9iZkxTZ3pwQTk00gHYAUFVX3lxTFBUaFU2NlEtUzJFLUV3cGl5R3NwdXplNTA1RzZrbHZ5dVk4bl9fSTh6U25xdlRuUzYzSnRxUGxsc2NDbWM4cXBmM3hFNmItLUtUVUFnSHdMN2hMRHp3cWFwWEl5RVEtU2xqODNHTS12R0NnbTZWTGt6c2lOa3lYQ0ZZeVVuSHZ0azJtNUkwTlJYbVYtaS01Q0xLaU1aaVdKeU5tY2Z3V1R6V2JmRWZkVjdLYmN5cjJVU3U0OC1QRmFqenczZ3pvZW5LMFdjOWJyY2RPUER4MmNlXw?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
       "title": "Nifty Gains 76 Points, Sensex Ends Flat After CAS - HDFC Sky",
       "source": "Google News RSS",
       "age": "Fri, 18 Sep 2026 07:00:00 GMT",
@@ -1773,10 +1757,24 @@
     },
     {
       "tag": "MARKET NEWS",
+      "title": "NSE IPO: Stock lists at Rs 1,800 versus issue price of Rs 1,785 on BSE with 0.8% premium; ends 1% up on f - The Times of India",
+      "source": "Google News RSS",
+      "age": "Thu, 24 Sep 2026 07:00:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMiigJBVV95cUxOZVNWbllpNEVHdHE2dXRPdjh5bzA0bVZOMEdtNW9BWVI5YWIxaGh3OXRLeGNpNzZrZUxScS0ySnFrZ05QYllvTW9oSldXemNVcDh2YU1WWWo2VGtUN1VSUUJwWXlSUW9malYzRDdqdEtfcFE1NEl5R3hlM3NUZXlfSjR3bktlYTdVWi1SMFdfSlRIeEU5aGh5elQ2b0o4VF9ZUHlaVmtNdEEzWDdxc2E0TlhNQ292U0hGa2lFd19XeWk5dWx5OUFjSW5Ra2xNZUN2NUE4Y1lxQkJoWTlaUk5fSTcwT0tDUlIyekV3dkNTUXlSWG9rc2dTV0dHZFlpRXJQWjRCUk5sajdBUdIBjwJBVV95cUxPeHRiR1RzZndfMF85RXN6RWp1bVJmZjdWeG9qZFNNM05DZHFNTTZfY2FvMEdCbTItTFIzM1g3eWZYeWxMOWxuOXVFOXBGZi05U09QRWVDTGk2bFFqNEs3dUxaTzlHS2xNWDlQUldXLV8tYmJ3STRQaDJuM212VWR3MjdtdFZrYktMSzlCR1J6dW9rNFdJSThYSE94UXdRUTlwYzNCZ3BWN05aeE5oNHp1Y0FGTV9idFJYcm5LOVpBV1dUYXNLNFhJN2ZiSm9XbnhPV09aSWhXcVlNYXV1bWJhczBGR2Ztak1JNjA4WmpBckJlbktuN042SHdEcUNGZkRVT1ZmV0xwcXo1c3FkNDVV?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
       "title": "Stock market prediction for tomorrow: Sensex, Nifty outlook for Tuesday | Kospi, Taiwan cues to watch | 6 Oct 2026 - IndiaIPO",
       "source": "Google News RSS",
       "age": "Mon, 05 Oct 2026 10:35:02 GMT",
       "url": "https://news.google.com/rss/articles/CBMi2wFBVV95cUxQOFpDNEM5UVhTUUtseU55Yk96cTZVNGJCVHhjWUJ3eUliS21Wcm85aFpiZ1hHSVRaUEIxM2FOcXZER01zMThyczBDc0ZJVnd3TGVKV1EyYWF2MEU0SjRRM1BKckZrd1BPVmsxaFJLT1pUUnZmUncxNzl1TktfRDlpLWZNXzNmMXowdkpXdTRGQVY3UTBpY1dQelJvWXpPZ1lWX05WUU1sMEQ1ckQ4U3V1cXFOVGVENDFqMXZjRnhsQzF5X3BKS0l4X1pwMUF6WjF2OUNOWDBxT2tBZzg?oc=5"
+    },
+    {
+      "tag": "MARKET NEWS",
+      "title": "Stock markets trade marginally higher after U.S. Fed rate hike; NSE IPO in focus - The Hindu",
+      "source": "Google News RSS",
+      "age": "Thu, 17 Sep 2026 07:00:00 GMT",
+      "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNVmtnWUg5WktRbm1KOEpsQVA5YzVMclhaaWMzekVjSFNNaG5lczlBQk9NTE9CMWFMaE80MFA2VzhmVFZKTHdPLTBGMkxnM1d0bnVKSzJjdkVSSlRKN2tWZlcwUHdHT2R5cFBnS3dnVTZwdkZZRjNsSWdRSmU1bmUwWUdPVmFmMVlfMzB6TWhrS3pTcUg1RDBJMGJETGNNaHhaZFFMNlZNVWdGTFpyVE85b3J4dFhwQlozUFZSaU5xaHR4Tnl1dXRtVU4xRzZaVVRFN1lHVkFn0gHcAUFVX3lxTE9IY2c2WDd6QnowLWdlalNLRW9lV2FPUVR2Y0cxSUNBZ2R1NHFOMzNlaEpGMVN6cjgyRktZOVN3Y0ZUVGpVVWtmSm9BYzNaTnpvZ3NObURBRnhva2JHenhtdTJyYjZsYUtVcFRHUl9WTEsxMGZfVHE3aDF3ZERTb2s2amRRZFVQbFVOZ1FTLTI0M25Ub0xKY2NoMmJYMUtrTUJpTHNGN1J1ZS03SVozd205cU1TWnluUEJiSFhXUkJYWXIyLWg1T2lQZHRzYm43MVEtMzFiYzlralhMTlE?oc=5"
     }
   ]
 }
