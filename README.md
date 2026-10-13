@@ -1,40 +1,80 @@
-# BazaarBrief
+# BazaarBrief — automated live-data website
 
-Premium Indian market intelligence dashboard with a shared API-only data feed.
+**Brand:** BazaarBrief  
+**Domain:** https://bazaarbrief.in  
+**Tagline:** India's Market, Simplified.
 
-## Data model
+This project is designed to run on Cloudflare's Free plan: Cloudflare Pages for the React frontend, one Cloudflare Worker as a thin scheduled data layer, and Cloudflare KV for public JSON cache. There is no traditional backend server or application database.
 
-The browser reads `/data/latest.json`. It does not call financial providers per visitor.
+## The one-click path (Windows)
 
-| Area | Source | Schedule |
-|---|---|---|
-| NIFTY 50 / BANK NIFTY | NSE public feed + EOD | Hourly 10:00-17:00 IST Mon-Fri |
-| SENSEX | BSE public feed + EOD | Hourly 10:00-17:00 IST Mon-Fri |
-| FII/FPI + DII | NSE public report/API | Every 2 hours at :15, 10:15-18:15 IST |
-| IPO issue list | NSE public IPO endpoints | Every 2 hours at :15, 10:15-18:15 IST |
-| IPO full issue information | NSE Issue Information per symbol | Every 2 hours at :15, 10:15-18:15 IST |
-| IPO documents | NSE public links when exposed | Every 2 hours at :15, 10:15-18:15 IST |
-| GIFT Nifty | TradingView public scanner | Scheduled refresh |
-| Gold / Silver | OroPocket India public rates | Scheduled refresh |
-| Brent / WTI / Natural Gas | TradingView public scanner | Scheduled refresh |
-| Global indices / USD-INR | Yahoo public chart feed | Scheduled refresh |
+1. Install Node.js 20 or newer from https://nodejs.org/.
+2. Extract this ZIP.
+3. Double-click `START-HERE-WINDOWS.bat` and approve Cloudflare login in the browser when asked.
 
-## IPO strategy
+The script installs dependencies, creates the KV namespaces, fills their IDs into the Worker config, deploys the Worker, creates a protected one-time refresh secret, attempts an initial refresh, builds the frontend with the deployed Worker URL, deploys Cloudflare Pages, and attempts to attach `bazaarbrief.in`.
 
-The current IPO release is deliberately **NSE-first**. It fetches the whole issue list and then opens the detailed NSE Issue Information record for every discovered IPO. The raw NSE fields are preserved in `ipo.details` so the UI can show an IPO-portal-style comprehensive page.
+**One unavoidable permission:** Cloudflare account login and domain ownership cannot be performed by a ZIP or by ChatGPT on your behalf. If the domain is not already active in the same Cloudflare account, the script will still deploy to a `pages.dev` URL; custom-domain activation may need to be completed in Cloudflare. No API token or password belongs in source code.
 
-GMP is intentionally deferred to a later provider integration. IPO publishing does not depend on GMP.
+## Local development (fetches upstream data on startup)
 
-## GitHub Actions
+On Windows, double-click `START-LOCAL-WINDOWS.bat`. It installs dependencies, starts a local Wrangler Worker with isolated local KV storage, requests an immediate refresh from upstream sources, writes `.env.local` to point the frontend at `http://127.0.0.1:8787`, then starts Vite at `http://localhost:5173`. Keep the terminal open while testing. No Cloudflare account login is needed for local testing.
 
-The workflow is `.github/workflows/refresh-data.yml`.
+The first refresh attempts to fetch actual market quotes, publisher RSS news, and the current NSE IPO/FII-DII endpoints. If a provider blocks the request or returns a changed schema, that dataset remains unavailable; no fabricated data is inserted. This environment cannot guarantee that NSE or Yahoo Finance permits the request from every local network. Internet access is required. The local Worker cache is separate from production Cloudflare KV.
 
-No financial API secret is required. `GIFT_NIFTY_SYMBOL` is optional.
+For manual frontend-only development, `npm run dev` still works, but live datasets require `VITE_DATA_BASE_URL` to point at a running Worker API.
 
-## Local validation
+## Schedule and data flow
 
-```bash
-node --check scripts/refresh-data.mjs
+```text
+Cloudflare Cron (*/15 * * * * UTC)
+  ├─ Market quote adapter (Yahoo Finance chart endpoint; unofficial)
+  ├─ IPO adapter (NSE public website endpoints; unofficial/undocumented)
+  ├─ FII/DII adapter (NSE public website endpoint; unofficial/undocumented)
+  └─ Market news (publisher RSS feeds)
+            ↓
+Cloudflare Worker normalizes successful responses
+            ↓
+Cloudflare KV replaces successful current datasets; FII/DII snapshots are date-deduplicated
+            ↓
+Public JSON API → React Query → Zod validation → IndexedDB client cache → visitors
 ```
 
-A production Vite build requires installing the npm dependencies first.
+The cron runs every 15 minutes in UTC. It is not a promise that upstream sources update every 15 minutes or provide real-time quotes. Each widget should display its source and source timestamp where available. A failed refresh preserves the last successful dataset; a dataset that has never succeeded returns unavailable instead of generated financial data.
+
+## Live source and limitations
+
+- **Indices/reference prices:** Yahoo Finance's chart endpoint is undocumented and not an official licensed redistribution API. It can fail, rate-limit, or change. Review its terms and replace it with a provider that explicitly permits public display before monetizing.
+- **IPO data:** the Worker attempts NSE public website endpoints for current, upcoming, and past issues and only stores records with the required fields. These endpoints are unofficial/undocumented for automated integration, can be blocked, and may not populate all fields. No fake IPOs are inserted.
+- **FII/DII:** the Worker attempts NSE's public FII/DII endpoint and appends/deduplicates actual returned date rows. If NSE blocks the request or changes its shape, this dataset remains unavailable or retains the previous cache. No historical values are invented.
+- **News:** RSS headlines are sourced from publisher feeds. Headlines link to the original publisher; short descriptions may be truncated. Feed availability and reuse terms vary.
+- **GMP:** there is no official GMP source. This project does not generate GMP values. Do not publish a GMP figure unless a real source is available and it is labelled unofficial.
+- **Commercial use:** exchange data redistribution may require permission or a licence. Review the official policies before publishing at scale or monetizing: https://www.nseindia.com/static/market-data/nse-data-policy and https://www.nse.in/static/nse-terms-of-use.
+
+## Endpoints
+
+- `GET /health`
+- `GET /api/indices`
+- `GET /api/history`
+- `GET /api/ipos`
+- `GET /api/news`
+- `GET /api/fii-dii`
+- `POST /admin/refresh` (requires the secret generated by the deployment script; do not remove authentication)
+
+## Manual build and checks
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
+
+Dependency installation/build could not be verified in the authoring environment because npm installation timed out. The one-click deployment script runs a fresh dependency install and build, and stops with the real error if either fails.
+
+## Security and compliance
+
+- Secrets are Worker secrets, not `VITE_*` variables.
+- `_headers` configures browser security headers for Pages.
+- External news links use `noopener noreferrer nofollow`.
+- Financial information is for information only and is not investment advice.
+- Never display illustrative/mock market values as live financial data.

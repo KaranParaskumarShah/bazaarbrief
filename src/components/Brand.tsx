@@ -1,0 +1,1 @@
+import {ChartNoAxesCombined} from 'lucide-react';import {Link} from 'react-router-dom';export default function Brand(){return <Link className="brand" to="/" aria-label="BazaarBrief home"><span className="brand-mark"><ChartNoAxesCombined size={22}/></span><span><b>BazaarBrief</b><small>INDIA'S MARKET, SIMPLIFIED.</small></span></Link>}
