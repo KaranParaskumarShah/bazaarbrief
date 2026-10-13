@@ -87,6 +87,6 @@ If this repository is deployed from **Workers & Pages → bazaarbrief → Builds
 - Deploy command: `npx wrangler deploy`
 - Root directory: `/`
 
-the root `wrangler.jsonc` config deploys the built `dist/` folder as a single-page React site. It fixes the `Missing entry-point to Worker script or to assets directory` error by explicitly declaring the static assets directory.
+the root `wrangler.jsonc` config deploys the built `dist/` folder as a single-page React site. It explicitly declares the static assets directory and enables SPA fallback. The conflicting `public/_redirects` rule is intentionally removed: Cloudflare rejected `/* /index.html 200` as an infinite redirect when combined with this asset configuration.
 
 This dashboard deployment is the **frontend only**. The scheduled data API is a separate Worker in `worker/`; deploy it separately using the included Windows deployment script (`START-HERE-WINDOWS.bat`) or from the `worker/` directory after configuring its KV namespace. For live widgets, set the frontend build variable `VITE_DATA_BASE_URL` to that deployed data Worker URL. Do not put secrets in `VITE_*` variables.
