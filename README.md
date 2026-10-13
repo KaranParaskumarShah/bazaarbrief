@@ -78,3 +78,15 @@ Dependency installation/build could not be verified in the authoring environment
 - External news links use `noopener noreferrer nofollow`.
 - Financial information is for information only and is not investment advice.
 - Never display illustrative/mock market values as live financial data.
+
+
+## Cloudflare Workers Builds dashboard (GitHub-connected deployment)
+
+If this repository is deployed from **Workers & Pages → bazaarbrief → Builds** with:
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+- Root directory: `/`
+
+the root `wrangler.jsonc` config deploys the built `dist/` folder as a single-page React site. It fixes the `Missing entry-point to Worker script or to assets directory` error by explicitly declaring the static assets directory.
+
+This dashboard deployment is the **frontend only**. The scheduled data API is a separate Worker in `worker/`; deploy it separately using the included Windows deployment script (`START-HERE-WINDOWS.bat`) or from the `worker/` directory after configuring its KV namespace. For live widgets, set the frontend build variable `VITE_DATA_BASE_URL` to that deployed data Worker URL. Do not put secrets in `VITE_*` variables.
