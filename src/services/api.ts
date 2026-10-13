@@ -8,8 +8,10 @@ const NewsSchema = z.array(z.object({ id:z.string(), title:z.string(), summary:z
 const FiiSchema = z.array(z.object({ date:z.string(), fii:z.number(), dii:z.number() }));
 const base = (import.meta.env.VITE_DATA_BASE_URL || '').replace(/\/$/, '');
 async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
-  if (!base) throw new Error('Live data service is not configured. Set VITE_DATA_BASE_URL.');
-  const response = await fetch(`${base}${path}`, { headers: { accept:'application/json' }, signal: AbortSignal.timeout(15000) });
+  // Same-origin by default: the frontend and API are deployed by the same Worker.
+  // VITE_DATA_BASE_URL remains available for local development or a separately hosted API.
+  const endpoint = base ? `${base}${path}` : path;
+  const response = await fetch(endpoint, { headers: { accept:'application/json' }, signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`Live data service returned HTTP ${response.status}`);
   return schema.parse(await response.json());
 }

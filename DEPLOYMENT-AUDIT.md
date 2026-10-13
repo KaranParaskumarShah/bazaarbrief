@@ -1,20 +1,27 @@
-# BazaarBrief deployment audit — 13 October 2026
+# BazaarBrief deployment/API audit — 13 October 2026
 
-## Fixed in this ZIP
+## Root cause found
 
-1. Removed `public/_redirects` containing `/* /index.html 200`. Cloudflare Workers static assets rejected that rule with error 100324 (infinite loop). SPA fallback is already declared in root `wrangler.jsonc` using `not_found_handling: single-page-application`.
-2. Kept the root `wrangler.jsonc` assets declaration pointing at `./dist`, which allowed Wrangler to upload the built static assets in the latest deployment log.
-3. Retained prior TypeScript build fixes (unused imports, ES2020-compatible array indexing, Vitest config). The latest supplied Cloudflare log confirms `npm run build` passes and 10 assets upload; deployment failed only when validating `_redirects`.
+The prior frontend could load while its `/api/*` requests did not reach the data Worker. The prior API handler only read from KV; when the KV cache was empty, it returned HTTP 503 and never tried fetching a dataset on the first API request. Also, a static-only deployment can return the SPA shell for unknown `/api/*` paths unless Worker-first routing is configured.
 
-## Deployment configuration to keep
+## Changes in this ZIP
 
-- Root directory: `/`
-- Build command: `npm run build`
-- Deploy command: `npx wrangler deploy`
+1. The root `wrangler.jsonc` deploys `worker/src/index.ts` and `dist/` together.
+2. `assets.run_worker_first` routes `/api/*`, `/health`, and `/admin/*` to the Worker before SPA fallback.
+3. API handlers fetch upstream data on a cache miss, so first-use does not require waiting for the next 15-minute cron.
+4. KV is optional for first deployment; edge cache is used as a best-effort cache. If KV is later configured, datasets are also written to KV.
+5. API errors return a 503 JSON body with a dataset and failure detail rather than silently returning HTML or fabricated records.
+6. Cron runs every 15 minutes and tries to warm cached datasets.
+7. The old catch-all `public/_redirects` file is absent; SPA fallback is handled by Wrangler asset configuration.
 
-## Verification and limitations
+## Still dependent on external sources
 
-- The latest Cloudflare log supplied by the project owner confirms the TypeScript/Vite production build succeeded and static assets uploaded.
-- The ZIP has been structurally checked and its Wrangler configuration validated. A fresh local dependency install timed out in the authoring environment, so a new local test-suite run could not be completed here.
-- This fixes the observed deployment error; it does not certify all upstream market providers. The data Worker is separate, uses a KV namespace that must be configured, and public IPO/FII-DII records may remain unavailable if NSE blocks the unofficial endpoints. No synthetic market data should be added to mask missing feeds.
-- Wrangler's outdated-version warning is not the cause of error 100324 and does not require a paid Cloudflare plan.
+Yahoo Finance and NSE endpoints are unofficial/undocumented and can block requests, change schema, or have terms limiting redistribution. IPO/FII/DII data cannot be guaranteed until a permitted feed succeeds. News feeds can also be unavailable. The implementation intentionally does not generate mock financial values.
+
+## Cloudflare settings
+
+- Root directory `/`
+- Build command `npm run build`
+- Deploy command `npx wrangler deploy`
+
+No KV placeholder or `VITE_DATA_BASE_URL` build variable is required for same-origin production.

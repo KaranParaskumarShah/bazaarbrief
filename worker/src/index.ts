@@ -1,5 +1,6 @@
 export interface Env {
-  MARKET_CACHE: KVNamespace;
+  MARKET_CACHE?: KVNamespace;
+  PUBLIC_ORIGIN?: string;
   ALLOWED_ORIGIN?: string;
   IPO_DATA_URL?: string;
   FII_DII_DATA_URL?: string;
@@ -37,32 +38,132 @@ const headers = (origin: string, env: Env) => {
   };
 };
 
+const DATASET_TTL: Record<Dataset, number> = {
+  indices: 60,
+  ipos: 600,
+  news: 300,
+  'fii-dii': 1800,
+  history: 60,
+};
+
+function edgeCache() {
+  try { return typeof caches !== 'undefined' ? caches.default : undefined; }
+  catch { return undefined; }
+}
+function edgeCacheKey(origin: string, dataset: Dataset) {
+  return new Request(new URL(`/__bazaarbrief_cache/${dataset}`, origin).toString(), { method: 'GET' });
+}
+async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<string | null> {
+  if (env.MARKET_CACHE) {
+    try {
+      const raw = await env.MARKET_CACHE.get(CACHE_KEYS[dataset]);
+      if (raw) return raw;
+    } catch { /* Continue to edge cache and live upstreams if KV is not bound or unavailable. */ }
+  }
+  const cache = edgeCache();
+  if (cache) {
+    try {
+      const cached = await cache.match(edgeCacheKey(origin, dataset));
+      if (cached) return await cached.text();
+    } catch { /* Cache miss is not fatal. */ }
+  }
+  return null;
+}
+async function writeDataset(dataset: Dataset, data: unknown, origin: string, env: Env): Promise<void> {
+  const raw = JSON.stringify(data);
+  if (env.MARKET_CACHE) {
+    try { await env.MARKET_CACHE.put(CACHE_KEYS[dataset], raw, { expirationTtl: Math.max(DATASET_TTL[dataset] * 4, 3600) }); }
+    catch { /* Edge cache still works if KV is not configured. */ }
+  }
+  const cache = edgeCache();
+  if (cache) {
+    try {
+      await cache.put(edgeCacheKey(origin, dataset), new Response(raw, {
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, s-maxage=${DATASET_TTL[dataset]}` },
+      }));
+    } catch { /* The response can still be returned without caching. */ }
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const h = headers(request.headers.get('Origin') || '', env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
-    if (url.pathname === '/health' && request.method === 'GET') return Response.json({ ok: true, service: 'bazaarbrief-data', cron: '*/15 * * * *', mode: 'live-cache' }, { headers: h });
+    if (url.pathname === '/health' && request.method === 'GET') {
+      return Response.json({
+        ok: true,
+        service: 'bazaarbrief-data',
+        mode: env.MARKET_CACHE ? 'live-cache+kv' : 'live-cache',
+        kvEnabled: Boolean(env.MARKET_CACHE),
+        cron: '*/15 * * * *',
+        endpoints: ['/api/indices', '/api/history', '/api/ipos', '/api/news', '/api/fii-dii'],
+      }, { headers: { ...h, 'cache-control': 'no-store' } });
+    }
     if (url.pathname === '/admin/refresh') {
       if (request.method !== 'POST') return Response.json({ error: 'Method not allowed' }, { status: 405, headers: h });
       const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
       const isLocalRefresh = env.LOCAL_DEV === 'true' && ['localhost', '127.0.0.1'].includes(url.hostname);
       if (!isLocalRefresh && (!env.REFRESH_SECRET || !token || token !== env.REFRESH_SECRET)) return Response.json({ error: 'Unauthorized' }, { status: 401, headers: h });
-      const report = await refreshAll(env);
-      return Response.json({ ok: true, refreshedAt: new Date().toISOString(), report }, { headers: { ...h, 'cache-control': 'no-store' } });
+      const report = await refreshAll(env, url.origin);
+      return Response.json({ ok: Object.values(report).some(v => v.startsWith('updated')), refreshedAt: new Date().toISOString(), report }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
     if (request.method !== 'GET') return Response.json({ error: 'Method not allowed' }, { status: 405, headers: h });
     const match = url.pathname.match(/^\/api\/(indices|ipos|news|fii-dii|history)$/);
-    if (!match) return Response.json({ error: 'Not found' }, { status: 404, headers: h });
+    if (!match) return Response.json({ error: 'Not found', path: url.pathname }, { status: 404, headers: h });
     const dataset = match[1] as Dataset;
-    const raw = await env.MARKET_CACHE.get(CACHE_KEYS[dataset]);
-    if (!raw) return Response.json({ error: 'Live dataset has not been populated yet', dataset, source: null, updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store' } });
-    return new Response(raw, { headers: { ...h, 'x-data-status': 'cached', 'x-dataset': dataset } });
+    const cached = await readDataset(dataset, url.origin, env);
+    if (cached) return new Response(cached, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'cached', 'x-dataset': dataset } });
+    try {
+      const data = await fetchDataset(dataset, env);
+      if (!Array.isArray(data) || data.length === 0) throw new Error('The upstream provider returned no records');
+      await writeDataset(dataset, data, url.origin, env);
+      return Response.json(data, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'live', 'x-dataset': dataset } });
+    } catch (error) {
+      return Response.json({
+        error: 'Live dataset unavailable',
+        dataset,
+        detail: error instanceof Error ? error.message : 'Upstream request failed',
+        source: null,
+        updatedAt: null,
+      }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
+    }
   },
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(refreshAll(env));
+    const origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in';
+    ctx.waitUntil(refreshAll(env, origin));
   },
 };
+
+async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
+  if (dataset === 'indices') {
+    const results = await Promise.allSettled(SYMBOLS.map(s => yahooChart(s.symbol)));
+    const quotes = results.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled').map(r => r.value);
+    if (!quotes.length) throw new Error('All quote providers failed');
+    return quotes;
+  }
+  if (dataset === 'history') {
+    const points = await yahooHistory('^NSEI');
+    if (!points.length) throw new Error('No intraday history returned');
+    return points;
+  }
+  if (dataset === 'news') {
+    const items = await fetchNews(env);
+    if (!items.length) throw new Error('All configured RSS feeds failed or returned no headlines');
+    return items;
+  }
+  const cookie = await fetchNseCookie();
+  if (dataset === 'ipos') {
+    const configured = await fetchConfiguredJson(env.IPO_DATA_URL, 'IPO');
+    const ipos = configured || await fetchNseIpos(cookie);
+    if (!ipos.length || !validIpos(ipos)) throw new Error('No valid IPO records returned; configure a permitted normalized IPO feed if NSE is unavailable');
+    return ipos;
+  }
+  const configured = await fetchConfiguredJson(env.FII_DII_DATA_URL, 'FII/DII');
+  const flows = configured || await fetchNseFiiDii(cookie);
+  if (!flows.length || !validFlows(flows)) throw new Error('No valid FII/DII records returned; configure a permitted normalized feed if NSE is unavailable');
+  return flows;
+}
 
 async function yahooChart(symbol: string) {
   // Yahoo Finance chart endpoint is undocumented/unlicensed for redistribution; use only after reviewing its terms.
@@ -204,58 +305,23 @@ function validIpos(rows: any[]): boolean {
 }
 function validFlows(rows: any[]): boolean { return Array.isArray(rows) && rows.every(x => x && typeof x.date === 'string' && Number.isFinite(x.fii) && Number.isFinite(x.dii)); }
 
-async function refreshAll(env: Env) {
-  // Refresh independent datasets concurrently to fit the Free Worker execution window.
-  // Each dataset is replaced only after a complete successful fetch; failed sources preserve last good cache.
+async function refreshAll(env: Env, origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in') {
+  // Refresh all public datasets. KV is optional; the edge cache provides short-lived caching
+  // when the project is deployed without a KV namespace, so first requests can still fetch live data.
   const report: Record<string, string> = {};
-  const [indexResults, newsResult, cookie] = await Promise.all([
-    Promise.allSettled(SYMBOLS.map(s => yahooChart(s.symbol))),
-    fetchNews(env).catch(() => [] as any[]),
-    fetchNseCookie(),
-  ]);
-
-  const quotes = indexResults.filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled').map(r => r.value);
-  if (quotes.length) {
-    await env.MARKET_CACHE.put(CACHE_KEYS.indices, JSON.stringify(quotes), { expirationTtl: 60 * 60 * 24 * 7 });
-    report.indices = `updated (${quotes.length} quotes)`;
-    if (quotes.some(q => q.symbol === '^NSEI')) {
-      const points = await yahooHistory('^NSEI').catch(() => []);
-      if (points.length) await env.MARKET_CACHE.put(CACHE_KEYS.history, JSON.stringify(points), { expirationTtl: 60 * 60 * 24 * 7 });
+  const datasets: Dataset[] = ['indices', 'history', 'news', 'ipos', 'fii-dii'];
+  await Promise.all(datasets.map(async dataset => {
+    try {
+      const data = await fetchDataset(dataset, env);
+      await writeDataset(dataset, data, origin, env);
+      report[dataset] = `updated (${data.length} records)`;
+    } catch (error) {
+      report[dataset] = `unavailable: ${error instanceof Error ? error.message : 'upstream request failed'}`;
     }
-  } else report.indices = 'unavailable (upstream did not return valid quotes)';
-
-  if (newsResult.length) {
-    await env.MARKET_CACHE.put(CACHE_KEYS.news, JSON.stringify(newsResult), { expirationTtl: 60 * 60 * 24 * 3 });
-    report.news = `updated (${newsResult.length} headlines)`;
-  } else report.news = 'unavailable; previous cache preserved if present';
-
-  const [ipoResult, flowResult] = await Promise.allSettled([
-    (async () => {
-      let ipos = await fetchConfiguredJson(env.IPO_DATA_URL, 'IPO');
-      if (!ipos) ipos = await fetchNseIpos(cookie);
-      if (ipos && ipos.length > 0 && validIpos(ipos)) {
-        await env.MARKET_CACHE.put(CACHE_KEYS.ipos, JSON.stringify(ipos), { expirationTtl: 60 * 60 * 24 });
-        return `updated (${ipos.length} records)`;
-      }
-      return 'unavailable; no valid permitted IPO records received';
-    })(),
-    (async () => {
-      let flows = await fetchConfiguredJson(env.FII_DII_DATA_URL, 'FII/DII');
-      if (!flows) flows = await fetchNseFiiDii(cookie);
-      if (flows && flows.length > 0 && validFlows(flows)) {
-        const prior = await env.MARKET_CACHE.get(CACHE_KEYS['fii-dii']);
-        const oldRows = prior ? JSON.parse(prior) : [];
-        const merged = [...new Map([...oldRows, ...flows].map((row: any) => [row.date, row])).values()].sort((a: any, b: any) => Date.parse(a.date) - Date.parse(b.date)).slice(-2000);
-        await env.MARKET_CACHE.put(CACHE_KEYS['fii-dii'], JSON.stringify(merged), { expirationTtl: 60 * 60 * 24 * 365 });
-        return `updated (${merged.length} historical records)`;
-      }
-      return 'unavailable; no valid institutional flow records received';
-    })(),
-  ]);
-  report.ipos = ipoResult.status === 'fulfilled' ? ipoResult.value : 'upstream failed; previous cache preserved';
-  report['fii-dii'] = flowResult.status === 'fulfilled' ? flowResult.value : 'upstream failed; previous cache preserved';
+  }));
   return report;
 }
+
 async function yahooHistory(symbol: string) {
   const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=15m`, { headers: { accept: 'application/json', 'user-agent': 'Mozilla/5.0 BazaarBrief/1.0' }, signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error('History unavailable');

@@ -1,8 +1,24 @@
 {
   "name": "bazaarbrief",
+  "main": "./worker/src/index.ts",
   "compatibility_date": "2026-10-13",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*",
+      "/health",
+      "/admin/*"
+    ]
+  },
+  "triggers": {
+    "crons": [
+      "*/15 * * * *"
+    ]
+  },
+  "vars": {
+    "ALLOWED_ORIGIN": "https://bazaarbrief.in",
+    "PUBLIC_ORIGIN": "https://bazaarbrief.in"
   }
 }

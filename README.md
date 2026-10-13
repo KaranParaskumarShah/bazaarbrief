@@ -1,92 +1,45 @@
-# BazaarBrief — automated live-data website
+# BazaarBrief — live-data website
 
-**Brand:** BazaarBrief  
 **Domain:** https://bazaarbrief.in  
 **Tagline:** India's Market, Simplified.
 
-This project is designed to run on Cloudflare's Free plan: Cloudflare Pages for the React frontend, one Cloudflare Worker as a thin scheduled data layer, and Cloudflare KV for public JSON cache. There is no traditional backend server or application database.
+## Cloudflare dashboard deployment
 
-## The one-click path (Windows)
+This repository deploys the React frontend and API Worker together. Keep these dashboard settings:
+- Root directory: `/`
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
 
-1. Install Node.js 20 or newer from https://nodejs.org/.
-2. Extract this ZIP.
-3. Double-click `START-HERE-WINDOWS.bat` and approve Cloudflare login in the browser when asked.
+The root `wrangler.jsonc` points Wrangler to `worker/src/index.ts`, uploads `dist/`, routes `/api/*` through the Worker, enables React SPA fallback, and configures a 15-minute Cron Trigger. **No KV namespace or build variable is required for the first deployment.** The Worker fetches data on demand and uses Cloudflare's edge cache; if you later add a `MARKET_CACHE` KV binding, it will additionally retain datasets across refreshes.
 
-The script installs dependencies, creates the KV namespaces, fills their IDs into the Worker config, deploys the Worker, creates a protected one-time refresh secret, attempts an initial refresh, builds the frontend with the deployed Worker URL, deploys Cloudflare Pages, and attempts to attach `bazaarbrief.in`.
+For a one-command Windows deployment, double-click `START-HERE-WINDOWS.bat`; approve Cloudflare login if prompted. The script builds and deploys this same combined Worker (it does not create a separate Pages project).
 
-**One unavoidable permission:** Cloudflare account login and domain ownership cannot be performed by a ZIP or by ChatGPT on your behalf. If the domain is not already active in the same Cloudflare account, the script will still deploy to a `pages.dev` URL; custom-domain activation may need to be completed in Cloudflare. No API token or password belongs in source code.
+## Deploy
 
-## Local development (fetches upstream data on startup)
+1. Extract the ZIP and push all changed files to the connected GitHub repository's `main` branch.
+2. Do not leave the old `public/_redirects` file in GitHub. The SPA fallback is configured in `wrangler.jsonc`; the old catch-all redirect conflicts with Cloudflare's asset router.
+3. Cloudflare should run `npm run build` followed by `npx wrangler deploy`.
+4. Verify `https://bazaarbrief.in/health`, then `https://bazaarbrief.in/api/indices` and `https://bazaarbrief.in/api/news`. `/health` should return JSON with `service: bazaarbrief-data`. A data endpoint returns a JSON array on success or HTTP 503 JSON explaining why the upstream is unavailable.
 
-On Windows, double-click `START-LOCAL-WINDOWS.bat`. It installs dependencies, starts a local Wrangler Worker with isolated local KV storage, requests an immediate refresh from upstream sources, writes `.env.local` to point the frontend at `http://127.0.0.1:8787`, then starts Vite at `http://localhost:5173`. Keep the terminal open while testing. No Cloudflare account login is needed for local testing.
+## Data refresh and limits
 
-The first refresh attempts to fetch actual market quotes, publisher RSS news, and the current NSE IPO/FII-DII endpoints. If a provider blocks the request or returns a changed schema, that dataset remains unavailable; no fabricated data is inserted. This environment cannot guarantee that NSE or Yahoo Finance permits the request from every local network. Internet access is required. The local Worker cache is separate from production Cloudflare KV.
+- Browser queries refresh regularly; edge cache TTL varies by dataset. Cron runs every 15 minutes UTC and attempts to warm the edge cache.
+- Indices/history use the Yahoo Finance chart endpoint, which is unofficial and may be blocked or unsuitable for commercial redistribution.
+- IPO and FII/DII use undocumented NSE website endpoints unless a permitted normalized feed URL is configured. These may fail or change.
+- News uses public RSS feeds. A provider failure remains an explicit unavailable state. No fabricated market prices, IPO records, GMP, or institutional flow values are created.
+- Upstream data is not guaranteed to be real-time. Review exchange/provider terms before public or commercial redistribution.
 
-For manual frontend-only development, `npm run dev` still works, but live datasets require `VITE_DATA_BASE_URL` to point at a running Worker API.
+## Local development
 
-## Schedule and data flow
+Install Node.js 20+ and run `npm install`, then `npm run dev`. API requests need a running Cloudflare Worker (or deployed API). `VITE_DATA_BASE_URL` can point to a separate API for local development; leave it empty for same-origin production requests.
 
-```text
-Cloudflare Cron (*/15 * * * * UTC)
-  ├─ Market quote adapter (Yahoo Finance chart endpoint; unofficial)
-  ├─ IPO adapter (NSE public website endpoints; unofficial/undocumented)
-  ├─ FII/DII adapter (NSE public website endpoint; unofficial/undocumented)
-  └─ Market news (publisher RSS feeds)
-            ↓
-Cloudflare Worker normalizes successful responses
-            ↓
-Cloudflare KV replaces successful current datasets; FII/DII snapshots are date-deduplicated
-            ↓
-Public JSON API → React Query → Zod validation → IndexedDB client cache → visitors
-```
-
-The cron runs every 15 minutes in UTC. It is not a promise that upstream sources update every 15 minutes or provide real-time quotes. Each widget should display its source and source timestamp where available. A failed refresh preserves the last successful dataset; a dataset that has never succeeded returns unavailable instead of generated financial data.
-
-## Live source and limitations
-
-- **Indices/reference prices:** Yahoo Finance's chart endpoint is undocumented and not an official licensed redistribution API. It can fail, rate-limit, or change. Review its terms and replace it with a provider that explicitly permits public display before monetizing.
-- **IPO data:** the Worker attempts NSE public website endpoints for current, upcoming, and past issues and only stores records with the required fields. These endpoints are unofficial/undocumented for automated integration, can be blocked, and may not populate all fields. No fake IPOs are inserted.
-- **FII/DII:** the Worker attempts NSE's public FII/DII endpoint and appends/deduplicates actual returned date rows. If NSE blocks the request or changes its shape, this dataset remains unavailable or retains the previous cache. No historical values are invented.
-- **News:** RSS headlines are sourced from publisher feeds. Headlines link to the original publisher; short descriptions may be truncated. Feed availability and reuse terms vary.
-- **GMP:** there is no official GMP source. This project does not generate GMP values. Do not publish a GMP figure unless a real source is available and it is labelled unofficial.
-- **Commercial use:** exchange data redistribution may require permission or a licence. Review the official policies before publishing at scale or monetizing: https://www.nseindia.com/static/market-data/nse-data-policy and https://www.nse.in/static/nse-terms-of-use.
-
-## Endpoints
-
-- `GET /health`
-- `GET /api/indices`
-- `GET /api/history`
-- `GET /api/ipos`
-- `GET /api/news`
-- `GET /api/fii-dii`
-- `POST /admin/refresh` (requires the secret generated by the deployment script; do not remove authentication)
-
-## Manual build and checks
+## Checks
 
 ```bash
+npm install
 npm run typecheck
 npm test
 npm run build
 ```
 
-Dependency installation/build could not be verified in the authoring environment because npm installation timed out. The one-click deployment script runs a fresh dependency install and build, and stops with the real error if either fails.
-
-## Security and compliance
-
-- Secrets are Worker secrets, not `VITE_*` variables.
-- `_headers` configures browser security headers for Pages.
-- External news links use `noopener noreferrer nofollow`.
-- Financial information is for information only and is not investment advice.
-- Never display illustrative/mock market values as live financial data.
-
-
-## Cloudflare Workers Builds dashboard (GitHub-connected deployment)
-
-If this repository is deployed from **Workers & Pages → bazaarbrief → Builds** with:
-- Build command: `npm run build`
-- Deploy command: `npx wrangler deploy`
-- Root directory: `/`
-
-the root `wrangler.jsonc` config deploys the built `dist/` folder as a single-page React site. It explicitly declares the static assets directory and enables SPA fallback. The conflicting `public/_redirects` rule is intentionally removed: Cloudflare rejected `/* /index.html 200` as an infinite redirect when combined with this asset configuration.
-
-This dashboard deployment is the **frontend only**. The scheduled data API is a separate Worker in `worker/`; deploy it separately using the included Windows deployment script (`START-HERE-WINDOWS.bat`) or from the `worker/` directory after configuring its KV namespace. For live widgets, set the frontend build variable `VITE_DATA_BASE_URL` to that deployed data Worker URL. Do not put secrets in `VITE_*` variables.
+The Worker is bundled by `wrangler deploy`; the dashboard's deploy step reports Worker bundling/configuration errors.
