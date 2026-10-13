@@ -1,4 +1,5 @@
 export interface Env {
+  ASSETS?: Fetcher;
   MARKET_CACHE?: KVNamespace;
   PUBLIC_ORIGIN?: string;
   ALLOWED_ORIGIN?: string;
@@ -108,6 +109,13 @@ export default {
       const report = await refreshAll(env, url.origin);
       return Response.json({ ok: Object.values(report).some(v => v.startsWith('updated')), refreshedAt: new Date().toISOString(), report }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
+    // This Worker runs before static assets so API routes can be handled here.
+    // All non-API paths must fall through to the bound ASSETS service; otherwise
+    // enabling run_worker_first would make the homepage and JS/CSS files return 404.
+    if (url.pathname !== '/api' && !url.pathname.startsWith('/api/')) {
+      if (env.ASSETS) return env.ASSETS.fetch(request);
+      return Response.json({ error: 'Static asset binding is unavailable', path: url.pathname }, { status: 500, headers: h });
+    }
     if (request.method !== 'GET') return Response.json({ error: 'Method not allowed' }, { status: 405, headers: h });
     const match = url.pathname.match(/^\/api\/(indices|ipos|news|fii-dii|history)$/);
     if (!match) return Response.json({ error: 'Not found', path: url.pathname }, { status: 404, headers: h });
@@ -152,15 +160,17 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     if (!items.length) throw new Error('All configured RSS feeds failed or returned no headlines');
     return items;
   }
-  const cookie = await fetchNseCookie();
   if (dataset === 'ipos') {
+    // Prefer an explicitly configured normalized feed without making a slow NSE
+    // landing-page request first. Only attempt NSE when no feed URL is configured.
     const configured = await fetchConfiguredJson(env.IPO_DATA_URL, 'IPO');
-    const ipos = configured || await fetchNseIpos(cookie);
+    const ipos = configured ?? await fetchNseIpos(await fetchNseCookie());
     if (!ipos.length || !validIpos(ipos)) throw new Error('No valid IPO records returned; configure a permitted normalized IPO feed if NSE is unavailable');
     return ipos;
   }
+  // As above, avoid a needless NSE cookie request when a feed is configured.
   const configured = await fetchConfiguredJson(env.FII_DII_DATA_URL, 'FII/DII');
-  const flows = configured || await fetchNseFiiDii(cookie);
+  const flows = configured ?? await fetchNseFiiDii(await fetchNseCookie());
   if (!flows.length || !validFlows(flows)) throw new Error('No valid FII/DII records returned; configure a permitted normalized feed if NSE is unavailable');
   return flows;
 }
