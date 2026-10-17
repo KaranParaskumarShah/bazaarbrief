@@ -15,7 +15,7 @@ async function getJson<T>(path: string, schema: z.ZodType<T, z.ZodTypeDef, any>)
   if (!response.ok) throw new Error(`Live data service returned HTTP ${response.status}`);
   return schema.parse(await response.json());
 }
-const live = <T,>(key:string,path:string,schema:z.ZodType<T>,ttl:number) => resolveDataset<T>(key,[{name:'BazaarBrief scheduled live feed',fetch:()=>getJson(path,schema)}],ttl);
+const live = <T,>(key:string,path:string,schema:z.ZodType<T, z.ZodTypeDef, any>,ttl:number) => resolveDataset<T>(key,[{name:'BazaarBrief scheduled live feed',fetch:()=>getJson(path,schema)}],ttl);
 export const getIndices = () => live<IndexQuote[]>('indices','/api/indices',IndexSchema,60_000);
 export const getIpos = () => live<Ipo[]>('ipos','/api/ipos',IpoSchema,600_000);
 const IpoRefreshStatusSchema = z.object({
