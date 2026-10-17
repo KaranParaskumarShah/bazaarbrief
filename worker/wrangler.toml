@@ -1,18 +1,14 @@
+# Legacy standalone Worker config. The root ../wrangler.jsonc is authoritative for
+# the combined static-site + API deployment. No placeholder KV namespace IDs are
+# included here; configure MARKET_CACHE in the root config after creating your KV namespace.
 name = "bazaarbrief-data"
 main = "src/index.ts"
-compatibility_date = "2026-10-01"
+compatibility_date = "2026-10-13"
 workers_dev = true
 
-[[kv_namespaces]]
-binding = "MARKET_CACHE"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID"
-
-# Cloudflare Cron uses UTC. This runs every 15 minutes, every day.
 [triggers]
 crons = ["*/15 * * * *"]
 
 [vars]
 ALLOWED_ORIGIN = "https://bazaarbrief.in"
-# Optional public JSON feed URLs must be permitted for public display and return normalized schemas.
-# Set via `wrangler secret put IPO_DATA_URL` / `FII_DII_DATA_URL` when source URLs are confidential.
+PUBLIC_ORIGIN = "https://bazaarbrief.in"

@@ -1,3 +1,5 @@
+import { asString, firstField, normalizeNseIpos, validIpos } from '../../src/services/ipoNormalization';
+
 export interface Env {
   ASSETS?: Fetcher;
   MARKET_CACHE?: KVNamespace;
@@ -61,6 +63,8 @@ async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<
       if (raw) return raw;
     } catch { /* Continue to edge cache and live upstreams if KV is not bound or unavailable. */ }
   }
+  // IPO data must come from the shared KV snapshot, never a region-local edge cache.
+  if (dataset === 'ipos') return null;
   const cache = edgeCache();
   if (cache) {
     try {
@@ -73,8 +77,8 @@ async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<
 async function writeDataset(dataset: Dataset, data: unknown, origin: string, env: Env): Promise<void> {
   const raw = JSON.stringify(data);
   if (env.MARKET_CACHE) {
-    try { await env.MARKET_CACHE.put(CACHE_KEYS[dataset], raw, { expirationTtl: Math.max(DATASET_TTL[dataset] * 4, 3600) }); }
-    catch { /* Edge cache still works if KV is not configured. */ }
+    try { await env.MARKET_CACHE.put(CACHE_KEYS[dataset], raw, { expirationTtl: dataset === 'ipos' ? 60 * 60 * 24 * 365 : Math.max(DATASET_TTL[dataset] * 4, 3600) }); if (dataset === 'ipos') await env.MARKET_CACHE.put('ipos/meta', JSON.stringify({ lastSuccessfulRefreshAt: new Date().toISOString(), recordCount: Array.isArray(data) ? data.length : 0, source: (env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL).includes('xflot.com') ? 'Xflot' : 'Configured IPO provider', provider: (env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL).includes('xflot.com') ? 'Xflot' : 'Configured IPO provider' }), { expirationTtl: 60 * 60 * 24 * 365 }); }
+    catch (error) { if (dataset === 'ipos') throw error; /* Other datasets can use edge cache when KV is unavailable. */ }
   }
   const cache = edgeCache();
   if (cache) {
@@ -91,12 +95,18 @@ export default {
     const url = new URL(request.url);
     const h = headers(request.headers.get('Origin') || '', env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
+    if (url.pathname === '/api/ipos/refresh-status' && request.method === 'GET') {
+      const meta = env.MARKET_CACHE ? await env.MARKET_CACHE.get('ipos/meta', 'json') : null;
+      const lastAttempt = env.MARKET_CACHE ? await env.MARKET_CACHE.get('ipos/refresh-status', 'json') : null;
+      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: '*/15 * * * * UTC' }, { headers: { ...h, 'cache-control': 'no-store' } });
+    }
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({
         ok: true,
         service: 'bazaarbrief-data',
         mode: env.MARKET_CACHE ? 'live-cache+kv' : 'live-cache',
         kvEnabled: Boolean(env.MARKET_CACHE),
+        ipoReady: Boolean(env.MARKET_CACHE),
         cron: '*/15 * * * *',
         endpoints: ['/api/indices', '/api/history', '/api/ipos', '/api/news', '/api/fii-dii'],
       }, { headers: { ...h, 'cache-control': 'no-store' } });
@@ -107,7 +117,7 @@ export default {
       const isLocalRefresh = env.LOCAL_DEV === 'true' && ['localhost', '127.0.0.1'].includes(url.hostname);
       if (!isLocalRefresh && (!env.REFRESH_SECRET || !token || token !== env.REFRESH_SECRET)) return Response.json({ error: 'Unauthorized' }, { status: 401, headers: h });
       const report = await refreshAll(env, url.origin);
-      return Response.json({ ok: Object.values(report).some(v => v.startsWith('updated')), refreshedAt: new Date().toISOString(), report }, { headers: { ...h, 'cache-control': 'no-store' } });
+      return Response.json({ ok: report.ipos?.startsWith('updated') === true, partialSuccess: Object.values(report).some(v => v.startsWith('updated')), refreshedAt: new Date().toISOString(), report }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
     // This Worker runs before static assets so API routes can be handled here.
     // All non-API paths must fall through to the bound ASSETS service; otherwise
@@ -120,8 +130,14 @@ export default {
     const match = url.pathname.match(/^\/api\/(indices|ipos|news|fii-dii|history)$/);
     if (!match) return Response.json({ error: 'Not found', path: url.pathname }, { status: 404, headers: h });
     const dataset = match[1] as Dataset;
+    // The edge Cache API is regional/ephemeral, not a shared persistent source of truth.
+    // Do not serve an IPO snapshot as if centralized storage were configured when KV is absent.
+    if (dataset === 'ipos' && !env.MARKET_CACHE) return Response.json({ error: 'IPO persistent storage is not configured', dataset, detail: 'Bind MARKET_CACHE to a Cloudflare KV namespace, then run the scheduled or authenticated refresh.', updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
     const cached = await readDataset(dataset, url.origin, env);
     if (cached) return new Response(cached, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'cached', 'x-dataset': dataset } });
+    // IPO data is intentionally never fetched on a visitor request. The shared snapshot
+    // is populated only by the scheduled Worker or authenticated /admin/refresh.
+    if (dataset === 'ipos') return Response.json({ error: 'IPO snapshot not initialized', dataset, detail: 'Wait for the scheduled refresh or run an authenticated admin refresh.', updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
     try {
       const data = await fetchDataset(dataset, env);
       if (!Array.isArray(data) || data.length === 0) throw new Error('The upstream provider returned no records');
@@ -161,11 +177,14 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     return items;
   }
   if (dataset === 'ipos') {
-    // Prefer an explicitly configured normalized feed without making a slow NSE
-    // landing-page request first. Only attempt NSE when no feed URL is configured.
-    const configured = await fetchConfiguredJson(env.IPO_DATA_URL, 'IPO');
-    const ipos = configured ?? await fetchNseIpos(await fetchNseCookie());
-    if (!ipos.length || !validIpos(ipos)) throw new Error('No valid IPO records returned; configure a permitted normalized IPO feed if NSE is unavailable');
+    // Only use a provider explicitly configured for permitted automated collection and redistribution.
+    // Xflot documents this no-key public JSON API and requests attribution, its disclaimer,
+    // and polling no more frequently than once per minute. Cron polls only every 15 minutes.
+    const feedUrl = env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL;
+    const configured = await fetchConfiguredJson(feedUrl, 'IPO');
+    if (!configured) throw new Error('The configured/default IPO feed returned no data');
+    const ipos = normalizeNseIpos(configured, 'Upcoming');
+    if (!ipos.length || !validIpos(ipos)) throw new Error('Configured IPO feed returned no usable records after normalization');
     return ipos;
   }
   // As above, avoid a needless NSE cookie request when a feed is configured.
@@ -221,15 +240,27 @@ async function fetchNews(env: Env) {
 async function sha(text: string) { const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)); return [...new Uint8Array(bytes)].slice(0, 10).map(x => x.toString(16).padStart(2, '0')).join(''); }
 async function fetchConfiguredJson(url: string | undefined, label: string) {
   if (!url) return null;
-  const r = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(12000) });
-  if (!r.ok) throw new Error(`${label} feed HTTP ${r.status}`);
-  const body: any = await r.json();
-  const data = Array.isArray(body) ? body : body.data;
-  if (!Array.isArray(data)) throw new Error(`${label} feed must return an array or {data: []}`);
-  return data;
+  let response: Response | undefined;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(12000) });
+    if (response.ok) break;
+    const retryable = response.status === 429 || [500, 502, 503, 504].includes(response.status);
+    if (!retryable || attempt === 2) throw new Error(`${label} feed HTTP ${response.status} after ${attempt + 1} attempt(s)`);
+    const retryAfter = Number(response.headers.get('retry-after'));
+    const delayMs = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 2000) : 400 * (attempt + 1);
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  if (!response?.ok) throw new Error(`${label} feed did not return a successful response`);
+  const body: any = await response.json();
+  const data = Array.isArray(body) ? body : Array.isArray(body.data) ? body.data : Array.isArray(body.ipos) ? body.ipos : null;
+  if (!Array.isArray(data)) throw new Error(`${label} feed must return an array, {data: []}, or {ipos: []}`);
+  const disclaimer = asString(body?.disclaimer);
+  const source = asString(body?.source);
+  return data.map((row: any) => ({ ...row, ...(disclaimer ? { providerDisclaimer: disclaimer } : {}), ...(source ? { providerName: source } : {}) }));
 }
 
 const NSE_HOME = 'https://www.nseindia.com/';
+const DEFAULT_IPO_DATA_URL = 'https://www.xflot.com/api/public/market/ipos?limit=200';
 async function fetchNseCookie(): Promise<string> {
   const common = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36 BazaarBrief/1.0',
@@ -257,43 +288,9 @@ async function fetchNseJson(path: string, cookie = ''): Promise<any> {
   if (!response.ok) throw new Error(`NSE endpoint ${path} returned HTTP ${response.status}`);
   return response.json();
 }
-function asString(value: unknown): string { return value == null ? '' : String(value).trim(); }
-function firstField(row: any, fields: string[]): unknown { for (const key of fields) if (row?.[key] != null && row[key] !== '') return row[key]; return undefined; }
-function normalizeNseIpos(raw: any, status: 'Open' | 'Upcoming' | 'Closed' | 'Listed'): any[] {
-  const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
-  return rows.map((row: any) => {
-    const name = asString(firstField(row, ['companyName', 'company', 'name', 'symbol', 'issuerName']));
-    const symbol = asString(firstField(row, ['symbol', 'companySymbol', 'ticker'])) || name;
-    const openDate = asString(firstField(row, ['issueStartDate', 'openDate', 'startDate', 'issueOpenDate']));
-    const closeDate = asString(firstField(row, ['issueEndDate', 'closeDate', 'endDate', 'issueCloseDate']));
-    const price = asString(firstField(row, ['priceRange', 'priceBand', 'issuePrice', 'price']));
-    const lotRaw = firstField(row, ['lotSize', 'marketLot', 'minimumBidQuantity']);
-    const lotSize = Number(String(lotRaw ?? '').replace(/[^0-9.]/g, ''));
-    const size = asString(firstField(row, ['issueSize', 'issue_size', 'totalIssueSize', 'issueAmount']));
-    if (!name || !openDate || !closeDate || !price || !Number.isFinite(lotSize) || lotSize <= 0 || !size) return null;
-    const marketText = `${asString(firstField(row, ['series', 'market', 'board']))} ${asString(firstField(row, ['category', 'issueType']))}`.toLowerCase();
-    const market = /sme|emerge|small/.test(marketText) ? 'SME' : 'Mainboard';
-    const id = symbol.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const listingDate = asString(firstField(row, ['listingDate', 'listing_date'])) || undefined;
-    return { id, name, symbol, market, status, openDate, closeDate, priceBand: price, lotSize, issueSize: size, listingDate, description: 'Verify dates, price band and issue details against the official offer document and exchange disclosures.' };
-  }).filter(Boolean);
-}
-async function fetchNseIpos(cookie = ''): Promise<any[]> {
-  const paths: Array<{ path: string; status: 'Open' | 'Upcoming' | 'Closed' | 'Listed' }> = [
-    { path: '/api/ipo-current-issue', status: 'Open' },
-    { path: '/api/all-upcoming-issues', status: 'Upcoming' },
-    { path: '/api/public-past-issues', status: 'Listed' },
-  ];
-  const combined: any[] = [];
-  const results = await Promise.all(paths.map(async entry => {
-    try { return normalizeNseIpos(await fetchNseJson(entry.path, cookie), entry.status); } catch { return []; }
-  }));
-  for (const rows of results) combined.push(...rows);
-  return [...new Map(combined.map((item: any) => [item.id, item])).values()];
-}
 async function fetchNseFiiDii(cookie = ''): Promise<any[]> {
   const raw = await fetchNseJson('/api/fiidiiTradeReact', cookie);
-  const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
+  const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.ipos) ? raw.ipos : [];
   const byDate = new Map<string, { date: string; fii: number; dii: number }>();
   for (const row of rows) {
     const date = asString(firstField(row, ['date', 'tradeDate', 'businessDate']));
@@ -310,25 +307,45 @@ async function fetchNseFiiDii(cookie = ''): Promise<any[]> {
   }
   return [...byDate.values()].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
 }
-function validIpos(rows: any[]): boolean {
-  return Array.isArray(rows) && rows.every(x => x && typeof x.id === 'string' && typeof x.name === 'string' && typeof x.symbol === 'string' && ['Mainboard', 'SME'].includes(x.market) && ['Open', 'Upcoming', 'Closed', 'Listed'].includes(x.status) && typeof x.openDate === 'string' && typeof x.closeDate === 'string' && typeof x.priceBand === 'string' && Number.isFinite(x.lotSize) && typeof x.issueSize === 'string');
-}
 function validFlows(rows: any[]): boolean { return Array.isArray(rows) && rows.every(x => x && typeof x.date === 'string' && Number.isFinite(x.fii) && Number.isFinite(x.dii)); }
 
 async function refreshAll(env: Env, origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in') {
-  // Refresh all public datasets. KV is optional; the edge cache provides short-lived caching
-  // when the project is deployed without a KV namespace, so first requests can still fetch live data.
+  // Refresh all public datasets. IPO reads are cache-only; configure MARKET_CACHE KV for persistence.
   const report: Record<string, string> = {};
   const datasets: Dataset[] = ['indices', 'history', 'news', 'ipos', 'fii-dii'];
   await Promise.all(datasets.map(async dataset => {
     try {
-      const data = await fetchDataset(dataset, env);
+      if (dataset === 'ipos' && !env.MARKET_CACHE) throw new Error('MARKET_CACHE KV binding is required to persist the shared IPO snapshot');
+      let data = await fetchDataset(dataset, env);
+      if (dataset === 'ipos') {
+        const previousRaw = env.MARKET_CACHE ? await env.MARKET_CACHE.get(CACHE_KEYS.ipos) : null;
+        if (previousRaw) {
+          try {
+            const previous = JSON.parse(previousRaw);
+            const byId = new Map<string, any>();
+            for (const item of Array.isArray(previous) ? previous : []) if (item?.id) byId.set(item.id, item);
+            for (const item of data as any[]) { const old = byId.get(item.id); byId.set(item.id, old ? Object.fromEntries([...new Set([...Object.keys(old), ...Object.keys(item)])].map(key => [key, item[key] !== undefined && item[key] !== null && item[key] !== '' ? item[key] : old[key]])) : item); }
+            data = [...byId.values()];
+          } catch (error) { console.warn('[IPO cache] Previous snapshot could not be merged', error); }
+        }
+      }
       await writeDataset(dataset, data, origin, env);
       report[dataset] = `updated (${data.length} records)`;
     } catch (error) {
+      console.error(`[refresh:${dataset}]`, error);
       report[dataset] = `unavailable: ${error instanceof Error ? error.message : 'upstream request failed'}`;
     }
   }));
+  if (env.MARKET_CACHE) {
+    try {
+      const ipoReport = report.ipos || 'unavailable: no IPO refresh result';
+      await env.MARKET_CACHE.put('ipos/refresh-status', JSON.stringify({
+        lastAttemptAt: new Date().toISOString(),
+        lastAttemptResult: ipoReport,
+        lastAttemptSucceeded: ipoReport.startsWith('updated'),
+      }), { expirationTtl: 60 * 60 * 24 * 30 });
+    } catch (error) { console.warn('[IPO cache] Could not write refresh status', error); }
+  }
   return report;
 }
 

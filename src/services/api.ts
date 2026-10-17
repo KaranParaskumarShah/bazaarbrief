@@ -3,7 +3,7 @@ import { resolveDataset } from './fallbackChain';
 import type { IndexQuote, Ipo, NewsItem, FiiDii } from '../types';
 
 const IndexSchema = z.array(z.object({ symbol:z.string(), name:z.string(), value:z.number(), change:z.number(), changePct:z.number(), updatedAt:z.string(), source:z.string() }));
-const IpoSchema = z.array(z.object({ id:z.string(), name:z.string(), symbol:z.string(), market:z.enum(['Mainboard','SME']), status:z.enum(['Open','Upcoming','Closed','Listed']), openDate:z.string(), closeDate:z.string(), priceBand:z.string(), lotSize:z.number(), issueSize:z.string(), gmp:z.number().optional(), subscription:z.number().optional(), listingDate:z.string().optional(), description:z.string().optional() }));
+const IpoSchema = z.array(z.object({ id:z.string(), name:z.string(), symbol:z.string(), market:z.enum(['Mainboard','SME']), status:z.enum(['Open','Upcoming','Closed','Listed','Cancelled','Withdrawn']), openDate:z.string().default(''), closeDate:z.string().default(''), priceBand:z.string().default(''), lotSize:z.number().default(0), issueSize:z.string().default(''), gmp:z.number().optional(), subscription:z.number().optional(), listingDate:z.string().optional(), description:z.string().optional(), exchange:z.string().optional(), registrar:z.string().optional(), registrarUrl:z.string().optional(), offerDocumentUrl:z.string().optional(), officialUrl:z.string().optional(), gmpSource:z.string().optional(), gmpSourceUrl:z.string().optional(), gmpObservedAt:z.string().optional(), updatedAt:z.string().optional(), gmpPct:z.number().optional(), minInvestment:z.number().optional(), faceValue:z.number().optional(), freshIssue:z.string().optional(), offerForSale:z.string().optional(), allotmentDate:z.string().optional(), refundDate:z.string().optional(), dematDate:z.string().optional(), actualListingPrice:z.number().optional(), listingGainPct:z.number().optional(), companyLogo:z.string().optional(), issueObjectives:z.string().optional(), financialHighlights:z.string().optional(), source:z.string().optional(), providerDisclaimer:z.string().optional(), gmpDisputed:z.boolean().optional(), gmpSources:z.number().optional(), gmpSpread:z.number().optional() }));
 const NewsSchema = z.array(z.object({ id:z.string(), title:z.string(), summary:z.string(), source:z.string(), category:z.enum(['IPO','Markets','Economy','Commodities']), publishedAt:z.string(), url:z.string().url() }));
 const FiiSchema = z.array(z.object({ date:z.string(), fii:z.number(), dii:z.number() }));
 const base = (import.meta.env.VITE_DATA_BASE_URL || '').replace(/\/$/, '');
@@ -18,6 +18,14 @@ async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
 const live = <T,>(key:string,path:string,schema:z.ZodType<T>,ttl:number) => resolveDataset<T>(key,[{name:'BazaarBrief scheduled live feed',fetch:()=>getJson(path,schema)}],ttl);
 export const getIndices = () => live<IndexQuote[]>('indices','/api/indices',IndexSchema,60_000);
 export const getIpos = () => live<Ipo[]>('ipos','/api/ipos',IpoSchema,600_000);
+const IpoRefreshStatusSchema = z.object({
+  dataset: z.string().optional(), persistentCacheEnabled: z.boolean(),
+  lastSuccessfulRefreshAt: z.string().optional(), recordCount: z.number().optional(),
+  source: z.string().optional(), provider: z.string().optional(),
+  lastAttemptAt: z.string().optional(), lastAttemptResult: z.string().optional(),
+  lastAttemptSucceeded: z.boolean().optional(), schedule: z.string().optional(),
+}).passthrough();
+export const getIpoRefreshStatus = () => getJson('/api/ipos/refresh-status', IpoRefreshStatusSchema);
 export const getNews = () => live<NewsItem[]>('news','/api/news',NewsSchema,900_000);
 export const getFiiDii = () => live<FiiDii[]>('fii_dii','/api/fii-dii',FiiSchema,1_800_000);
 export const getHistory = () => live<{time:string;value:number}[]>('history','/api/history',z.array(z.object({time:z.string(),value:z.number()})),60_000);
