@@ -7,7 +7,7 @@ const IpoSchema = z.array(z.object({ id:z.string(), name:z.string(), symbol:z.st
 const NewsSchema = z.array(z.object({ id:z.string(), title:z.string(), summary:z.string(), source:z.string(), category:z.enum(['IPO','Markets','Economy','Commodities']), publishedAt:z.string(), url:z.string().url() }));
 const FiiSchema = z.array(z.object({ date:z.string(), fii:z.number(), dii:z.number() }));
 const base = (import.meta.env.VITE_DATA_BASE_URL || '').replace(/\/$/, '');
-async function getJson<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+async function getJson<T>(path: string, schema: z.ZodType<T, z.ZodTypeDef, any>): Promise<T> {
   // Same-origin by default: the frontend and API are deployed by the same Worker.
   // VITE_DATA_BASE_URL remains available for local development or a separately hosted API.
   const endpoint = base ? `${base}${path}` : path;
