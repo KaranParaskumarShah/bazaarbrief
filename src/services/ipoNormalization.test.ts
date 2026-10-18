@@ -20,6 +20,11 @@ describe('IPO normalization', () => {
     expect(ipo.gmpSource).toBe('Permitted Provider');
   });
 
+  it('calculates GMP percentage from the upper price-band value when the provider only supplies a price range', () => {
+    const [ipo] = normalizeNseIpos([{ companyName: 'Percent Co', priceRange: '₹100–₹120', lastGmp: 24 }], 'Upcoming');
+    expect(ipo.gmpPct).toBe(20);
+  });
+
   it('does not set GMP when the source omits it', () => {
     const [ipo] = normalizeNseIpos([{ companyName: 'No GMP Co', symbol: 'NOGMP' }], 'Upcoming');
     expect(ipo.gmp).toBeUndefined();

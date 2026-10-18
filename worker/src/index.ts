@@ -6,6 +6,7 @@ export interface Env {
   PUBLIC_ORIGIN?: string;
   ALLOWED_ORIGIN?: string;
   IPO_DATA_URL?: string;
+  IPO_DETAIL_BASE_URL?: string;
   FII_DII_DATA_URL?: string;
   NEWS_RSS_URLS?: string;
   REFRESH_SECRET?: string;
@@ -183,8 +184,12 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     const feedUrl = env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL;
     const configured = await fetchConfiguredJson(feedUrl, 'IPO');
     if (!configured) throw new Error('The configured/default IPO feed returned no data');
-    const ipos = normalizeNseIpos(configured, 'Upcoming');
+    let ipos = normalizeNseIpos(configured, 'Upcoming');
     if (!ipos.length || !validIpos(ipos)) throw new Error('Configured IPO feed returned no usable records after normalization');
+    // Enrich a small, relevant subset from the documented Xflot per-IPO endpoint.
+    // Refresh details at most every six hours to avoid making one request per visitor
+    // or multiplying provider traffic on every 15-minute list refresh.
+    ipos = await enrichIposFromDetailFeed(ipos, env);
     return ipos;
   }
   // As above, avoid a needless NSE cookie request when a feed is configured.
@@ -257,6 +262,89 @@ async function fetchConfiguredJson(url: string | undefined, label: string) {
   const disclaimer = asString(body?.disclaimer);
   const source = asString(body?.source);
   return data.map((row: any) => ({ ...row, ...(disclaimer ? { providerDisclaimer: disclaimer } : {}), ...(source ? { providerName: source } : {}) }));
+}
+
+/**
+ * Enrich list records with the documented Xflot detail endpoint. This endpoint supplies
+ * GMP observations and category-wise subscription. It does not claim to provide audited
+ * financial statements, registrar contact data, or all investor quotas; those remain
+ * blank unless the configured list provider supplies them.
+ */
+async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
+  if (!env.MARKET_CACHE) return ipos;
+  const listUrl = env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL;
+  const detailBase = env.IPO_DETAIL_BASE_URL || (listUrl.includes('xflot.com') ? 'https://www.xflot.com/api/public/market/ipos' : '');
+  if (!detailBase) return ipos;
+  const lastRaw = await env.MARKET_CACHE.get('ipos/detail-last-refresh');
+  const last = lastRaw ? Date.parse(lastRaw) : NaN;
+  if (Number.isFinite(last) && Date.now() - last < 6 * 60 * 60 * 1000) return ipos;
+
+  // Prioritize open/upcoming/closed issues and a small number of recent listings.
+  const priority = (status: string) => status === 'Open' ? 0 : status === 'Upcoming' ? 1 : status === 'Closed' ? 2 : status === 'Listed' ? 3 : 4;
+  const candidates = [...ipos]
+    .filter(ipo => ipo && typeof ipo.symbol === 'string' && ipo.symbol.trim())
+    .sort((a, b) => priority(a.status) - priority(b.status))
+    .slice(0, 20);
+  if (!candidates.length) return ipos;
+
+  const byId = new Map(ipos.map(ipo => [ipo.id, { ...ipo }]));
+  let successes = 0;
+  // Keep concurrency low and isolate provider failures by issue.
+  for (let i = 0; i < candidates.length; i += 4) {
+    const batch = candidates.slice(i, i + 4);
+    await Promise.all(batch.map(async (baseIpo: any) => {
+      try {
+        const base = detailBase.replace(/\/$/, '');
+        const response = await fetch(`${base}/${encodeURIComponent(baseIpo.symbol)}`, {
+          headers: { accept: 'application/json', 'user-agent': 'BazaarBrief/1.0 (+https://bazaarbrief.in)' },
+          signal: AbortSignal.timeout(9000),
+        });
+        if (!response.ok) throw new Error(`detail HTTP ${response.status}`);
+        const body: any = await response.json();
+        const detail = body?.ipo || body?.data?.ipo || body?.data || body;
+        if (!detail || typeof detail !== 'object') return;
+        const patch: any = {};
+        const history = Array.isArray(detail.gmp) ? detail.gmp : Array.isArray(detail.gmpHistory) ? detail.gmpHistory : [];
+        const normalizedHistory = history.map((row: any) => {
+          const value = Number(row?.gmp ?? row?.premium);
+          const pct = Number(row?.gmpPct ?? row?.gmpPercent);
+          const date = String(row?.observedAt ?? row?.date ?? row?.updatedAt ?? '').trim();
+          if (!date || !Number.isFinite(value)) return null;
+          return { date, gmp: value, ...(Number.isFinite(pct) ? { gmpPct: pct } : {}), ...(row?.source ? { source: String(row.source) } : {}), ...(row?.unofficial != null ? { unofficial: Boolean(row.unofficial) } : { unofficial: true }) };
+        }).filter(Boolean);
+        if (normalizedHistory.length) {
+          patch.gmpHistory = normalizedHistory;
+          const latest = normalizedHistory[normalizedHistory.length - 1];
+          patch.gmpObservedAt = latest.date;
+          patch.gmpSource = latest.source || baseIpo.gmpSource || 'Xflot (aggregated, unofficial GMP)';
+          if (baseIpo.gmp == null) patch.gmp = latest.gmp;
+          if (baseIpo.gmpPct == null && latest.gmpPct != null) patch.gmpPct = latest.gmpPct;
+        }
+        const subs = Array.isArray(detail.subs) ? detail.subs : Array.isArray(detail.subscription) ? detail.subscription : [];
+        if (subs.length) {
+          const findSub = (pattern: RegExp) => {
+            const row = subs.find((item: any) => pattern.test(String(item?.category ?? item?.name ?? item?.type ?? '')));
+            const value = Number(row?.timesSub ?? row?.subscription ?? row?.times ?? row?.value);
+            return Number.isFinite(value) ? value : undefined;
+          };
+          patch.qibSubscription = baseIpo.qibSubscription ?? findSub(/\bqib\b|qualified institutional/i);
+          patch.niiSubscription = baseIpo.niiSubscription ?? findSub(/\bnii\b|hni|non.institutional/i);
+          patch.retailSubscription = baseIpo.retailSubscription ?? findSub(/retail|rii/i);
+          patch.employeeSubscription = baseIpo.employeeSubscription ?? findSub(/employee/i);
+          patch.shareholderSubscription = baseIpo.shareholderSubscription ?? findSub(/shareholder/i);
+          patch.subscription = baseIpo.subscription ?? findSub(/^total$|overall/i);
+        }
+        const old = byId.get(baseIpo.id) || baseIpo;
+        byId.set(baseIpo.id, { ...old, ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined && value !== null)) });
+        successes++;
+      } catch (error) {
+        console.warn(`[IPO detail] ${baseIpo.symbol}: ${error instanceof Error ? error.message : 'request failed'}`);
+      }
+    }));
+  }
+  if (successes > 0) await env.MARKET_CACHE.put('ipos/detail-last-refresh', new Date().toISOString(), { expirationTtl: 60 * 60 * 24 * 7 });
+  console.info(`[IPO detail] enriched ${successes}/${candidates.length} issue(s)`);
+  return ipos.map(ipo => byId.get(ipo.id) || ipo);
 }
 
 const NSE_HOME = 'https://www.nseindia.com/';

@@ -22,3 +22,8 @@ NSE terms prohibit automated data collection without authorization, and NSE data
 - https://www.nseindia.com/static/market-data/nse-data-policy
 
 Do not scrape NSE/BSE or republish data just because an endpoint is technically reachable. Obtain written permission or use a vendor whose contract allows public display and redistribution. Yahoo Finance chart access is unofficial and not guaranteed for this purpose; replace it with a permitted source before commercial use. Free tiers often prohibit redistributing market data.
+
+
+## IPO detail enrichment
+
+BazaarBrief uses the documented Xflot public IPO list endpoint and, no more than once every six hours, enriches up to 20 issues from the documented per-IPO endpoint. This supplies reported GMP observations and category subscription where returned. It is not a substitute for audited prospectus financials, complete daily subscription snapshots, registrar contacts, or every investor quota. Those fields remain unavailable unless the selected feed provides them. GMP is unofficial and the Xflot attribution/disclaimer must remain visible.
