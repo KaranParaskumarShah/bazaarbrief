@@ -1,18 +1,6 @@
 // Shared, dependency-free IPO normalization used by the Worker and tests.
 export function asString(value: unknown): string { return value == null ? '' : String(value).trim(); }
 export function firstField(row: any, fields: string[]): unknown { for (const key of fields) if (row?.[key] != null && row[key] !== '') return row[key]; return undefined; }
-
-/** Extract a list from common public-feed envelopes without treating an unknown
- * response object as a valid empty list. */
-export function extractIpoRows(raw: any, depth = 0): any[] | null {
-  if (Array.isArray(raw)) return raw;
-  if (!raw || typeof raw !== 'object' || depth > 3) return null;
-  for (const key of ['ipos', 'data', 'results', 'items', 'records']) {
-    const result = extractIpoRows(raw[key], depth + 1);
-    if (result) return result;
-  }
-  return null;
-}
 function parseDate(value: unknown): string {
   const raw = asString(value);
   if (!raw) return '';
@@ -46,7 +34,7 @@ function lifecycleStatus(row: any, requested: 'Open' | 'Upcoming' | 'Closed' | '
   return requested;
 }
 export function normalizeNseIpos(raw: any, requested: 'Open' | 'Upcoming' | 'Closed' | 'Listed'): any[] {
-  const rows = extractIpoRows(raw) || [];
+  const rows = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : Array.isArray(raw?.ipos) ? raw.ipos : [];
   return rows.map((row: any) => {
     const name = asString(firstField(row, ['companyName','company','name','symbol','issuerName','issuer']));
     if (!name) return null;

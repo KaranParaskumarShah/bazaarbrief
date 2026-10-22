@@ -31,7 +31,7 @@ Audit date: 2026-10-20
 
 ## Deployment prerequisites and limitations
 
-- A real `MARKET_CACHE` namespace is recommended for a durable shared IPO snapshot but is no longer required for basic IPO endpoint availability. Without KV, the Worker uses regional edge cache, fetches the configured delayed feed on cache miss, and serves a bounded stale IPO snapshot if the feed later fails. A 503 is returned only when all upstreams fail and no cached IPO snapshot exists.
+- The source archive intentionally does not invent a Cloudflare KV namespace ID. Configure the real `MARKET_CACHE` binding in the Cloudflare dashboard or `wrangler.jsonc` before deploying IPO snapshots; without it, `/api/ipos` correctly returns a clear 503 instead of pretending a shared cache exists.
 - Preserve the existing `package-lock.json` from the repository when applying these files. This archive does not include one, so dependency resolution must not be assumed reproducible from this ZIP alone.
 - NSE's undocumented public endpoint is opt-in and disabled by default. Review current terms before enabling automated access or redistribution.
 - Data fields that the provider does not supply remain undisclosed. GMP is unofficial and should not be treated as an exchange quote.

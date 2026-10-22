@@ -1,4 +1,4 @@
-import { asString, extractIpoRows, firstField, normalizeNseIpos, validIpos } from '../../src/services/ipoNormalization';
+import { asString, firstField, normalizeNseIpos, validIpos } from '../../src/services/ipoNormalization';
 
 export interface Env {
   ASSETS?: Fetcher;
@@ -59,9 +59,6 @@ function edgeCache() {
 function edgeCacheKey(origin: string, dataset: Dataset) {
   return new Request(new URL(`/__bazaarbrief_cache/${dataset}`, origin).toString(), { method: 'GET' });
 }
-function staleEdgeCacheKey(origin: string, dataset: Dataset) {
-  return new Request(new URL(`/__bazaarbrief_cache/${dataset}-stale`, origin).toString(), { method: 'GET' });
-}
 async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<string | null> {
   if (env.MARKET_CACHE) {
     try {
@@ -69,9 +66,8 @@ async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<
       if (raw) return raw;
     } catch { /* Continue to edge cache and live upstreams if KV is not bound or unavailable. */ }
   }
-  // KV is preferred for a globally shared snapshot. If it is not configured, use
-  // the regional edge cache as a degraded mode so the public IPO page does not fail
-  // solely because an optional binding has not yet been added.
+  // IPO data must come from the shared KV snapshot, never a region-local edge cache.
+  if (dataset === 'ipos') return null;
   const cache = edgeCache();
   if (cache) {
     try {
@@ -83,17 +79,14 @@ async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<
 }
 async function writeDataset(dataset: Dataset, data: unknown, origin: string, env: Env): Promise<void> {
   const raw = JSON.stringify(data);
-  let kvSnapshotSaved = false;
   if (env.MARKET_CACHE) {
     try {
       await env.MARKET_CACHE.put(CACHE_KEYS[dataset], raw, { expirationTtl: dataset === 'ipos' ? 60 * 60 * 24 * 365 : Math.max(DATASET_TTL[dataset] * 4, 3600) });
-      kvSnapshotSaved = true;
     } catch (error) {
-      // A KV outage must not discard usable upstream data. The edge cache below is
-      // a temporary fallback; configure KV for a globally shared durable snapshot.
-      console.warn(`[cache:${dataset}] KV write failed; using edge cache fallback`, error);
+      if (dataset === 'ipos') throw error;
+      // Other datasets can use edge cache when KV is unavailable.
     }
-    if (dataset === 'ipos' && kvSnapshotSaved) {
+    if (dataset === 'ipos') {
       const provider = (env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL).includes('xflot.com') ? 'Xflot' : 'Configured IPO provider';
       try {
         await env.MARKET_CACHE.put('ipos/meta', JSON.stringify({ lastSuccessfulRefreshAt: new Date().toISOString(), recordCount: Array.isArray(data) ? data.length : 0, source: provider, provider }), { expirationTtl: 60 * 60 * 24 * 365 });
@@ -105,43 +98,11 @@ async function writeDataset(dataset: Dataset, data: unknown, origin: string, env
   const cache = edgeCache();
   if (cache) {
     try {
-      const now = new Date().toISOString();
       await cache.put(edgeCacheKey(origin, dataset), new Response(raw, {
-        headers: {
-          'content-type': 'application/json; charset=utf-8',
-          'cache-control': `public, max-age=${DATASET_TTL[dataset]}, s-maxage=${DATASET_TTL[dataset]}`,
-          'x-bazaarbrief-cached-at': now,
-        },
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, s-maxage=${DATASET_TTL[dataset]}` },
       }));
-      // Keep a longer-lived emergency snapshot for IPOs. If an upstream feed is
-      // temporarily unavailable, serve known data with an explicit stale marker.
-      if (dataset === 'ipos') {
-        await cache.put(staleEdgeCacheKey(origin, dataset), new Response(raw, {
-          headers: {
-            'content-type': 'application/json; charset=utf-8',
-            'cache-control': 'public, max-age=86400, s-maxage=86400',
-            'x-bazaarbrief-cached-at': now,
-          },
-        }));
-      }
-    } catch (error) { console.warn(`[cache:${dataset}] Edge cache write failed`, error); }
+    } catch { /* The response can still be returned without caching. */ }
   }
-}
-async function readStaleIpos(origin: string, env: Env): Promise<string | null> {
-  if (env.MARKET_CACHE) {
-    try {
-      const raw = await env.MARKET_CACHE.get(CACHE_KEYS.ipos);
-      if (raw) return raw;
-    } catch (error) { console.warn('[IPO cache] KV stale read failed', error); }
-  }
-  const cache = edgeCache();
-  if (cache) {
-    try {
-      const cached = await cache.match(staleEdgeCacheKey(origin, 'ipos'));
-      if (cached) return await cached.text();
-    } catch (error) { console.warn('[IPO cache] Edge stale read failed', error); }
-  }
-  return null;
 }
 
 export default {
@@ -150,21 +111,17 @@ export default {
     const h = headers(request.headers.get('Origin') || '', env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     if (url.pathname === '/api/ipos/refresh-status' && request.method === 'GET') {
-      let meta: unknown = null; let lastAttempt: unknown = null;
-      if (env.MARKET_CACHE) {
-        try { meta = await env.MARKET_CACHE.get('ipos/meta', 'json'); } catch (error) { console.warn('[IPO status] Metadata read failed', error); }
-        try { lastAttempt = await env.MARKET_CACHE.get('ipos/refresh-status', 'json'); } catch (error) { console.warn('[IPO status] Refresh status read failed', error); }
-      }
-      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), cacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback', ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: '*/15 * * * * UTC' }, { headers: { ...h, 'cache-control': 'no-store' } });
+      const meta = env.MARKET_CACHE ? await env.MARKET_CACHE.get('ipos/meta', 'json') : null;
+      const lastAttempt = env.MARKET_CACHE ? await env.MARKET_CACHE.get('ipos/refresh-status', 'json') : null;
+      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: '*/15 * * * * UTC' }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({
         ok: true,
         service: 'bazaarbrief-data',
-        mode: env.MARKET_CACHE ? 'live-cache+kv' : 'live-cache-fallback',
+        mode: env.MARKET_CACHE ? 'live-cache+kv' : 'live-cache',
         kvEnabled: Boolean(env.MARKET_CACHE),
-        ipoReady: true,
-        ipoCacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback',
+        ipoReady: Boolean(env.MARKET_CACHE),
         cron: '*/15 * * * *',
         endpoints: ['/api/indices', '/api/history', '/api/ipos', '/api/news', '/api/fii-dii'],
       }, { headers: { ...h, 'cache-control': 'no-store' } });
@@ -188,20 +145,20 @@ export default {
     const match = url.pathname.match(/^\/api\/(indices|ipos|news|fii-dii|history)$/);
     if (!match) return Response.json({ error: 'Not found', path: url.pathname }, { status: 404, headers: h });
     const dataset = match[1] as Dataset;
-    // Prefer the shared KV snapshot; use regional edge cache and a bounded upstream
-    // refresh as a fallback when KV is not configured or has not been populated yet.
+    // The edge Cache API is regional/ephemeral, not a shared persistent source of truth.
+    // Do not serve an IPO snapshot as if centralized storage were configured when KV is absent.
+    if (dataset === 'ipos' && !env.MARKET_CACHE) return Response.json({ error: 'IPO persistent storage is not configured', dataset, detail: 'Bind MARKET_CACHE to a Cloudflare KV namespace, then run the scheduled or authenticated refresh.', updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
     const cached = await readDataset(dataset, url.origin, env);
     if (cached) return new Response(cached, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'cached', 'x-dataset': dataset } });
+    // IPO data is intentionally never fetched on a visitor request. The shared snapshot
+    // is populated only by the scheduled Worker or authenticated /admin/refresh.
+    if (dataset === 'ipos') return Response.json({ error: 'IPO snapshot not initialized', dataset, detail: 'Wait for the scheduled refresh or run an authenticated admin refresh.', updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
     try {
       const data = await fetchDataset(dataset, env);
       if (!Array.isArray(data) || data.length === 0) throw new Error('The upstream provider returned no records');
       await writeDataset(dataset, data, url.origin, env);
       return Response.json(data, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'live', 'x-dataset': dataset } });
     } catch (error) {
-      if (dataset === 'ipos') {
-        const stale = await readStaleIpos(url.origin, env);
-        if (stale) return new Response(stale, { headers: { ...h, 'cache-control': 'public, max-age=60, stale-while-revalidate=300', 'x-data-status': 'stale-cache', 'x-dataset': 'ipos', 'warning': '110 - Response is stale; upstream feed is temporarily unavailable' } });
-      }
       return Response.json({
         error: 'Live dataset unavailable',
         dataset,
@@ -244,13 +201,6 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     let usedNseFallback = false;
     try { configured = await fetchConfiguredJson(feedUrl, 'IPO'); }
     catch (error) { console.warn(`[IPO primary] feed unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
-    // The provider's documented examples use the apex host. Try the www host too
-    // when the default feed fails; this handles host-specific routing/edge incidents.
-    if (!configured && (!env.IPO_DATA_URL || feedUrl === DEFAULT_IPO_DATA_URL || feedUrl === DEFAULT_IPO_FALLBACK_URL)) {
-      const alternate = feedUrl.includes('www.xflot.com') ? DEFAULT_IPO_DATA_URL : DEFAULT_IPO_FALLBACK_URL;
-      try { configured = await fetchConfiguredJson(alternate, 'IPO alternate host'); }
-      catch (error) { console.warn(`[IPO alternate host] unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
-    }
     // Try the separately configured, terms-reviewed secondary feed if the primary fails.
     if (!configured && env.IPO_SECONDARY_DATA_URL) {
       try { configured = await fetchConfiguredJson(env.IPO_SECONDARY_DATA_URL, 'Secondary IPO'); usedSecondaryFallback = Boolean(configured); }
@@ -375,15 +325,10 @@ async function fetchConfiguredJson(url: string | undefined, label: string) {
   }
   if (!response?.ok) throw new Error(`${label} feed did not return a successful response`);
   const body: any = await response.json();
-  if (body && typeof body === 'object' && body.ok === false) {
-    throw new Error(`${label} provider reported failure${body.error ? `: ${String(body.error).slice(0, 180)}` : ''}`);
-  }
-  // Support documented { ipos: [...] } and common API gateway envelopes such as
-  // { data: { ipos: [...] } } without silently treating a valid payload as empty.
-  const data = extractIpoRows(body);
-  if (!data || data.length === 0) throw new Error(`${label} feed returned no IPO rows (expected an array or an object containing ipos/data/results)`);
-  const disclaimer = asString(body?.disclaimer) || asString(body?.data?.disclaimer);
-  const source = asString(body?.source) || asString(body?.provider) || 'Xflot';
+  const data = Array.isArray(body) ? body : Array.isArray(body.data) ? body.data : Array.isArray(body.ipos) ? body.ipos : null;
+  if (!Array.isArray(data)) throw new Error(`${label} feed must return an array, {data: []}, or {ipos: []}`);
+  const disclaimer = asString(body?.disclaimer);
+  const source = asString(body?.source);
   return data.map((row: any) => ({ ...row, ...(disclaimer ? { providerDisclaimer: disclaimer } : {}), ...(source ? { providerName: source } : {}) }));
 }
 
@@ -490,8 +435,7 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
 }
 
 const NSE_HOME = 'https://www.nseindia.com/';
-const DEFAULT_IPO_DATA_URL = 'https://xflot.com/api/public/market/ipos?limit=200';
-const DEFAULT_IPO_FALLBACK_URL = 'https://www.xflot.com/api/public/market/ipos?limit=200';
+const DEFAULT_IPO_DATA_URL = 'https://www.xflot.com/api/public/market/ipos?limit=200';
 async function fetchNseCookie(): Promise<string> {
   const common = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36 BazaarBrief/1.0',
@@ -541,19 +485,15 @@ async function fetchNseFiiDii(cookie = ''): Promise<any[]> {
 function validFlows(rows: any[]): boolean { return Array.isArray(rows) && rows.every(x => x && typeof x.date === 'string' && Number.isFinite(x.fii) && Number.isFinite(x.dii)); }
 
 async function refreshAll(env: Env, origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in') {
-  // Refresh all public datasets. KV is preferred for durable shared IPO storage;
-  // if it is absent, the Worker still fetches and writes an edge-cache snapshot.
+  // Refresh all public datasets. IPO reads are cache-only; configure MARKET_CACHE KV for persistence.
   const report: Record<string, string> = {};
   const datasets: Dataset[] = ['indices', 'history', 'news', 'ipos', 'fii-dii'];
   await Promise.all(datasets.map(async dataset => {
     try {
+      if (dataset === 'ipos' && !env.MARKET_CACHE) throw new Error('MARKET_CACHE KV binding is required to persist the shared IPO snapshot');
       let data = await fetchDataset(dataset, env);
       if (dataset === 'ipos') {
-        let previousRaw: string | null = null;
-        if (env.MARKET_CACHE) {
-          try { previousRaw = await env.MARKET_CACHE.get(CACHE_KEYS.ipos); }
-          catch (error) { console.warn('[IPO cache] Previous snapshot read failed; using fresh provider data', error); }
-        }
+        const previousRaw = env.MARKET_CACHE ? await env.MARKET_CACHE.get(CACHE_KEYS.ipos) : null;
         if (previousRaw) {
           try {
             const previous = JSON.parse(previousRaw);

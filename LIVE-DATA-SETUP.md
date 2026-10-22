@@ -6,12 +6,12 @@ The **root `wrangler.jsonc` is authoritative** for production: it deploys `worke
 
 - Cloudflare Cron Trigger runs `*/15 * * * *` in UTC (96 scheduled runs/day).
 - The scheduled Worker fetches IPO data, validates/normalizes it and stores one shared snapshot in `MARKET_CACHE` KV.
-- `GET /api/ipos` prefers the shared KV snapshot. If KV is missing or has not been populated yet, it fetches the configured public IPO feed, caches the result regionally, and returns delayed data. This fallback is not a substitute for shared KV durability.
+- `GET /api/ipos` only reads the shared snapshot. It **never calls an upstream IPO provider per visitor**. Before the first successful scheduled/admin refresh it returns a JSON `503` rather than pretending the data is empty.
 - Failed refreshes leave the previous KV snapshot untouched. Successful refreshes merge by stable IPO ID so historical records are not removed just because they disappear from the current-issues feed.
 - `GET /api/ipos/refresh-status` reports cache binding availability, last successful refresh, and the most recent refresh attempt/result. The IPO UI displays this freshness metadata.
 - `POST /admin/refresh` requires `Authorization: Bearer <REFRESH_SECRET>`; set the secret with `npx wrangler secret put REFRESH_SECRET`.
 
-## Recommended one-time KV setup (regional fallback works without it)
+## Required one-time KV setup
 
 KV namespace IDs are account-specific and cannot safely be guessed or committed. Create the namespace first:
 
@@ -31,9 +31,9 @@ The string above is an instruction example, **not a deployable ID**. Replace it 
 
 ## IPO data source configuration
 
-The default provider is Xflot's documented free/no-key public endpoint: `https://xflot.com/api/public/market/ipos?limit=200`. Its API docs request attribution, carrying the response disclaimer and polling no more than once per minute; this Worker polls every 15 minutes and attributes Xflot in the UI. You may override `IPO_DATA_URL` with another feed only if its terms permit automated retrieval, caching and public display. Expected payload is an array or a response containing `ipos`, `data`, `results`, `items`, or `records`; nested `data.ipos` is supported. If the default provider host fails, the Worker retries the alternate `www` host before using other configured fallbacks. Configure with `npx wrangler secret put IPO_DATA_URL` if the URL itself is sensitive; use a normal Worker variable for a public URL. Do not point this at a provider unless its terms allow this use.
+The default provider is Xflot's documented free/no-key public endpoint: `https://www.xflot.com/api/public/market/ipos?limit=200`. Its API docs request attribution, carrying the response disclaimer and polling no more than once per minute; this Worker polls every 15 minutes and attributes Xflot in the UI. You may override `IPO_DATA_URL` with another feed only if its terms permit automated retrieval, caching and public display. Expected payload is an array, `{ "data": [...] }`, or Xflot's `{ "ipos": [...] }` response. Configure with `npx wrangler secret put IPO_DATA_URL` if the URL itself is sensitive; use a normal Worker variable for a public URL. Do not point this at a provider unless its terms allow this use.
 
-If the KV binding is missing, `GET /api/ipos` uses Cloudflare's regional Cache API and fetches the configured feed on a cache miss. If the upstream is temporarily unavailable, a previously cached IPO snapshot can be returned with `x-data-status: stale-cache`. This fallback may differ by Cloudflare region and is less durable than KV. With KV configured, the shared snapshot remains the source of truth. If all upstreams fail and no stale snapshot exists, the API returns a structured `503` with the provider error. The IPO adapter intentionally does not scrape NSE/BSE pages because publicly reachable endpoints are not proof of permission for automated collection or redistribution. The app does not assume a free, redistributable GMP API exists. GMP appears only when the configured source supplies it, and is labelled unofficial with source/time when available. No GMP is fabricated.
+If the KV binding is missing, IPO refresh is reported as unavailable and `GET /api/ipos` returns a structured `503`; it will not pretend an edge-local Cache API entry is a globally shared snapshot. If the configured feed fails after KV is configured, IPO refresh fails clearly and the last valid snapshot is retained. The IPO adapter intentionally does not scrape NSE/BSE pages because publicly reachable endpoints are not proof of permission for automated collection or redistribution. The app does not assume a free, redistributable GMP API exists. GMP appears only when the configured source supplies it, and is labelled unofficial with source/time when available. No GMP is fabricated.
 
 ## Deploy and verify
 
@@ -48,7 +48,7 @@ npx wrangler deploy
 Then check:
 
 - `GET https://bazaarbrief.in/health`
-- `GET https://bazaarbrief.in/api/ipos` (should return a JSON array; `x-data-status` identifies live, cached or stale-cache data)
+- `GET https://bazaarbrief.in/api/ipos`
 - `GET https://bazaarbrief.in/api/ipos/refresh-status`
 - `POST https://bazaarbrief.in/admin/refresh` with a bearer token (admin only)
 

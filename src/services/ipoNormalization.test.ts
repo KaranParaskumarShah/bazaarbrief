@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractIpoRows, normalizeNseIpos, validIpos } from './ipoNormalization';
+import { normalizeNseIpos, validIpos } from './ipoNormalization';
 
 describe('IPO normalization', () => {
   it('keeps historical records with missing lot size, price and issue size', () => {
@@ -87,21 +87,4 @@ it('preserves the provider detail slug separately from the exchange symbol', () 
   const [ipo] = normalizeNseIpos([{ name: 'Slug Limited', symbol: 'SLUG', slug: 'slug-limited-ipo' }], 'Upcoming');
   expect(ipo.symbol).toBe('SLUG');
   expect(ipo.detailSlug).toBe('slug-limited-ipo');
-});
-
-
-describe('public provider response envelopes', () => {
-  it('extracts the documented Xflot { ok, count, ipos } payload', () => {
-    const rows = extractIpoRows({ ok: true, count: 1, ipos: [{ slug: 'one' }] });
-    expect(rows).toEqual([{ slug: 'one' }]);
-  });
-
-  it('extracts nested data.ipos payloads used by API gateways', () => {
-    const rows = extractIpoRows({ ok: true, data: { ipos: [{ slug: 'nested' }] } });
-    expect(rows).toEqual([{ slug: 'nested' }]);
-  });
-
-  it('rejects unknown object envelopes instead of silently returning an empty feed', () => {
-    expect(extractIpoRows({ ok: true, message: 'no records key' })).toBeNull();
-  });
 });
