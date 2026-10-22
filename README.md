@@ -43,3 +43,14 @@ npm run build
 ```
 
 The Worker is bundled by `wrangler deploy`; the dashboard's deploy step reports Worker bundling/configuration errors.
+
+
+## IPO intelligence UI and data pipeline
+
+The IPO dashboard uses a compact market-monitor table, status/board/GMP filters, tabular financial numerals, and a detail view for timeline, issue breakup, subscription, GMP history and registrar links. Fields are only rendered as reported by configured providers; missing financial statements, subscription snapshots, quota splits and registrar links are not fabricated.
+
+The Worker reads from a primary configured IPO list, can optionally merge a separately configured secondary JSON feed, and can opt into the undocumented NSE public IPO endpoint after terms review. Xflot per-IPO detail enrichment is throttled to a small batch every six hours. The 15-minute cron refreshes the shared snapshot; KV retention keeps the last successful snapshot available through temporary provider failures. See `docs/API-sources.md` and `LIVE-DATA-SETUP.md` before enabling additional feeds.
+
+### Build and test
+
+Run `npm install`, then `npm run build` and `npm test`. Cloudflare production builds use `npm run build`. This source package does not include a generated dependency lockfile; preserve the repository's existing `package-lock.json` when applying these changes so Cloudflare's `npm clean-install` continues to work.

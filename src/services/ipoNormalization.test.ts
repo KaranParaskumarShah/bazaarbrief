@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeNseIpos, validIpos } from './ipoNormalization';
+import { extractIpoRows, normalizeNseIpos, validIpos } from './ipoNormalization';
 
 describe('IPO normalization', () => {
   it('keeps historical records with missing lot size, price and issue size', () => {
@@ -61,5 +61,47 @@ describe('IPO normalization', () => {
   it('preserves explicit cancellation status', () => {
     const [ipo] = normalizeNseIpos([{ companyName: 'Cancelled Co', symbol: 'CANCEL', status: 'Cancelled' }], 'Upcoming');
     expect(ipo.status).toBe('Cancelled');
+  });
+});
+
+it('calculates minimum retail investment from lot size times upper price-band cap', () => {
+  const [ipo] = normalizeNseIpos([{ companyName: 'Cap Price Limited', symbol: 'CAPPRICE', priceRange: '₹1,065–₹1,119', lotSize: 14 }], 'Upcoming');
+  expect(ipo.minInvestment).toBe(15666);
+});
+
+it('normalizes structured issue breakup and registrar metadata when supplied', () => {
+  const [ipo] = normalizeNseIpos([{ companyName: 'Metadata Limited', symbol: 'META', issueSize: '₹500 Cr', freshIssue: '₹300 Cr', offerForSale: '₹200 Cr', registrarName: 'Example Registrar', registrarUrl: 'https://example.com', registrarStatusUrl: 'https://example.com/status', leadManagers: ['Manager A', 'Manager B'], industry: 'Technology' }], 'Upcoming');
+  expect(ipo.issueBreakup).toEqual({ freshIssue: '₹300 Cr', ofs: '₹200 Cr', totalIssue: '₹500 Cr' });
+  expect(ipo.registrarDetails).toEqual({ name: 'Example Registrar', url: 'https://example.com', checkStatusUrl: 'https://example.com/status' });
+  expect(ipo.leadManagers).toEqual(['Manager A', 'Manager B']);
+  expect(ipo.industry).toBe('Technology');
+});
+
+
+it('does not double-format issue size when both issueSize and issueSizeCr are present', () => {
+  const [ipo] = normalizeNseIpos([{ companyName: 'Mixed Size Limited', issueSize: '₹1,450 Cr', issueSizeCr: 1450 }], 'Upcoming');
+  expect(ipo.issueSize).toBe('₹1,450 Cr');
+});
+
+it('preserves the provider detail slug separately from the exchange symbol', () => {
+  const [ipo] = normalizeNseIpos([{ name: 'Slug Limited', symbol: 'SLUG', slug: 'slug-limited-ipo' }], 'Upcoming');
+  expect(ipo.symbol).toBe('SLUG');
+  expect(ipo.detailSlug).toBe('slug-limited-ipo');
+});
+
+
+describe('public provider response envelopes', () => {
+  it('extracts the documented Xflot { ok, count, ipos } payload', () => {
+    const rows = extractIpoRows({ ok: true, count: 1, ipos: [{ slug: 'one' }] });
+    expect(rows).toEqual([{ slug: 'one' }]);
+  });
+
+  it('extracts nested data.ipos payloads used by API gateways', () => {
+    const rows = extractIpoRows({ ok: true, data: { ipos: [{ slug: 'nested' }] } });
+    expect(rows).toEqual([{ slug: 'nested' }]);
+  });
+
+  it('rejects unknown object envelopes instead of silently returning an empty feed', () => {
+    expect(extractIpoRows({ ok: true, message: 'no records key' })).toBeNull();
   });
 });

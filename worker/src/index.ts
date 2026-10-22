@@ -1,4 +1,4 @@
-import { asString, firstField, normalizeNseIpos, validIpos } from '../../src/services/ipoNormalization';
+import { asString, extractIpoRows, firstField, normalizeNseIpos, validIpos } from '../../src/services/ipoNormalization';
 
 export interface Env {
   ASSETS?: Fetcher;
@@ -7,6 +7,8 @@ export interface Env {
   ALLOWED_ORIGIN?: string;
   IPO_DATA_URL?: string;
   IPO_DETAIL_BASE_URL?: string;
+  IPO_SECONDARY_DATA_URL?: string;
+  NSE_IPO_ENABLED?: string;
   FII_DII_DATA_URL?: string;
   NEWS_RSS_URLS?: string;
   REFRESH_SECRET?: string;
@@ -57,6 +59,9 @@ function edgeCache() {
 function edgeCacheKey(origin: string, dataset: Dataset) {
   return new Request(new URL(`/__bazaarbrief_cache/${dataset}`, origin).toString(), { method: 'GET' });
 }
+function staleEdgeCacheKey(origin: string, dataset: Dataset) {
+  return new Request(new URL(`/__bazaarbrief_cache/${dataset}-stale`, origin).toString(), { method: 'GET' });
+}
 async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<string | null> {
   if (env.MARKET_CACHE) {
     try {
@@ -64,8 +69,9 @@ async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<
       if (raw) return raw;
     } catch { /* Continue to edge cache and live upstreams if KV is not bound or unavailable. */ }
   }
-  // IPO data must come from the shared KV snapshot, never a region-local edge cache.
-  if (dataset === 'ipos') return null;
+  // KV is preferred for a globally shared snapshot. If it is not configured, use
+  // the regional edge cache as a degraded mode so the public IPO page does not fail
+  // solely because an optional binding has not yet been added.
   const cache = edgeCache();
   if (cache) {
     try {
@@ -77,18 +83,65 @@ async function readDataset(dataset: Dataset, origin: string, env: Env): Promise<
 }
 async function writeDataset(dataset: Dataset, data: unknown, origin: string, env: Env): Promise<void> {
   const raw = JSON.stringify(data);
+  let kvSnapshotSaved = false;
   if (env.MARKET_CACHE) {
-    try { await env.MARKET_CACHE.put(CACHE_KEYS[dataset], raw, { expirationTtl: dataset === 'ipos' ? 60 * 60 * 24 * 365 : Math.max(DATASET_TTL[dataset] * 4, 3600) }); if (dataset === 'ipos') await env.MARKET_CACHE.put('ipos/meta', JSON.stringify({ lastSuccessfulRefreshAt: new Date().toISOString(), recordCount: Array.isArray(data) ? data.length : 0, source: (env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL).includes('xflot.com') ? 'Xflot' : 'Configured IPO provider', provider: (env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL).includes('xflot.com') ? 'Xflot' : 'Configured IPO provider' }), { expirationTtl: 60 * 60 * 24 * 365 }); }
-    catch (error) { if (dataset === 'ipos') throw error; /* Other datasets can use edge cache when KV is unavailable. */ }
+    try {
+      await env.MARKET_CACHE.put(CACHE_KEYS[dataset], raw, { expirationTtl: dataset === 'ipos' ? 60 * 60 * 24 * 365 : Math.max(DATASET_TTL[dataset] * 4, 3600) });
+      kvSnapshotSaved = true;
+    } catch (error) {
+      // A KV outage must not discard usable upstream data. The edge cache below is
+      // a temporary fallback; configure KV for a globally shared durable snapshot.
+      console.warn(`[cache:${dataset}] KV write failed; using edge cache fallback`, error);
+    }
+    if (dataset === 'ipos' && kvSnapshotSaved) {
+      const provider = (env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL).includes('xflot.com') ? 'Xflot' : 'Configured IPO provider';
+      try {
+        await env.MARKET_CACHE.put('ipos/meta', JSON.stringify({ lastSuccessfulRefreshAt: new Date().toISOString(), recordCount: Array.isArray(data) ? data.length : 0, source: provider, provider }), { expirationTtl: 60 * 60 * 24 * 365 });
+      } catch (error) {
+        console.warn('[IPO cache] Snapshot saved but refresh metadata could not be updated', error);
+      }
+    }
   }
   const cache = edgeCache();
   if (cache) {
     try {
+      const now = new Date().toISOString();
       await cache.put(edgeCacheKey(origin, dataset), new Response(raw, {
-        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, s-maxage=${DATASET_TTL[dataset]}` },
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': `public, max-age=${DATASET_TTL[dataset]}, s-maxage=${DATASET_TTL[dataset]}`,
+          'x-bazaarbrief-cached-at': now,
+        },
       }));
-    } catch { /* The response can still be returned without caching. */ }
+      // Keep a longer-lived emergency snapshot for IPOs. If an upstream feed is
+      // temporarily unavailable, serve known data with an explicit stale marker.
+      if (dataset === 'ipos') {
+        await cache.put(staleEdgeCacheKey(origin, dataset), new Response(raw, {
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+            'cache-control': 'public, max-age=86400, s-maxage=86400',
+            'x-bazaarbrief-cached-at': now,
+          },
+        }));
+      }
+    } catch (error) { console.warn(`[cache:${dataset}] Edge cache write failed`, error); }
   }
+}
+async function readStaleIpos(origin: string, env: Env): Promise<string | null> {
+  if (env.MARKET_CACHE) {
+    try {
+      const raw = await env.MARKET_CACHE.get(CACHE_KEYS.ipos);
+      if (raw) return raw;
+    } catch (error) { console.warn('[IPO cache] KV stale read failed', error); }
+  }
+  const cache = edgeCache();
+  if (cache) {
+    try {
+      const cached = await cache.match(staleEdgeCacheKey(origin, 'ipos'));
+      if (cached) return await cached.text();
+    } catch (error) { console.warn('[IPO cache] Edge stale read failed', error); }
+  }
+  return null;
 }
 
 export default {
@@ -97,17 +150,21 @@ export default {
     const h = headers(request.headers.get('Origin') || '', env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     if (url.pathname === '/api/ipos/refresh-status' && request.method === 'GET') {
-      const meta = env.MARKET_CACHE ? await env.MARKET_CACHE.get('ipos/meta', 'json') : null;
-      const lastAttempt = env.MARKET_CACHE ? await env.MARKET_CACHE.get('ipos/refresh-status', 'json') : null;
-      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: '*/15 * * * * UTC' }, { headers: { ...h, 'cache-control': 'no-store' } });
+      let meta: unknown = null; let lastAttempt: unknown = null;
+      if (env.MARKET_CACHE) {
+        try { meta = await env.MARKET_CACHE.get('ipos/meta', 'json'); } catch (error) { console.warn('[IPO status] Metadata read failed', error); }
+        try { lastAttempt = await env.MARKET_CACHE.get('ipos/refresh-status', 'json'); } catch (error) { console.warn('[IPO status] Refresh status read failed', error); }
+      }
+      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), cacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback', ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: '*/15 * * * * UTC' }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({
         ok: true,
         service: 'bazaarbrief-data',
-        mode: env.MARKET_CACHE ? 'live-cache+kv' : 'live-cache',
+        mode: env.MARKET_CACHE ? 'live-cache+kv' : 'live-cache-fallback',
         kvEnabled: Boolean(env.MARKET_CACHE),
-        ipoReady: Boolean(env.MARKET_CACHE),
+        ipoReady: true,
+        ipoCacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback',
         cron: '*/15 * * * *',
         endpoints: ['/api/indices', '/api/history', '/api/ipos', '/api/news', '/api/fii-dii'],
       }, { headers: { ...h, 'cache-control': 'no-store' } });
@@ -131,20 +188,20 @@ export default {
     const match = url.pathname.match(/^\/api\/(indices|ipos|news|fii-dii|history)$/);
     if (!match) return Response.json({ error: 'Not found', path: url.pathname }, { status: 404, headers: h });
     const dataset = match[1] as Dataset;
-    // The edge Cache API is regional/ephemeral, not a shared persistent source of truth.
-    // Do not serve an IPO snapshot as if centralized storage were configured when KV is absent.
-    if (dataset === 'ipos' && !env.MARKET_CACHE) return Response.json({ error: 'IPO persistent storage is not configured', dataset, detail: 'Bind MARKET_CACHE to a Cloudflare KV namespace, then run the scheduled or authenticated refresh.', updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
+    // Prefer the shared KV snapshot; use regional edge cache and a bounded upstream
+    // refresh as a fallback when KV is not configured or has not been populated yet.
     const cached = await readDataset(dataset, url.origin, env);
     if (cached) return new Response(cached, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'cached', 'x-dataset': dataset } });
-    // IPO data is intentionally never fetched on a visitor request. The shared snapshot
-    // is populated only by the scheduled Worker or authenticated /admin/refresh.
-    if (dataset === 'ipos') return Response.json({ error: 'IPO snapshot not initialized', dataset, detail: 'Wait for the scheduled refresh or run an authenticated admin refresh.', updatedAt: null }, { status: 503, headers: { ...h, 'cache-control': 'no-store', 'x-dataset': dataset } });
     try {
       const data = await fetchDataset(dataset, env);
       if (!Array.isArray(data) || data.length === 0) throw new Error('The upstream provider returned no records');
       await writeDataset(dataset, data, url.origin, env);
       return Response.json(data, { headers: { ...h, 'cache-control': `public, max-age=${DATASET_TTL[dataset]}, stale-while-revalidate=300`, 'x-data-status': 'live', 'x-dataset': dataset } });
     } catch (error) {
+      if (dataset === 'ipos') {
+        const stale = await readStaleIpos(url.origin, env);
+        if (stale) return new Response(stale, { headers: { ...h, 'cache-control': 'public, max-age=60, stale-while-revalidate=300', 'x-data-status': 'stale-cache', 'x-dataset': 'ipos', 'warning': '110 - Response is stale; upstream feed is temporarily unavailable' } });
+      }
       return Response.json({
         error: 'Live dataset unavailable',
         dataset,
@@ -182,14 +239,75 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     // Xflot documents this no-key public JSON API and requests attribution, its disclaimer,
     // and polling no more frequently than once per minute. Cron polls only every 15 minutes.
     const feedUrl = env.IPO_DATA_URL || DEFAULT_IPO_DATA_URL;
-    const configured = await fetchConfiguredJson(feedUrl, 'IPO');
-    if (!configured) throw new Error('The configured/default IPO feed returned no data');
+    let configured: any[] | null = null;
+    let usedSecondaryFallback = false;
+    let usedNseFallback = false;
+    try { configured = await fetchConfiguredJson(feedUrl, 'IPO'); }
+    catch (error) { console.warn(`[IPO primary] feed unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
+    // The provider's documented examples use the apex host. Try the www host too
+    // when the default feed fails; this handles host-specific routing/edge incidents.
+    if (!configured && (!env.IPO_DATA_URL || feedUrl === DEFAULT_IPO_DATA_URL || feedUrl === DEFAULT_IPO_FALLBACK_URL)) {
+      const alternate = feedUrl.includes('www.xflot.com') ? DEFAULT_IPO_DATA_URL : DEFAULT_IPO_FALLBACK_URL;
+      try { configured = await fetchConfiguredJson(alternate, 'IPO alternate host'); }
+      catch (error) { console.warn(`[IPO alternate host] unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
+    }
+    // Try the separately configured, terms-reviewed secondary feed if the primary fails.
+    if (!configured && env.IPO_SECONDARY_DATA_URL) {
+      try { configured = await fetchConfiguredJson(env.IPO_SECONDARY_DATA_URL, 'Secondary IPO'); usedSecondaryFallback = Boolean(configured); }
+      catch (error) { console.warn(`[IPO secondary fallback] unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
+    }
+    // Optional NSE fallback is intentionally gated by explicit operator opt-in.
+    if (!configured && env.NSE_IPO_ENABLED === 'true') {
+      try { const cookie = await fetchNseCookie(); configured = await fetchNseJson('/api/ipo-current-issue', cookie); usedNseFallback = Boolean(configured); }
+      catch (error) { console.warn(`[IPO NSE fallback] unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
+    }
+    if (!configured) throw new Error('Primary and configured fallback IPO feeds returned no data');
     let ipos = normalizeNseIpos(configured, 'Upcoming');
     if (!ipos.length || !validIpos(ipos)) throw new Error('Configured IPO feed returned no usable records after normalization');
+    // Optional official NSE public issue feed adapter. Enable only after reviewing
+    // NSE terms for automated access and public redistribution; NSE may rate-limit/block Workers.
+    if (env.NSE_IPO_ENABLED === 'true' && !usedNseFallback) {
+      try {
+        const cookie = await fetchNseCookie();
+        const nseRaw = await fetchNseJson('/api/ipo-current-issue', cookie);
+        const nseRows = normalizeNseIpos(nseRaw, 'Upcoming');
+        const mergeKey = (item: any) => String(item.symbol || item.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const merged = new Map<string, any>(ipos.map(item => [mergeKey(item), item] as const));
+        for (const item of nseRows) {
+          const key = mergeKey(item); const existing = merged.get(key);
+          if (!existing) merged.set(key, { ...item, source: 'NSE public IPO endpoint' });
+          else merged.set(key, { ...existing, ...Object.fromEntries(Object.entries(item).filter(([,v]) => v !== undefined && v !== null && v !== '')), source: `${existing.source || 'Configured IPO feed'} + NSE` });
+        }
+        ipos = [...merged.values()];
+        console.info(`[IPO NSE] merged ${nseRows.length} issue record(s)`);
+      } catch (error) { console.warn(`[IPO NSE] optional feed unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
+    }
+    // Optional secondary provider adapter. Configure only a feed whose terms permit
+    // automated retrieval and public display. Failure is isolated from the primary feed.
+    if (env.IPO_SECONDARY_DATA_URL && !usedSecondaryFallback) {
+      try {
+        const secondaryRaw = await fetchConfiguredJson(env.IPO_SECONDARY_DATA_URL, 'Secondary IPO');
+        const secondary = normalizeNseIpos(secondaryRaw || [], 'Upcoming');
+        const mergeKey = (item: any) => String(item.symbol || item.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const merged = new Map<string, any>(ipos.map(item => [mergeKey(item), item] as const));
+        for (const item of secondary) {
+          const key = mergeKey(item); const existing = merged.get(key);
+          if (!existing) merged.set(key, { ...item, source: 'Secondary configured IPO provider' });
+          else merged.set(key, { ...existing, ...Object.fromEntries(Object.entries(item).filter(([,v]) => v !== undefined && v !== null && v !== '')), source: `${existing.source || 'Primary IPO feed'} + secondary provider` });
+        }
+        ipos = [...merged.values()];
+        console.info(`[IPO secondary] merged ${secondary.length} issue record(s)`);
+      } catch (error) { console.warn(`[IPO secondary] optional feed unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
+    }
     // Enrich a small, relevant subset from the documented Xflot per-IPO endpoint.
     // Refresh details at most every six hours to avoid making one request per visitor
     // or multiplying provider traffic on every 15-minute list refresh.
-    ipos = await enrichIposFromDetailFeed(ipos, env);
+    try {
+      ipos = await enrichIposFromDetailFeed(ipos, env);
+    } catch (error) {
+      // Optional detail enrichment must never discard a valid primary IPO snapshot.
+      console.warn(`[IPO detail] enrichment skipped: ${error instanceof Error ? error.message : 'request failed'}`);
+    }
     return ipos;
   }
   // As above, avoid a needless NSE cookie request when a feed is configured.
@@ -257,10 +375,15 @@ async function fetchConfiguredJson(url: string | undefined, label: string) {
   }
   if (!response?.ok) throw new Error(`${label} feed did not return a successful response`);
   const body: any = await response.json();
-  const data = Array.isArray(body) ? body : Array.isArray(body.data) ? body.data : Array.isArray(body.ipos) ? body.ipos : null;
-  if (!Array.isArray(data)) throw new Error(`${label} feed must return an array, {data: []}, or {ipos: []}`);
-  const disclaimer = asString(body?.disclaimer);
-  const source = asString(body?.source);
+  if (body && typeof body === 'object' && body.ok === false) {
+    throw new Error(`${label} provider reported failure${body.error ? `: ${String(body.error).slice(0, 180)}` : ''}`);
+  }
+  // Support documented { ipos: [...] } and common API gateway envelopes such as
+  // { data: { ipos: [...] } } without silently treating a valid payload as empty.
+  const data = extractIpoRows(body);
+  if (!data || data.length === 0) throw new Error(`${label} feed returned no IPO rows (expected an array or an object containing ipos/data/results)`);
+  const disclaimer = asString(body?.disclaimer) || asString(body?.data?.disclaimer);
+  const source = asString(body?.source) || asString(body?.provider) || 'Xflot';
   return data.map((row: any) => ({ ...row, ...(disclaimer ? { providerDisclaimer: disclaimer } : {}), ...(source ? { providerName: source } : {}) }));
 }
 
@@ -282,12 +405,12 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
   // Prioritize open/upcoming/closed issues and a small number of recent listings.
   const priority = (status: string) => status === 'Open' ? 0 : status === 'Upcoming' ? 1 : status === 'Closed' ? 2 : status === 'Listed' ? 3 : 4;
   const candidates = [...ipos]
-    .filter(ipo => ipo && typeof ipo.symbol === 'string' && ipo.symbol.trim())
+    .filter(ipo => ipo && (typeof ipo.detailSlug === 'string' && ipo.detailSlug.trim() || typeof ipo.id === 'string' && ipo.id.trim() || typeof ipo.symbol === 'string' && ipo.symbol.trim()))
     .sort((a, b) => priority(a.status) - priority(b.status))
     .slice(0, 20);
   if (!candidates.length) return ipos;
 
-  const byId = new Map(ipos.map(ipo => [ipo.id, { ...ipo }]));
+  const byId = new Map<string, any>(ipos.map(ipo => [ipo.id, { ...ipo }] as const));
   let successes = 0;
   // Keep concurrency low and isolate provider failures by issue.
   for (let i = 0; i < candidates.length; i += 4) {
@@ -295,7 +418,8 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
     await Promise.all(batch.map(async (baseIpo: any) => {
       try {
         const base = detailBase.replace(/\/$/, '');
-        const response = await fetch(`${base}/${encodeURIComponent(baseIpo.symbol)}`, {
+        const detailIdentifier = baseIpo.detailSlug || baseIpo.id || baseIpo.symbol;
+        const response = await fetch(`${base}/${encodeURIComponent(detailIdentifier)}`, {
           headers: { accept: 'application/json', 'user-agent': 'BazaarBrief/1.0 (+https://bazaarbrief.in)' },
           signal: AbortSignal.timeout(9000),
         });
@@ -304,14 +428,23 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
         const detail = body?.ipo || body?.data?.ipo || body?.data || body;
         if (!detail || typeof detail !== 'object') return;
         const patch: any = {};
+        // Reuse the same field normalizer for provider detail payloads; only non-empty
+        // values are merged, so sparse detail responses cannot erase valid list fields.
+        const detailNormalized = normalizeNseIpos([detail], baseIpo.status as any)[0];
+        if (detailNormalized) {
+          const allowed = ['openDate','closeDate','priceBand','lotSize','issueSize','minInvestment','listingDate','faceValue','freshIssue','offerForSale','allotmentDate','refundDate','dematDate','actualListingPrice','listingGainPct','registrar','registrarUrl','registrarName','leadManager','leadManagers','offerDocumentUrl','officialUrl','description','issueObjectives','financialHighlights','financials','subscriptionHistory','investorReservations','issueType','industry','issueBreakup','quotaAllocation','registrarDetails','expectedListingPrice'];
+          for (const key of allowed) { const value = detailNormalized[key]; if (value !== undefined && value !== null && value !== '') patch[key] = value; }
+        }
         const history = Array.isArray(detail.gmp) ? detail.gmp : Array.isArray(detail.gmpHistory) ? detail.gmpHistory : [];
-        const normalizedHistory = history.map((row: any) => {
-          const value = Number(row?.gmp ?? row?.premium);
-          const pct = Number(row?.gmpPct ?? row?.gmpPercent);
+        const normalizedHistory: Array<{ date: string; gmp: number; gmpPct?: number; source?: string; unofficial?: boolean }> = history.map((row: any) => {
+          const valueRaw = row?.gmp ?? row?.premium;
+          const value = valueRaw == null || String(valueRaw).trim() === '' ? NaN : Number(String(valueRaw).replace(/[₹,\s]/g, '').replace(/(INR|Rs\.?)/ig, ''));
+          const pctRaw = row?.gmpPct ?? row?.gmpPercent;
+          const pct = pctRaw == null || String(pctRaw).trim() === '' ? NaN : Number(pctRaw);
           const date = String(row?.observedAt ?? row?.date ?? row?.updatedAt ?? '').trim();
           if (!date || !Number.isFinite(value)) return null;
           return { date, gmp: value, ...(Number.isFinite(pct) ? { gmpPct: pct } : {}), ...(row?.source ? { source: String(row.source) } : {}), ...(row?.unofficial != null ? { unofficial: Boolean(row.unofficial) } : { unofficial: true }) };
-        }).filter(Boolean);
+        }).filter((row: any) => row !== null).sort((a: { date: string }, b: { date: string }) => Date.parse(a.date) - Date.parse(b.date));
         if (normalizedHistory.length) {
           patch.gmpHistory = normalizedHistory;
           const latest = normalizedHistory[normalizedHistory.length - 1];
@@ -324,7 +457,9 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
         if (subs.length) {
           const findSub = (pattern: RegExp) => {
             const row = subs.find((item: any) => pattern.test(String(item?.category ?? item?.name ?? item?.type ?? '')));
-            const value = Number(row?.timesSub ?? row?.subscription ?? row?.times ?? row?.value);
+            const rawValue = row?.timesSub ?? row?.subscription ?? row?.times ?? row?.value;
+            if (rawValue == null || String(rawValue).trim() === '') return undefined;
+            const value = Number(String(rawValue).replace(/,/g, '').replace(/x$/i, '').trim());
             return Number.isFinite(value) ? value : undefined;
           };
           patch.qibSubscription = baseIpo.qibSubscription ?? findSub(/\bqib\b|qualified institutional/i);
@@ -333,12 +468,19 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
           patch.employeeSubscription = baseIpo.employeeSubscription ?? findSub(/employee/i);
           patch.shareholderSubscription = baseIpo.shareholderSubscription ?? findSub(/shareholder/i);
           patch.subscription = baseIpo.subscription ?? findSub(/^total$|overall/i);
+          const qib = patch.qibSubscription ?? baseIpo.qibSubscription;
+          const nii = patch.niiSubscription ?? baseIpo.niiSubscription;
+          const retail = patch.retailSubscription ?? baseIpo.retailSubscription;
+          const total = patch.subscription ?? baseIpo.subscription;
+          if ([qib, nii, retail, total].every((value: unknown) => typeof value === 'number' && Number.isFinite(value))) {
+            patch.subscriptionDetails = { qib, nii, retail, total, asOf: new Date().toISOString() };
+          }
         }
         const old = byId.get(baseIpo.id) || baseIpo;
         byId.set(baseIpo.id, { ...old, ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined && value !== null)) });
         successes++;
       } catch (error) {
-        console.warn(`[IPO detail] ${baseIpo.symbol}: ${error instanceof Error ? error.message : 'request failed'}`);
+        console.warn(`[IPO detail] ${baseIpo.detailSlug || baseIpo.id || baseIpo.symbol}: ${error instanceof Error ? error.message : 'request failed'}`);
       }
     }));
   }
@@ -348,7 +490,8 @@ async function enrichIposFromDetailFeed(ipos: any[], env: Env): Promise<any[]> {
 }
 
 const NSE_HOME = 'https://www.nseindia.com/';
-const DEFAULT_IPO_DATA_URL = 'https://www.xflot.com/api/public/market/ipos?limit=200';
+const DEFAULT_IPO_DATA_URL = 'https://xflot.com/api/public/market/ipos?limit=200';
+const DEFAULT_IPO_FALLBACK_URL = 'https://www.xflot.com/api/public/market/ipos?limit=200';
 async function fetchNseCookie(): Promise<string> {
   const common = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36 BazaarBrief/1.0',
@@ -398,15 +541,19 @@ async function fetchNseFiiDii(cookie = ''): Promise<any[]> {
 function validFlows(rows: any[]): boolean { return Array.isArray(rows) && rows.every(x => x && typeof x.date === 'string' && Number.isFinite(x.fii) && Number.isFinite(x.dii)); }
 
 async function refreshAll(env: Env, origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in') {
-  // Refresh all public datasets. IPO reads are cache-only; configure MARKET_CACHE KV for persistence.
+  // Refresh all public datasets. KV is preferred for durable shared IPO storage;
+  // if it is absent, the Worker still fetches and writes an edge-cache snapshot.
   const report: Record<string, string> = {};
   const datasets: Dataset[] = ['indices', 'history', 'news', 'ipos', 'fii-dii'];
   await Promise.all(datasets.map(async dataset => {
     try {
-      if (dataset === 'ipos' && !env.MARKET_CACHE) throw new Error('MARKET_CACHE KV binding is required to persist the shared IPO snapshot');
       let data = await fetchDataset(dataset, env);
       if (dataset === 'ipos') {
-        const previousRaw = env.MARKET_CACHE ? await env.MARKET_CACHE.get(CACHE_KEYS.ipos) : null;
+        let previousRaw: string | null = null;
+        if (env.MARKET_CACHE) {
+          try { previousRaw = await env.MARKET_CACHE.get(CACHE_KEYS.ipos); }
+          catch (error) { console.warn('[IPO cache] Previous snapshot read failed; using fresh provider data', error); }
+        }
         if (previousRaw) {
           try {
             const previous = JSON.parse(previousRaw);
