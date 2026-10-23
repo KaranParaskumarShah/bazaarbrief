@@ -4,8 +4,9 @@ The **root `wrangler.jsonc` is authoritative** for production: it deploys `worke
 
 ## IPO request architecture
 
-- Cloudflare Cron Trigger runs `*/15 * * * *` in UTC (96 scheduled runs/day).
-- The scheduled Worker fetches IPO data, validates/normalizes it and stores one shared snapshot in `MARKET_CACHE` KV.
+- Cloudflare Cron Trigger wakes the Worker every 15 minutes in UTC (`*/15 * * * *`, 96 trigger events/day).
+- The Worker gates refresh work using `Asia/Kolkata`: every 15 minutes from 09:00 to before 17:00 IST, and once per hour outside that window. Because Cloudflare cron is UTC-based, do not change the trigger to a simple 09:00–17:00 UTC hour range.
+- When a refresh is due, the scheduled Worker fetches IPO data, validates/normalizes it and stores one shared snapshot in `MARKET_CACHE` KV.
 - `GET /api/ipos` prefers the shared KV snapshot. If KV is missing or has not been populated yet, it fetches the configured public IPO feed, caches the result regionally, and returns delayed data. This fallback is not a substitute for shared KV durability.
 - Failed refreshes leave the previous KV snapshot untouched. Successful refreshes merge by stable IPO ID so historical records are not removed just because they disappear from the current-issues feed.
 - `GET /api/ipos/refresh-status` reports cache binding availability, last successful refresh, and the most recent refresh attempt/result. The IPO UI displays this freshness metadata.
@@ -62,8 +63,8 @@ The `/api/ipos` response remains a JSON array for frontend compatibility. `x-dat
 
 ## Request and quota estimates
 
-- 4 scheduled refreshes/hour × 24 = 96 refreshes/day.
-- Base IPO list: up to 96 requests/day. The optional Xflot detail enricher is capped at 20 issue details per refresh; the subscription enricher considers only active/upcoming and recently closed/listed issues, capped at 25 matched details per refresh. Actual request counts depend on provider coverage and whether detail URLs are present; worst-case totals can be several thousand requests/day, so check provider terms and Worker subrequest limits before enabling all enrichers at scale.
+- The cron has 96 trigger events/day, but the IST gate currently runs about 48 scheduled refresh batches/day: every 15 minutes during 09:00–16:45 IST, then hourly from 17:00 onward.
+- Base IPO list: up to about 48 requests/day from scheduled batches, before retries/fallbacks. The optional detail and subscription enrichers can make additional provider requests per batch; actual counts depend on issue matching, detail URLs, retries and provider coverage. Review provider terms and Worker subrequest limits before enabling all enrichers at scale.
 - Visitor reads do not add IPO upstream calls. They add Worker requests and KV reads; KV free-tier quotas are account/plan-specific and should be checked in Cloudflare's current limits before launch.
 - KV stores one latest snapshot plus one metadata key; snapshot expiry is one year and refreshed values overwrite the same keys. Historical GMP points are not fabricated or stored unless the source actually provides them.
 

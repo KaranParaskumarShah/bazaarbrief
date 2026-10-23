@@ -48,3 +48,62 @@ it('normalizes Xflot-style subscription arrays without fabricating an as-of time
   expect(value?.total).toBe(2.1);
   expect(value?.asOf).toBe('');
 });
+
+it('supports flat sNII, bNII and retail fields from a provider response', () => {
+  const value = normalizeSubscriptionPayload({
+    data: {
+      totalSubscription: 4.2,
+      bNiiSubscription: 5.1,
+      sNiiSubscription: 2.7,
+      retailSubscription: 1.8,
+    },
+  });
+  expect(value?.bigNii).toBe(5.1);
+  expect(value?.smallNii).toBe(2.7);
+  expect(value?.retail).toBe(1.8);
+  expect(value?.subscriptionCategories).toEqual([
+    { key: 'bNII', label: 'Big NII (bNII)', times: 5.1 },
+    { key: 'sNII', label: 'Small NII (sNII)', times: 2.7 },
+    { key: 'RII', label: 'Retail individual investors', times: 1.8 },
+  ]);
+});
+
+it('supports nested small and big NII buckets without copying combined NII into them', () => {
+  const value = normalizeSubscriptionPayload({
+    data: {
+      categories: {
+        NII: {
+          times: 3.4,
+          sub_categories: [
+            { name: 'sNII', times: 2.1 },
+            { name: 'bNII', times: 4.8 },
+          ],
+        },
+        RII: { times: 1.6 },
+      },
+    },
+  });
+  expect(value?.nii).toBe(3.4);
+  expect(value?.smallNii).toBe(2.1);
+  expect(value?.bigNii).toBe(4.8);
+  expect(value?.retail).toBe(1.6);
+});
+
+it('normalizes flat investor-category application counts without inventing missing values', () => {
+  const value = normalizeSubscriptionPayload({ data: {
+    totalApplications: 125000,
+    retailSubscription: 4.2,
+    retailApplications: 85000,
+    sNiiSubscription: 2.1,
+    sNiiApplications: 18000,
+    bNiiSubscription: 3.4,
+    bNiiApplications: 12000,
+  } });
+  expect(value?.applications).toBe(125000);
+  expect(value?.subscriptionCategories).toEqual(expect.arrayContaining([
+    expect.objectContaining({ key: 'RII', times: 4.2, applications: 85000 }),
+    expect.objectContaining({ key: 'sNII', times: 2.1, applications: 18000 }),
+    expect.objectContaining({ key: 'bNII', times: 3.4, applications: 12000 }),
+  ]));
+  expect(value?.subscriptionCategories?.some(row => row.key === 'QIB' && row.applications !== undefined)).toBe(false);
+});

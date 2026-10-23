@@ -20,12 +20,25 @@ function numberOrUndefined(value: unknown): number | undefined {
 }
 function categoryValue(categories: any, aliases: string[]): any {
   const wanted = new Set(aliases.map(keyText));
-  if (Array.isArray(categories)) {
-    return categories.find((item: any) => wanted.has(keyText(item?.category ?? item?.name ?? item?.type ?? item?.key)));
-  }
-  if (categories && typeof categories === 'object') {
-    const key = Object.keys(categories).find(name => wanted.has(keyText(name)));
-    return key ? categories[key] : undefined;
+  const findIn = (source: any): any => {
+    if (Array.isArray(source)) {
+      return source.find((item: any) => wanted.has(keyText(item?.category ?? item?.name ?? item?.type ?? item?.key ?? item?.label)));
+    }
+    if (source && typeof source === 'object') {
+      const key = Object.keys(source).find(name => wanted.has(keyText(name)));
+      return key ? source[key] : undefined;
+    }
+    return undefined;
+  };
+  const direct = findIn(categories);
+  if (direct !== undefined) return direct;
+  // Some feeds nest sNII/bNII under the parent NII category.
+  const parents = Array.isArray(categories) ? categories : categories && typeof categories === 'object' ? Object.values(categories) : [];
+  for (const parent of parents) {
+    for (const nestedKey of ['sub_categories', 'subCategories', 'subcategories', 'breakdown', 'sub_categories_data']) {
+      const nested = findIn(parent?.[nestedKey]);
+      if (nested !== undefined) return nested;
+    }
   }
   return undefined;
 }
@@ -45,15 +58,24 @@ export function normalizeSubscriptionPayload(body: any): NormalizedSubscription 
   const categories = data?.categories ?? data?.category ?? data?.subscription_categories ?? data?.subscriptionByCategory ?? data?.subscriptionsByCategory ?? data?.subscriptions ?? data?.subs ?? data?.subscription ?? {}; 
   const timesFields = ['times', 'times_sub', 'times_subscribed', 'timesSub', 'subscription', 'multiple', 'subscription_times', 'timesSubscribed', 'times_subscribed_x', 'value'];
   const pick = (aliases: string[]) => categoryValue(categories, aliases);
-  const qib = categoryNumber(pick(['QIB']), timesFields);
-  const nii = categoryNumber(pick(['NII']), timesFields);
-  const smallNii = categoryNumber(pick(['sNII', 'Small NII', 'Small HNI']), timesFields);
-  const bigNii = categoryNumber(pick(['bNII', 'Big NII', 'Big HNI']), timesFields);
-  const retail = categoryNumber(pick(['RII', 'RII/retail', 'Retail']), timesFields);
-  const employee = categoryNumber(pick(['EMP', 'Employee']), timesFields);
-  const shareholder = categoryNumber(pick(['SH', 'Shareholder', 'Shareholders']), timesFields);
+  const rootTimes = (keys: string[]) => numberOrUndefined(first(data, keys));
+  const qib = categoryNumber(pick(['QIB']), timesFields) ?? rootTimes(['qibSubscription', 'qib_subscription', 'qib_times', 'qibTimes']);
+  const nii = categoryNumber(pick(['NII', 'NII total', 'HNI']), timesFields) ?? rootTimes(['niiSubscription', 'nii_subscription', 'nii_times', 'niiTimes']);
+  const smallNii = categoryNumber(pick(['sNII', 'Small NII', 'Small HNI', 'SHNI', 'Small HNI (₹2L-₹10L)']), timesFields) ?? rootTimes(['smallNiiSubscription', 'small_nii_subscription', 'sniiSubscription', 'sNiiSubscription', 'snii_times', 'sNiiTimes', 'shniSubscription']);
+  const bigNii = categoryNumber(pick(['bNII', 'Big NII', 'Big HNI', 'BHNI', 'Big HNI (>₹10L)']), timesFields) ?? rootTimes(['bigNiiSubscription', 'big_nii_subscription', 'bniiSubscription', 'bNiiSubscription', 'bnii_times', 'bNiiTimes', 'bhniSubscription']);
+  const retail = categoryNumber(pick(['RII', 'RII/retail', 'Retail']), timesFields) ?? rootTimes(['retailSubscription', 'retail_subscription', 'retail_times', 'retailTimes', 'riiSubscription', 'rii_times']);
+  const employee = categoryNumber(pick(['EMP', 'Employee']), timesFields) ?? rootTimes(['employeeSubscription', 'employee_subscription', 'employee_times']);
+  const shareholder = categoryNumber(pick(['SH', 'Shareholder', 'Shareholders']), timesFields) ?? rootTimes(['shareholderSubscription', 'shareholder_subscription', 'shareholder_times']);
+  const applicationFields = ['applications', 'application_count', 'applicationCount', 'applicationsCount', 'numberOfApplications', 'totalApplications'];
+  const qibApplications = categoryNumber(pick(['QIB']), applicationFields) ?? rootTimes(['qibApplications', 'qib_applications', 'qibApplicationCount', 'qib_application_count']);
+  const niiApplications = categoryNumber(pick(['NII', 'NII total', 'HNI']), applicationFields) ?? rootTimes(['niiApplications', 'nii_applications', 'niiApplicationCount', 'nii_application_count']);
+  const smallNiiApplications = categoryNumber(pick(['sNII', 'Small NII', 'Small HNI', 'SHNI']), applicationFields) ?? rootTimes(['smallNiiApplications', 'small_nii_applications', 'sniiApplications', 'sNiiApplications', 'shniApplications']);
+  const bigNiiApplications = categoryNumber(pick(['bNII', 'Big NII', 'Big HNI', 'BHNI']), applicationFields) ?? rootTimes(['bigNiiApplications', 'big_nii_applications', 'bniiApplications', 'bNiiApplications', 'bhniApplications']);
+  const retailApplications = categoryNumber(pick(['RII', 'RII/retail', 'Retail']), applicationFields) ?? rootTimes(['retailApplications', 'retail_applications', 'riiApplications', 'rii_applications']);
+  const employeeApplications = categoryNumber(pick(['EMP', 'Employee']), applicationFields) ?? rootTimes(['employeeApplications', 'employee_applications']);
+  const shareholderApplications = categoryNumber(pick(['SH', 'Shareholder', 'Shareholders']), applicationFields) ?? rootTimes(['shareholderApplications', 'shareholder_applications']);
   const totalFromCategory = categoryNumber(pick(['TOTAL', 'Overall', 'Total subscription']), timesFields);
-  const exactTotal = numberOrUndefined(first(data, ['total_times', 'totalTimes', 'totalSubscription', 'total_subscription']));
+  const exactTotal = numberOrUndefined(first(data, ['total_times', 'totalTimes', 'totalSubscription', 'total_subscription', 'overallSubscription', 'overall_subscription']));
   const lowerBound = numberOrUndefined(first(data, ['lower_bound_times', 'lowerBoundTimes']));
   const total = exactTotal ?? totalFromCategory ?? lowerBound;
   let applications = numberOrUndefined(first(data, ['applications', 'totalApplications', 'application_count', 'total_applications', 'totalApplicationsCount', 'applicationCount']));
@@ -75,6 +97,23 @@ export function normalizeSubscriptionPayload(body: any): NormalizedSubscription 
     const times = reportedTimes ?? (offered !== undefined && offered > 0 && bid !== undefined ? bid / offered : undefined);
     return { key: rawKey, label: labels[key] || rawKey, ...(offered !== undefined ? { offered } : {}), ...(bid !== undefined ? { bid } : {}), ...(times !== undefined ? { times } : {}), ...(applicationsCount !== undefined ? { applications: applicationsCount } : {}) };
   }).filter(item => item.offered !== undefined || item.bid !== undefined || item.times !== undefined || item.applications !== undefined);
+  // Add explicit split categories when the provider supplies flat fields instead of a categories object.
+  const appendFlat = (key: string, label: string, times: number | undefined, applicationsCount?: number) => {
+    const existing = subscriptionCategories.find(item => keyText(item.key) === keyText(key));
+    if (existing) {
+      if (existing.times === undefined && times !== undefined) existing.times = times;
+      if (existing.applications === undefined && applicationsCount !== undefined) existing.applications = applicationsCount;
+    } else if (times !== undefined || applicationsCount !== undefined) {
+      subscriptionCategories.push({ key, label, ...(times !== undefined ? { times } : {}), ...(applicationsCount !== undefined ? { applications: applicationsCount } : {}) });
+    }
+  };
+  appendFlat('QIB', 'Qualified institutional buyers (QIB)', qib, qibApplications);
+  appendFlat('NII', 'Non-institutional investors (NII)', nii, niiApplications);
+  appendFlat('bNII', 'Big NII (bNII)', bigNii, bigNiiApplications);
+  appendFlat('sNII', 'Small NII (sNII)', smallNii, smallNiiApplications);
+  appendFlat('RII', 'Retail individual investors', retail, retailApplications);
+  appendFlat('EMP', 'Employees', employee, employeeApplications);
+  appendFlat('SH', 'Shareholders', shareholder, shareholderApplications);
   if (applications === undefined) {
     const totalCategory = subscriptionCategories.find(item => ['total', 'overall'].includes(keyText(item.key)));
     if (totalCategory?.applications !== undefined) applications = totalCategory.applications;

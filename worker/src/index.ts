@@ -157,7 +157,7 @@ export default {
         try { meta = await env.MARKET_CACHE.get('ipos/meta', 'json'); } catch (error) { console.warn('[IPO status] Metadata read failed', error); }
         try { lastAttempt = await env.MARKET_CACHE.get('ipos/refresh-status', 'json'); } catch (error) { console.warn('[IPO status] Refresh status read failed', error); }
       }
-      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), cacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback', ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: '*/15 * * * * UTC' }, { headers: { ...h, 'cache-control': 'no-store' } });
+      return Response.json({ dataset: 'ipos', persistentCacheEnabled: Boolean(env.MARKET_CACHE), cacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback', ...(meta && typeof meta === 'object' ? meta as object : {}), ...(lastAttempt && typeof lastAttempt === 'object' ? lastAttempt as object : {}), schedule: 'Every 15 min from 09:00-17:00 IST; hourly outside that window (Worker cron trigger: */15 * * * * UTC)' }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
     if (url.pathname === '/health' && request.method === 'GET') {
       return Response.json({
@@ -167,7 +167,7 @@ export default {
         kvEnabled: Boolean(env.MARKET_CACHE),
         ipoReady: true,
         ipoCacheMode: env.MARKET_CACHE ? 'shared-kv-with-edge-fallback' : 'regional-edge-fallback',
-        cron: '*/15 * * * *',
+        cron: '*/15 * * * * UTC; effective IPO refresh: every 15 min 09:00-17:00 IST, hourly otherwise',
         endpoints: ['/api/indices', '/api/history', '/api/ipos', '/api/news', '/api/fii-dii'],
       }, { headers: { ...h, 'cache-control': 'no-store' } });
     }
@@ -223,6 +223,10 @@ export default {
     }
   },
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    // Cloudflare cron expressions run in UTC. The every-15-minute trigger is
+    // intentionally retained, then gated using Asia/Kolkata wall-clock time.
+    // This avoids extra provider requests outside the requested refresh windows.
+    if (!isScheduledRefreshDue(new Date())) return;
     const origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in';
     ctx.waitUntil(refreshAll(env, origin));
   },
@@ -574,14 +578,40 @@ async function enrichIposFromSubscriptionFeed(ipos: any[], env: Env): Promise<an
     await Promise.all(candidates.slice(offset, offset + 5).map(async ({ipo, issue}) => {
       try {
         let detail: any = issue;
+        let parsed = normalizeSubscriptionPayload(detail);
         const rawUrl = asString(issue.url);
         const path = asString(issue.path || issue.detail_url || issue.detailUrl || issue.api_url || (rawUrl.includes('/api/') ? rawUrl : ''));
-        if (path) {
-          const url = new URL(path, 'https://ipos.markets');
-          if (url.hostname !== 'ipos.markets' || url.protocol !== 'https:') throw new Error('Unexpected subscription path host');
-          detail = await safeJson(url.toString(), `Subscription detail ${ipo.symbol}`);
+        // The manifest often contains only the total multiple. Fetch the full issue
+        // detail whenever category rows are absent, not merely when parsing fails.
+        const needsCategoryDetail = () => !parsed || !parsed.subscriptionCategories?.length;
+        // Prefer the manifest's canonical JSON path, but do not stop if a provider
+        // returns an unsupported wrapper or stale/non-JSON path. Retry by symbol.
+        if (path && needsCategoryDetail()) {
+          try {
+            const url = new URL(path, 'https://ipos.markets');
+            if (url.hostname !== 'ipos.markets' || url.protocol !== 'https:') throw new Error('Unexpected subscription path host');
+            detail = await safeJson(url.toString(), `Subscription detail ${ipo.symbol}`);
+            const detailParsed = normalizeSubscriptionPayload(detail);
+            if (detailParsed) parsed = detailParsed;
+          } catch (error) {
+            console.warn(`[IPO subscriptions] detail path failed for ${ipo.symbol || ipo.name}: ${error instanceof Error ? error.message : 'fetch failed'}`);
+          }
         }
-        const parsed = normalizeSubscriptionPayload(detail);
+        if (needsCategoryDetail()) {
+          const symbolCandidates = [issue.symbol, issue.ticker, issue.nse, issue.bse, ipo.symbol, issue.slug, ipo.detailSlug, ipo.name].map(asString).filter(Boolean);
+          for (const symbol of [...new Set(symbolCandidates)]) {
+            try {
+              const lookup = new URL(IPO_SUBSCRIPTION_BASE);
+              lookup.searchParams.set('symbol', symbol);
+              detail = await safeJson(lookup.toString(), `Subscription lookup ${symbol}`);
+              parsed = normalizeSubscriptionPayload(detail);
+              if (parsed) break;
+            } catch (error) {
+              // Unknown symbols are expected while trying aliases; continue to the next candidate.
+              console.debug(`[IPO subscriptions] lookup miss ${symbol}: ${error instanceof Error ? error.message : 'fetch failed'}`);
+            }
+          }
+        }
         if (!parsed) return;
         const rawStatus = asString(issue.status || detail?.status).toLowerCase();
         const statusMap: Record<string, string> = { open: 'Open', active: 'Open', upcoming: 'Upcoming', closed: 'Closed', listed: 'Listed', cancelled: 'Cancelled', canceled: 'Cancelled', withdrawn: 'Withdrawn' };
@@ -713,6 +743,19 @@ async function fetchNseFiiDii(cookie = ''): Promise<any[]> {
   return [...byDate.values()].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
 }
 function validFlows(rows: any[]): boolean { return Array.isArray(rows) && rows.every(x => x && typeof x.date === 'string' && Number.isFinite(x.fii) && Number.isFinite(x.dii)); }
+
+function istClock(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date);
+  const value = (name: string) => Number(parts.find(part => part.type === name)?.value || 0);
+  return { hour: value('hour'), minute: value('minute') };
+}
+function isScheduledRefreshDue(date: Date): boolean {
+  const { hour, minute } = istClock(date);
+  // The cron fires every 15 minutes. During the 09:00-17:00 IST window every
+  // trigger is used; outside it, only the start of each IST hour is used.
+  if (hour >= 9 && hour < 17) return true;
+  return minute === 0 || (hour === 17 && minute === 0);
+}
 
 async function refreshAll(env: Env, origin = env.PUBLIC_ORIGIN || 'https://bazaarbrief.in') {
   // Refresh all public datasets. KV is preferred for durable shared IPO storage;

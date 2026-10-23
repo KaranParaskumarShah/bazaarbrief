@@ -35,3 +35,15 @@ body{background:#f9fafb;color:#111827;font-variant-numeric:tabular-nums}
 .subscription-source-note{font-size:12px;margin:12px 0 0;color:var(--text-muted,#64748b)}
 @media(max-width:900px){.ipo-lotwise-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.ipo-lotwise-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Subscription category cards: bNII, sNII and retail are always visible, with no inferred values. */
+.ipo-category-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.ipo-category-card{display:flex;flex-direction:column;gap:7px;min-width:0;padding:14px;border:1px solid #e7edf7;border-radius:11px;background:linear-gradient(145deg,#f8faff,#fff)}
+.ipo-category-card small{font-size:10px;color:#71809a;font-weight:700}
+.ipo-category-card strong{font:800 19px Manrope,sans-serif;color:#263751;overflow-wrap:anywhere}
+.ipo-category-card span{font-size:10px;line-height:1.5;color:#8a96a9}
+@media(max-width:560px){.ipo-category-cards{grid-template-columns:1fr}.ipo-category-card{padding:12px}}
+
+/* Day-wise IPO subscription trend */
+.ipo-history-chart{width:100%;height:280px;min-width:0;margin:0 0 14px}.subscription-source-note{font-size:10px;line-height:1.65;color:#8793a7;margin:12px 0 0}.ipo-history-chart .recharts-wrapper{max-width:100%}
+@media(max-width:520px){.ipo-history-chart{height:245px}.ipo-history-chart .recharts-legend-wrapper{font-size:9px!important}}
