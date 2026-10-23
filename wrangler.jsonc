@@ -1,3 +1,4 @@
+// IMPORTANT: before config-driven deployment, add the existing MARKET_CACHE KV binding with its real account-specific namespace ID. A dashboard-only binding may be replaced by this config. See LIVE-DATA-SETUP.md.
 {
   "name": "bazaarbrief",
   "main": "./worker/src/index.ts",

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeNseIpos, validIpos } from './ipoNormalization';
+import { extractIpoRows, lifecycleStatus, normalizeNseIpos, validIpos } from './ipoNormalization';
 
 describe('IPO normalization', () => {
   it('keeps historical records with missing lot size, price and issue size', () => {
-    const [ipo] = normalizeNseIpos([{ companyName: 'Example Industries', symbol: 'EXAMPLE', listingDate: '2026-10-01' }], 'Listed');
+    const [ipo] = normalizeNseIpos([{ companyName: 'Example Industries', symbol: 'EXAMPLE', listingDate: '2026-10-01', actualListingPrice: 123 }], 'Listed');
     expect(ipo.name).toBe('Example Industries');
     expect(ipo.market).toBe('Mainboard');
     expect(ipo.lotSize).toBe(0);
@@ -87,4 +87,61 @@ it('preserves the provider detail slug separately from the exchange symbol', () 
   const [ipo] = normalizeNseIpos([{ name: 'Slug Limited', symbol: 'SLUG', slug: 'slug-limited-ipo' }], 'Upcoming');
   expect(ipo.symbol).toBe('SLUG');
   expect(ipo.detailSlug).toBe('slug-limited-ipo');
+});
+
+
+describe('public provider response envelopes', () => {
+  it('extracts the documented Xflot { ok, count, ipos } payload', () => {
+    const rows = extractIpoRows({ ok: true, count: 1, ipos: [{ slug: 'one' }] });
+    expect(rows).toEqual([{ slug: 'one' }]);
+  });
+
+  it('extracts nested data.ipos payloads used by API gateways', () => {
+    const rows = extractIpoRows({ ok: true, data: { ipos: [{ slug: 'nested' }] } });
+    expect(rows).toEqual([{ slug: 'nested' }]);
+  });
+
+  it('rejects unknown object envelopes instead of silently returning an empty feed', () => {
+    expect(extractIpoRows({ ok: true, message: 'no records key' })).toBeNull();
+  });
+});
+
+
+describe('IPO lifecycle date reconciliation', () => {
+  it('overrides a stale UPCOMING label when the issue is currently open', () => {
+    expect(lifecycleStatus({status:'UPCOMING',openDate:'2026-10-21',closeDate:'2026-10-23'}, 'Upcoming', '2026-10-22')).toBe('Open');
+  });
+  it('does not treat a passed tentative listing date as proof of listing', () => {
+    expect(lifecycleStatus({status:'UPCOMING',openDate:'2026-08-01',closeDate:'2026-08-05',listingDate:'2026-08-10'}, 'Upcoming', '2026-10-22')).toBe('Closed');
+  });
+  it('marks an issue listed when listing evidence exists', () => {
+    expect(lifecycleStatus({status:'UPCOMING',openDate:'2026-08-01',closeDate:'2026-08-05',listingDate:'2026-08-10',actualListingPrice:123}, 'Upcoming', '2026-10-22')).toBe('Listed');
+  });
+  it('marks an ended issue closed rather than keeping stale upcoming status', () => {
+    expect(lifecycleStatus({status:'UPCOMING',openDate:'2026-09-01',closeDate:'2026-09-05'}, 'Upcoming', '2026-10-22')).toBe('Closed');
+  });
+  it('keeps cancellation and withdrawal statuses authoritative', () => {
+    expect(lifecycleStatus({status:'CANCELLED',openDate:'2026-10-21',closeDate:'2026-10-23'}, 'Upcoming', '2026-10-22')).toBe('Cancelled');
+  });
+});
+
+
+it('reconciles stale upcoming labels for old issue windows before dashboard filtering', () => {
+  const [ipo] = normalizeNseIpos([{ companyName: 'September Issue Limited', symbol: 'SEPT', status: 'UPCOMING', openDate: '2026-09-17', closeDate: '2026-09-21', listingDate: '2026-09-24' }], 'Upcoming');
+  expect(ipo.status).toBe('Closed');
+  expect(lifecycleStatus({ status: 'UPCOMING', openDate: '2026-09-17', closeDate: '2026-09-21' }, 'Upcoming', '2026-10-22')).toBe('Closed');
+});
+
+
+it('rejects only an obviously corrupted extreme issue-size record', () => {
+  const rows = normalizeNseIpos([
+    { companyName: 'Bad Size Limited', symbol: 'BAD', status: 'UPCOMING', openDate: '2026-09-17', closeDate: '2026-09-21', issueSize: '₹88642911 Cr' },
+    { companyName: 'Normal Size Limited', symbol: 'NORMAL', issueSize: '₹22,561.57 Cr' },
+  ], 'Upcoming');
+  expect(rows.map(row => row.name)).toEqual(['Normal Size Limited']);
+});
+
+it('does not stamp retrieval time as the source data update time', () => {
+  const [ipo] = normalizeNseIpos([{ companyName: 'No Timestamp Limited', symbol: 'NOTIME' }], 'Upcoming');
+  expect(ipo.updatedAt).toBeUndefined();
 });

@@ -1,6 +1,6 @@
 # BazaarBrief IPO audit and verification
 
-Audit date: 2026-10-20
+Audit date: 2026-10-22
 
 ## Fixes made in this audit
 
@@ -12,12 +12,17 @@ Audit date: 2026-10-20
 - Fixed the frontend fallback chain so a successful live response is still returned when IndexedDB cache persistence fails.
 - Added the optional provider detail slug to the canonical type and API schema.
 - Added normalizer regression tests for issue-size formatting and provider detail slugs.
+- Fixed stale IPO lifecycle labels: dates in Asia/Kolkata now override stale `UPCOMING` labels, and cached IPO responses are reclassified on read. Listing dates in the past are `Listed`; expired issue windows without a passed listing date are `Closed`; cancelled/withdrawn remains authoritative.
+- Added the no-key `ipos.markets` public subscription manifest/detail adapter as a secondary enrichment feed. It captures category-wise QIB/NII/RII/employee/shareholder/total data, bid/offered shares, applications and exact-versus-lower-bound basis when supplied.
+- Added KV-backed per-IPO subscription history with one row per IST calendar day (up to 30 days); each day's row is updated in place on subsequent refreshes.
+- Added a detailed category subscription grid and a lot-wise retail application planner (1/2/3/5/10 lots) calculated only when lot size and upper price cap are available.
+- Added tests for stale lifecycle reconciliation, subscription category parsing, share/bid/application counts, and lower-bound semantics.
 
 ## Checks completed
 
-- TypeScript/TSX syntax transpilation: passed for 26 TypeScript/TSX source, config and test files.
+- TypeScript/TSX syntax transpilation: passed for 28 TypeScript/TSX source, config and test files.
 - Worker strict type-check: passed against local Cloudflare API-compatible type stubs. This checks Worker/normalizer semantics but is not a substitute for `wrangler types` or the installed `@cloudflare/workers-types` package.
-- IPO normalizer runtime smoke checks: 6 passed (partial historical row, SME/GMP parsing, GMP percentage, minimum investment, Indian issue-size formatting, provider detail slug).
+- IPO lifecycle/subscription runtime smoke checks: 8 passed (stale UPCOMING → OPEN, expired issue → CLOSED, past listing → LISTED, cancellation retained, category normalization, share/bid/application fields, lower-bound semantics, missing values not coerced to zero).
 - CSS parsing: passed.
 - Relative local import resolution: passed.
 - JSON configuration parsing: passed for JSON files; `wrangler.jsonc` was inspected and is valid JSONC without comments.
@@ -31,9 +36,9 @@ Audit date: 2026-10-20
 
 ## Deployment prerequisites and limitations
 
-- The source archive intentionally does not invent a Cloudflare KV namespace ID. Configure the real `MARKET_CACHE` binding in the Cloudflare dashboard or `wrangler.jsonc` before deploying IPO snapshots; without it, `/api/ipos` correctly returns a clear 503 instead of pretending a shared cache exists.
+- A real `MARKET_CACHE` namespace is recommended for a durable shared IPO snapshot but is no longer required for basic IPO endpoint availability. Without KV, the Worker uses regional edge cache, fetches the configured delayed feed on cache miss, and serves a bounded stale IPO snapshot if the feed later fails. A 503 is returned only when all upstreams fail and no cached IPO snapshot exists.
 - Preserve the existing `package-lock.json` from the repository when applying these files. This archive does not include one, so dependency resolution must not be assumed reproducible from this ZIP alone.
 - NSE's undocumented public endpoint is opt-in and disabled by default. Review current terms before enabling automated access or redistribution.
 - Data fields that the provider does not supply remain undisclosed. GMP is unofficial and should not be treated as an exchange quote.
 
-A completely bug-free build cannot be certified without the full dependency-backed build, unit tests, and deployment checks succeeding in the project's real environment.
+A completely bug-free build cannot be certified without the full dependency-backed build, Vitest suite, and live provider/deployment checks succeeding in the project's real environment.

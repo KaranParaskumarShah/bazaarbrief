@@ -10,7 +10,7 @@ This repository deploys the React frontend and API Worker together. Keep these d
 - Build command: `npm run build`
 - Deploy command: `npx wrangler deploy`
 
-The root `wrangler.jsonc` points Wrangler to `worker/src/index.ts`, uploads `dist/`, routes `/api/*` through the Worker, enables React SPA fallback, and configures a 15-minute Cron Trigger. **No KV namespace or build variable is required for the first deployment.** The Worker fetches data on demand and uses Cloudflare's edge cache; if you later add a `MARKET_CACHE` KV binding, it will additionally retain datasets across refreshes.
+The root `wrangler.jsonc` points Wrangler to `worker/src/index.ts`, uploads `dist/`, routes `/api/*` through the Worker, enables React SPA fallback, and configures a 15-minute Cron Trigger. The IPO list can degrade to edge caching without KV, but the shared IPO snapshot, subscription enrichment throttle, and daily subscription history require the existing `MARKET_CACHE` binding. Keep that binding in both the production Worker settings and the root `wrangler.jsonc` using the actual namespace ID; a config-driven deployment can remove a dashboard-only binding.
 
 For a one-command Windows deployment, double-click `START-HERE-WINDOWS.bat`; approve Cloudflare login if prompted. The script builds and deploys this same combined Worker (it does not create a separate Pages project).
 
@@ -49,7 +49,7 @@ The Worker is bundled by `wrangler deploy`; the dashboard's deploy step reports 
 
 The IPO dashboard uses a compact market-monitor table, status/board/GMP filters, tabular financial numerals, and a detail view for timeline, issue breakup, subscription, GMP history and registrar links. Fields are only rendered as reported by configured providers; missing financial statements, subscription snapshots, quota splits and registrar links are not fabricated.
 
-The Worker reads from a primary configured IPO list, can optionally merge a separately configured secondary JSON feed, and can opt into the undocumented NSE public IPO endpoint after terms review. Xflot per-IPO detail enrichment is throttled to a small batch every six hours. The 15-minute cron refreshes the shared snapshot; KV retention keeps the last successful snapshot available through temporary provider failures. See `docs/API-sources.md` and `LIVE-DATA-SETUP.md` before enabling additional feeds.
+The Worker reads from a primary configured IPO list, can optionally merge a separately configured secondary JSON feed, and can opt into the undocumented NSE public IPO endpoint after terms review. Xflot per-IPO detail enrichment is throttled to a small batch every 10 minutes, and category subscription enrichment only requests current/recent issues. The 15-minute cron refreshes the shared snapshot; KV retention keeps the last successful snapshot available through temporary provider failures. See `docs/API-sources.md` and `LIVE-DATA-SETUP.md` before enabling additional feeds.
 
 ### Build and test
 
