@@ -16,6 +16,7 @@
   },
   "vars": {
     "ALLOWED_ORIGIN": "https://bazaarbrief.in",
-    "PUBLIC_ORIGIN": "https://bazaarbrief.in"
+    "PUBLIC_ORIGIN": "https://bazaarbrief.in",
+    "NSE_IPO_ENABLED": "true"
   }
 }

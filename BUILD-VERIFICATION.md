@@ -38,7 +38,7 @@ Audit date: 2026-10-22
 
 - A real `MARKET_CACHE` namespace is recommended for a durable shared IPO snapshot but is no longer required for basic IPO endpoint availability. Without KV, the Worker uses regional edge cache, fetches the configured delayed feed on cache miss, and serves a bounded stale IPO snapshot if the feed later fails. A 503 is returned only when all upstreams fail and no cached IPO snapshot exists.
 - Preserve the existing `package-lock.json` from the repository when applying these files. This archive does not include one, so dependency resolution must not be assumed reproducible from this ZIP alone.
-- NSE's undocumented public endpoint is opt-in and disabled by default. Review current terms before enabling automated access or redistribution.
+- The current root deployment config enables NSE's undocumented public IPO website endpoints for list/detail/category enrichment. They are not a documented or guaranteed free API; review current terms and redistribution permissions. Set `NSE_IPO_ENABLED=false` to disable them.
 - Data fields that the provider does not supply remain undisclosed. GMP is unofficial and should not be treated as an exchange quote.
 
 A completely bug-free build cannot be certified without the full dependency-backed build, Vitest suite, and live provider/deployment checks succeeding in the project's real environment.

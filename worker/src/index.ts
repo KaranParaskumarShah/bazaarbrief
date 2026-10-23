@@ -273,7 +273,7 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     }
     // Optional NSE fallback is intentionally gated by explicit operator opt-in.
     if (!configured && env.NSE_IPO_ENABLED === 'true') {
-      try { const cookie = await fetchNseCookie(); configured = await fetchNseJson('/api/ipo-current-issue', cookie); usedNseFallback = Boolean(configured); }
+      try { const cookie = await fetchNseCookie(); configured = await fetchNseJson('/api/all-upcoming-issues?category=ipo', cookie); usedNseFallback = Boolean(configured); }
       catch (error) { console.warn(`[IPO NSE fallback] unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
     }
     if (!configured) throw new Error('Primary and configured fallback IPO feeds returned no data');
@@ -284,7 +284,7 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
     if (env.NSE_IPO_ENABLED === 'true' && !usedNseFallback) {
       try {
         const cookie = await fetchNseCookie();
-        const nseRaw = await fetchNseJson('/api/ipo-current-issue', cookie);
+        const nseRaw = await fetchNseJson('/api/all-upcoming-issues?category=ipo', cookie);
         const nseRows = normalizeNseIpos(nseRaw, 'Upcoming');
         const mergeKey = (item: any) => String(item.symbol || item.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         const merged = new Map<string, any>(ipos.map(item => [mergeKey(item), item] as const));
@@ -327,6 +327,13 @@ async function fetchDataset(dataset: Dataset, env: Env): Promise<any[]> {
       ipos = await enrichIposFromSubscriptionFeed(ipos, env);
     } catch (error) {
       console.warn(`[IPO subscriptions] optional feed unavailable: ${error instanceof Error ? error.message : 'request failed'}`);
+    }
+    // NSE's own public website feed is the final subscription source of record when
+    // enabled. Its JSON endpoints are undocumented and may be rate-limited; failures
+    // are isolated so the Xflot/ipos.markets snapshot remains available.
+    if (env.NSE_IPO_ENABLED === 'true') {
+      try { ipos = await enrichIposFromNseSubscription(ipos, env); }
+      catch (error) { console.warn(`[IPO NSE subscription] optional feed unavailable: ${error instanceof Error ? error.message : 'request failed'}`); }
     }
     return refreshIpoLifecycle(ipos);
   }
@@ -643,6 +650,170 @@ async function enrichIposFromSubscriptionFeed(ipos: any[], env: Env): Promise<an
   console.info(`[IPO subscriptions] enriched ${patches.size}/${candidates.length} matched issues`);
   return withHistory;
 }
+const NSE_SUBSCRIPTION_MIN_INTERVAL_MS = 55 * 60 * 1000;
+function nseRows(raw: any): any[] {
+  if (Array.isArray(raw)) return raw;
+  for (const candidate of [raw?.dataList, raw?.data, raw?.results, raw?.items, raw?.ipos]) {
+    if (Array.isArray(candidate)) return candidate;
+  }
+  return [];
+}
+function nseNumeric(row: any, names: string[]): number | undefined {
+  for (const name of names) {
+    const value = row?.[name];
+    if (value == null || String(value).trim() === '' || String(value).trim() === '-') continue;
+    const parsed = Number(String(value).replace(/[,\s]/g, ''));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+function nseSubscriptionPatch(payload: any): any | null {
+  const rows = nseRows(payload);
+  if (!rows.length) return null;
+  const categories: any[] = [];
+  const result: any = {};
+  const asOf = asString(payload?.updateTime || payload?.updatedAt || payload?.asOf || payload?.as_of);
+  const classify = (label: string, sr: string) => {
+    const text = `${label} ${sr}`.toLowerCase().replace(/[–—]/g, '-');
+    if (/^total\b/.test(label.trim().toLowerCase()) || label.trim().toLowerCase() === 'total') return { key: 'TOTAL', label: 'Total' };
+    if (/qualified institutional|\bqib\b/.test(text)) return { key: 'QIB', label: 'Qualified institutional buyers (QIB)' };
+    if (/retail individual|\brii\b|retail investors/.test(text)) return { key: 'RII', label: 'Retail individual investors (RII)' };
+    if (/employee/.test(text)) return { key: 'EMP', label: 'Employees' };
+    if (/shareholder/.test(text)) return { key: 'SH', label: 'Shareholders' };
+    if (/non.?institutional|\bnii\b|hni/.test(text) && /more than ten lakh|above ten lakh|>\s*10\s*lakh|2\.1/.test(text)) return { key: 'bNII', label: 'Big NII (bNII)' };
+    if (/non.?institutional|\bnii\b|hni/.test(text) && /two lakh|upto ten lakh|up to ten lakh|2\.2/.test(text)) return { key: 'sNII', label: 'Small NII (sNII)' };
+    if (/non.?institutional|\bnii\b|hni/.test(text)) return { key: 'NII', label: 'Non-institutional investors (NII)' };
+    return null;
+  };
+  for (const row of rows) {
+    const label = asString(row?.category || row?.categoryName || row?.investorCategory || row?.name);
+    const sr = asString(row?.srNo || row?.srno || row?.serialNo);
+    if (!label || /^category$/i.test(label) || /^sr\.?\s*no\.?$/i.test(sr)) continue;
+    const mapped = classify(label, sr);
+    if (!mapped) continue;
+    // NSE uses compound serials such as 2.1 and 2.2 for the NII sub-buckets.
+    // Preserve these as bNII/sNII without counting them twice in the total.
+    if (mapped.key !== 'TOTAL' && mapped.key !== 'bNII' && mapped.key !== 'sNII' && sr && !/^\d+$/.test(sr)) continue;
+    const offered = nseNumeric(row, ['noOfShareOffered','noOfSharesOffered','sharesOffered','offered','reserved']);
+    const bid = nseNumeric(row, ['noOfSharesBid','noOfShareBid','sharesBid','sharesBidFor','bid']);
+    const times = nseNumeric(row, ['noOfTotalMeant','noOfTimes','subscriptionTimes','times','timesSubscribed']) ?? (offered && offered > 0 && bid !== undefined ? bid / offered : undefined);
+    const applications = nseNumeric(row, ['noOfApplications','noOfApplication','applications','applicationCount','noOfApplicationsReceived','applicationsReceived']);
+    const item = { key: mapped.key, label: mapped.label, ...(offered !== undefined ? { offered } : {}), ...(bid !== undefined ? { bid } : {}), ...(times !== undefined ? { times } : {}), ...(applications !== undefined ? { applications } : {}) };
+    const existingIndex = categories.findIndex(category => category.key === item.key);
+    if (existingIndex >= 0) categories[existingIndex] = { ...categories[existingIndex], ...item };
+    else categories.push(item);
+  }
+  const byKey = (key: string) => categories.find(item => item.key === key);
+  const assignTimes = (key: string, field: string) => { const value = byKey(key)?.times; if (value !== undefined) result[field] = value; };
+  assignTimes('QIB', 'qibSubscription');
+  assignTimes('NII', 'niiSubscription');
+  assignTimes('bNII', 'bigNiiSubscription');
+  assignTimes('sNII', 'smallNiiSubscription');
+  assignTimes('RII', 'retailSubscription');
+  assignTimes('EMP', 'employeeSubscription');
+  assignTimes('SH', 'shareholderSubscription');
+  const total = byKey('TOTAL');
+  if (total?.times !== undefined) result.subscription = total.times;
+  if (total?.applications !== undefined) result.totalApplications = total.applications;
+  // Some NSE payloads expose the overall application count outside dataList.
+  const totalApps = nseNumeric(payload, ['totalApplications','noOfApplications','applicationCount']);
+  if (result.totalApplications === undefined && totalApps !== undefined) result.totalApplications = totalApps;
+  if (categories.length) result.subscriptionCategories = categories;
+  if (asOf) result.subscriptionAsOf = asOf;
+  if (Object.keys(result).length === 0) return null;
+  result.subscriptionSource = 'NSE India public IPO feed';
+  result.subscriptionBasis = 'exchange-reported';
+  result.subscriptionDetails = {
+    ...(result.qibSubscription !== undefined ? { qib: result.qibSubscription } : {}),
+    ...(result.niiSubscription !== undefined ? { nii: result.niiSubscription } : {}),
+    ...(result.smallNiiSubscription !== undefined ? { smallNii: result.smallNiiSubscription } : {}),
+    ...(result.bigNiiSubscription !== undefined ? { bigNii: result.bigNiiSubscription } : {}),
+    ...(result.retailSubscription !== undefined ? { retail: result.retailSubscription } : {}),
+    ...(result.subscription !== undefined ? { total: result.subscription } : {}),
+    ...(result.employeeSubscription !== undefined ? { employee: result.employeeSubscription } : {}),
+    ...(asOf ? { asOf } : {}),
+  };
+  return result;
+}
+async function enrichIposFromNseSubscription(ipos: any[], env: Env): Promise<any[]> {
+  if (!ipos.length || !env.MARKET_CACHE) return ipos;
+  const lastRaw = await env.MARKET_CACHE.get('ipos/nse-subscription-last-refresh');
+  const last = lastRaw ? Date.parse(lastRaw) : NaN;
+  if (Number.isFinite(last) && Date.now() - last < NSE_SUBSCRIPTION_MIN_INTERVAL_MS) return ipos;
+  const cookie = await fetchNseCookie();
+  const nseListRaw = await fetchNseJson('/api/all-upcoming-issues?category=ipo', cookie);
+  const exchangeRows = nseRows(nseListRaw);
+  const norm = (value: unknown) => keyText(value).replace(/(limited|ltd|private|pvt|company|co|ipo|issue)$/g, '');
+  const match = (ipo: any) => {
+    const symbols = new Set([ipo.symbol, ipo.nseSymbol, ipo.ticker].map(keyText).filter(Boolean));
+    const exact = exchangeRows.find(row => symbols.has(keyText(row?.symbol || row?.ticker)));
+    if (exact) return exact;
+    const name = norm(ipo.name || ipo.companyName || ipo.company);
+    if (!name) return undefined;
+    const scored = exchangeRows.map(row => {
+      const candidate = norm(row?.companyName || row?.company || row?.name || row?.issuerName);
+      if (candidate === name) return { row, score: 1 };
+      const a = new Set(name.match(/[a-z0-9]{2,}/g) || []);
+      const b = new Set(candidate.match(/[a-z0-9]{2,}/g) || []);
+      const common = [...a].filter(token => b.has(token)).length;
+      return { row, score: a.size && b.size ? common / Math.max(a.size, b.size) : 0 };
+    }).sort((a,b) => b.score-a.score);
+    return scored[0]?.score >= 0.8 ? scored[0].row : undefined;
+  };
+  const cutoff = new Date(Date.now() - 45 * 86400000).toISOString().slice(0,10);
+  const candidates = ipos.filter(ipo => ipo.status === 'Open' || ipo.status === 'Upcoming' || (ipo.status === 'Closed' && String(ipo.closeDate || '') >= cutoff) || (ipo.status === 'Listed' && String(ipo.listingDate || '') >= cutoff)).slice(0, 24);
+  const patches = new Map<string, any>();
+  for (let offset = 0; offset < candidates.length; offset += 3) {
+    await Promise.all(candidates.slice(offset, offset + 3).map(async ipo => {
+      try {
+        const listed = match(ipo);
+        const symbol = asString(listed?.symbol || ipo.nseSymbol || ipo.symbol);
+        if (!symbol) return;
+        const series = asString(listed?.series || (ipo.market === 'SME' ? 'SME' : 'EQ')) || 'EQ';
+        const query = `symbol=${encodeURIComponent(symbol)}&series=${encodeURIComponent(series)}`;
+        const [payload, detailPayload] = await Promise.all([
+          fetchNseJson(`/api/ipo-active-category?${query}`, cookie).catch(error => {
+            console.warn(`[IPO NSE subscription] category endpoint failed for ${symbol}: ${error instanceof Error ? error.message : 'request failed'}`);
+            return null;
+          }),
+          fetchNseJson(`/api/ipo-detail?${query}`, cookie).catch(error => {
+            console.debug(`[IPO NSE detail] endpoint unavailable for ${symbol}: ${error instanceof Error ? error.message : 'request failed'}`);
+            return null;
+          }),
+        ]);
+        const patch: any = nseSubscriptionPatch(payload) || {};
+        const infoRows = detailPayload?.issueInfo?.dataList || detailPayload?.data?.issueInfo?.dataList || detailPayload?.dataList || [];
+        for (const info of Array.isArray(infoRows) ? infoRows : []) {
+          const title = asString(info?.title).toLowerCase();
+          const value = asString(info?.value).replace(/^['"]|['"]$/g, '').trim();
+          if (!title || !value || value === '-') continue;
+          if (/bid lot|minimum order quantity|market lot/.test(title) && patch.lotSize === undefined) {
+            const amount = nseNumeric({ value }, ['value']); if (amount !== undefined) patch.lotSize = amount;
+          } else if (/face value/.test(title) && patch.faceValue === undefined) {
+            const amount = nseNumeric({ value }, ['value']); if (amount !== undefined) patch.faceValue = amount;
+          } else if (/^name of the registrar$|^registrar$/.test(title) && patch.registrarName === undefined) {
+            patch.registrarName = value; patch.registrar = value;
+          } else if (/price range|price band/.test(title) && !patch.priceBand) {
+            patch.priceBand = value;
+          } else if (/industry|sector/.test(title) && !patch.industry) {
+            patch.industry = value;
+          }
+        }
+        if (Object.keys(patch).length) patches.set(ipo.id, patch);
+      } catch (error) {
+        console.warn(`[IPO NSE subscription] ${ipo.symbol || ipo.name}: ${error instanceof Error ? error.message : 'request failed'}`);
+      }
+    }));
+  }
+  if (patches.size) {
+    await env.MARKET_CACHE.put('ipos/nse-subscription-last-refresh', new Date().toISOString(), { expirationTtl: 60 * 60 * 24 * 7 });
+    console.info(`[IPO NSE subscription] enriched ${patches.size}/${candidates.length} issue(s)`);
+  } else {
+    console.warn(`[IPO NSE subscription] no subscription rows matched; will retry next cron`);
+  }
+  return ipos.map(ipo => ({ ...ipo, ...(patches.get(ipo.id) || {}) }));
+}
+
 function todayIst() {
   const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
   const get = (name: string) => parts.find(p => p.type === name)?.value || '';
@@ -694,6 +865,7 @@ async function readSubscriptionHistory(id: string, env: Env): Promise<any[]> {
 }
 
 const NSE_HOME = 'https://www.nseindia.com/';
+const NSE_IPO_PAGE = 'https://www.nseindia.com/market-data/all-upcoming-issues-ipo';
 const DEFAULT_IPO_DATA_URL = 'https://xflot.com/api/public/market/ipos?limit=200';
 const DEFAULT_IPO_FALLBACK_URL = 'https://www.xflot.com/api/public/market/ipos?limit=200';
 async function fetchNseCookie(): Promise<string> {
@@ -701,11 +873,11 @@ async function fetchNseCookie(): Promise<string> {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36 BazaarBrief/1.0',
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'en-US,en;q=0.9',
-    'referer': NSE_HOME,
+    'referer': NSE_IPO_PAGE,
     'origin': 'https://www.nseindia.com',
   };
   try {
-    const landing = await fetch(NSE_HOME, { headers: { ...common, accept: 'text/html,application/xhtml+xml' }, signal: AbortSignal.timeout(8000) });
+    const landing = await fetch(NSE_IPO_PAGE, { headers: { ...common, referer: NSE_HOME, accept: 'text/html,application/xhtml+xml' }, signal: AbortSignal.timeout(10000) });
     return landing.headers.get('set-cookie')?.split(/,(?=[^;]+=[^;]+)/).map(x => x.split(';')[0]).join('; ') || '';
   } catch { return ''; }
 }
@@ -716,7 +888,7 @@ async function fetchNseJson(path: string, cookie = ''): Promise<any> {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36 BazaarBrief/1.0',
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'en-US,en;q=0.9',
-    'referer': NSE_HOME,
+    'referer': NSE_IPO_PAGE,
     'origin': 'https://www.nseindia.com',
   };
   const response = await fetch(`https://www.nseindia.com${path}`, { headers: { ...common, ...(cookie ? { cookie } : {}) }, signal: AbortSignal.timeout(10000) });
